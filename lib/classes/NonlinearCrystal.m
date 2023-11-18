@@ -16,7 +16,10 @@ classdef NonlinearCrystal < Optic
 		DomainWidths
 		Periods
 		DomainWallPositions
-
+		NSteps
+	end
+	properties (Dependent)
+		TStepShift
 	end
 
 	methods
@@ -49,9 +52,9 @@ classdef NonlinearCrystal < Optic
 
 		function ppole(obj,optSim)
 			L_m = obj.Bulk.Length;
-			nSteps = L_m / optSim.StepSize;
+			obj.NSteps = (L_m / optSim.StepSize);
 			
-			xtal = QPMcrystal(nSteps,L_m,obj.GratingPeriod,...
+			xtal = QPMcrystal(obj.NSteps,L_m,obj.GratingPeriod,...
 										 obj.Uncertainty,...
 										 obj.DutyCycleOffset);
 
@@ -61,6 +64,11 @@ classdef NonlinearCrystal < Optic
 			obj.Periods = xtal.periods;
 		end
 		
+		function tss = get.TStepShift(obj)
+			ts = obj.Transmission .^ (1/obj.NSteps);
+			tss = fftshift(ts);
+		end
+
 		function xtalplot(obj)
 			upPoled = obj.DomainWidths(2:2:end);
 			downPoled = obj.DomainWidths(1:2:end-1);

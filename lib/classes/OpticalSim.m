@@ -57,7 +57,7 @@ classdef OpticalSim < matlab.mixin.Copyable
 			% Will need individual class functions to convert to gpuArray?
 			%	or just do it here for those required in .run?
 
-			nSteps = uint32(obj.System.Optics.(obj.System.CrystalPosition).Bulk.Length./obj.StepSize);
+			% nSteps = uint32(obj.System.Optics.(obj.System.CrystalPosition).Bulk.Length./obj.StepSize);
 			gpus = gpuDeviceCount;
 			if gpus > 0.5
 				gpuDevice(1);
@@ -68,10 +68,9 @@ classdef OpticalSim < matlab.mixin.Copyable
 
 			obj.Source.simulate(obj.SimWin);	% Will we need to load these objects?
 			obj.System.simulate(obj.SimWin);
-			obj.StepSizeModifiers = zeros(obj.RoundTrips,nSteps);
 			obj.convertArrays;	% Convert arrays to correct precision and type
 
-			obj.System.Optics.(obj.System.CrystalPosition).ppole(obj);
+			obj.System.Xtal.ppole(obj);
 
 			obj.Source.Pulse.applyGDD(obj.System.PumpChirp);
 			obj.Pulse = copy(obj.Source.Pulse);	% Copy the pump pulse as basis for cavity field
@@ -84,7 +83,7 @@ classdef OpticalSim < matlab.mixin.Copyable
 				ydat = linspace(0,obj.System.Xtal.Length*1e3,obj.ProgressPlots);
 				obj.Plotter = SimPlotter(obj,ydat);
 			end
-
+			obj.StepSizeModifiers = obj.convArr(zeros(obj.RoundTrips,obj.System.Xtal.NSteps));
 			obj.Pulse.refract(airOpt);
 
 		end
@@ -92,11 +91,9 @@ classdef OpticalSim < matlab.mixin.Copyable
 		function run(obj)
 		% Will want to be based off the solver, since that should already be hardware dependent
 		% Should probably convert to correct precision and array type in the setup
-			xtal = obj.System.Optics.(obj.System.CrystalPosition);
-			nSteps = xtal.Bulk.Length ./ obj.StepSize;
-			sel = obj.convArr(round(nSteps/(obj.ProgressPlots - 1)));
-			% Tstep = fftshift(xtal.Transmission ./ nSteps); % Nope, not divide, that's for sure...
-			Tstep = fftshift(xtal.Transmission .^ (1/nSteps));
+			xtal = obj.System.Xtal;
+
+			sel = obj.convArr(round(xtal.NSteps/(obj.ProgressPlots - 1)));
 			n0 = xtal.Bulk.RefractiveIndex(obj.SimWin.ReferenceIndex);
 			w0 = obj.convArr(obj.SimWin.ReferenceOmega);
 			G33 = obj.convArr(xtal.Polarisation .* w0 ./ n0 ./ 4 ./ c);
@@ -119,12 +116,12 @@ classdef OpticalSim < matlab.mixin.Copyable
 
 				[EtShift,obj.SpectralProgressShift(:,2:obj.ProgressPlots),obj.StepSizeModifiers(obj.TripNumber,:)] =...
 										obj.Solver(EtShift,...
-													 Tstep,...
+													 xtal.TStepShift,...
 													 G33,...
 													 w0,...
 													 bdiffw0,...
 													 h,...
-													 uint32(nSteps),...
+													 uint32(xtal.NSteps),...
 													 dt,...
 													 hBshift,...
 													 obj.AdaptiveError(2),...
