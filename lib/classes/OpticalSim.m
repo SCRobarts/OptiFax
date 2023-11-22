@@ -34,13 +34,13 @@ classdef OpticalSim < matlab.mixin.Copyable
 	end
 
 	methods
-		function obj = OpticalSim(src,cav,simWin,stepSize,errorBounds)
+		function obj = OpticalSim(src,cav,simWin,errorBounds,stepSize)
 			arguments
 				src
 				cav
 				simWin
-				stepSize = 1e-7;		% default starting step size of 0.1 micron
 				errorBounds = [2.5e-3,5e-2];	% default error 0.05-1%
+				stepSize = 1e-7;		% default starting step size of 0.1 micron
 			end
 			%OPTICALSIM Construct an instance of this class
 			%   Detailed explanation goes here
@@ -49,6 +49,12 @@ classdef OpticalSim < matlab.mixin.Copyable
 			obj.SimWin = simWin;
 			obj.StepSize = stepSize;
 			obj.AdaptiveError = errorBounds;
+
+			gpus = gpuDeviceCount;
+			if gpus > 0.5
+				gpuDevice(1);
+				obj.Hardware = "GPU";	% Could probably add actual GPU model info here
+			end
 		end
 
 		function setup(obj)
@@ -58,12 +64,10 @@ classdef OpticalSim < matlab.mixin.Copyable
 			%	or just do it here for those required in .run?
 
 			% nSteps = uint32(obj.System.Optics.(obj.System.CrystalPosition).Bulk.Length./obj.StepSize);
-			gpus = gpuDeviceCount;
-			if gpus > 0.5
-				gpuDevice(1);
-				obj.Hardware = "GPU";	% Could probably add actual GPU model info here
+			if strcmp(obj.Hardware, "GPU")	% Could probably add actual GPU model info here
+				obj.Solver = @OPOmexBatch;
 			else 
-				obj.Solver = @NEE_CPU;	% Need to make a stand alone CPU adaptive solver
+				obj.Solver = @NEE_CPU_par;	% Need to make a stand alone CPU adaptive solver
 			end
 
 			obj.Source.simulate(obj.SimWin);	% Will we need to load these objects?
@@ -91,9 +95,10 @@ classdef OpticalSim < matlab.mixin.Copyable
 		function run(obj)
 		% Will want to be based off the solver, since that should already be hardware dependent
 		% Should probably convert to correct precision and array type in the setup
+			
 			xtal = obj.System.Xtal;
-
-			sel = obj.convArr(round(xtal.NSteps/(obj.ProgressPlots - 1)));
+			% sel = obj.convArr(round(xtal.NSteps/(obj.ProgressPlots - 1)));
+			sel = (round(xtal.NSteps/(obj.ProgressPlots - 1)));
 			n0 = xtal.Bulk.RefractiveIndex(obj.SimWin.ReferenceIndex);
 			w0 = obj.convArr(obj.SimWin.ReferenceOmega);
 			G33 = obj.convArr(xtal.Polarisation .* w0 ./ n0 ./ 4 ./ c);
@@ -106,7 +111,8 @@ classdef OpticalSim < matlab.mixin.Copyable
 			hBshift = obj.convArr(hBshift);
 			airOpt = obj.Pulse.Medium;
 			dt = obj.SimWin.DeltaTime;
-
+			
+			obj.TripNumber = 0;
 			while obj.TripNumber < obj.RoundTrips
 				obj.TripNumber = obj.TripNumber + 1;
 				

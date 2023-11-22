@@ -52,7 +52,7 @@ classdef NonlinearCrystal < Optic
 
 		function ppole(obj,optSim)
 			L_m = obj.Bulk.Length;
-			obj.NSteps = (L_m / optSim.StepSize);
+			obj.NSteps = floor(L_m / optSim.StepSize);
 			
 			xtal = QPMcrystal(obj.NSteps,L_m,obj.GratingPeriod,...
 										 obj.Uncertainty,...

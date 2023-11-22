@@ -115,7 +115,6 @@ __global__
 	int const gi = (blockDim.x * blockIdx.x) + threadIdx.x + (N * blockIdx.y);
 
     float pos, g, bc;
-    //float a = 24.0;
 	float a = 24.0;
 
     if (gx < N) 
@@ -127,12 +126,9 @@ __global__
         	g = coshf(pos);
     		bc = (1 - (1/(g*g))) * b;
     		A[gi] = complex_scale(A[gi] , bc);
-        	//A[gi] = complex_scale(A[gi] , 0.0*b);
-    		//float bc = (cbrt(cbrt(cbrt(cbrt(cbrt( (float) pos)))))) * b;
     	}
     	else
     	{
-    	
 			A[gi] = complex_scale(A[gi] , b);
     	}
     	
@@ -153,6 +149,8 @@ void NLFN_kernel(float2 * const NL,
 				 //int gi) 
 				 int Npoints)
 {
+
+	float arg;
 	/* Calculate the global linear index, assuming a 1-d grid. */
 	// 2D grid?
     int const gx = blockDim.x * blockIdx.x + threadIdx.x;
@@ -169,7 +167,16 @@ void NLFN_kernel(float2 * const NL,
     				(2 * expfi(-wt[gi] + (bdiffw0 * z)) * (abs(A0[gi]) * abs(A0[gi]) )); */
 
     	//float arg = ((w0 * t[gx]) - bdwz);
-		float arg = ((w0 * (dt*gx)) - bdwz);
+		//float arg = ((w0 * (dt*gx)) - bdwz); // This is inherently unshifted time... 
+
+		if (gx > (Npoints/2))
+		{
+			arg = ((w0 * (dt*(gx-Npoints/2))) - bdwz);
+		}
+		else
+		{
+			arg = ((w0 * (dt*(gx+Npoints/2))) - bdwz);
+		}
 
     	float2 AxAy		= complex_mult(Ax[gi],Ay[gi]);
     	float2 abAxAy 	= complex_mult(f2absf2(Ax[gi]),f2absf2(Ay[gi]));
@@ -243,7 +250,7 @@ void KN_kernel (float2 const * const A0,
 }
 
 
-__global__ void Dispersion_kernel (	float2 * const E,
+__global__ void Dispersion_kernel (	float2 * const ApFT,
 									float2 * const EFT,
 									float const * const alpha_w,
 									float const * const beta_op,
@@ -290,7 +297,7 @@ __global__ void Dispersion_kernel (	float2 * const E,
     	}
 */
     	//E[chunk + (gi * Nchunks)] = EFT[gi];
-        E[(gy * (Nchunks-1) * Npoints) + (chunk * Npoints) + gi] = EFT[gi];
+        ApFT[(gy * (Nchunks-1) * Npoints) + (chunk * Npoints) + gi] = EFT[gi];
     }
 
 }

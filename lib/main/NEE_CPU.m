@@ -5,15 +5,18 @@ function [Et,ApFT,stepMods] = NEE_CPU(Et,xT_h,G33,w0,bdiffw0,h,nSteps,dt,hBarg,m
 Et = Et.';
 %% Precompute scalars
 k = 1;
-stepmod = 10;
+stepmod = 8;
 nPoints = length(Et);
 t = (-nPoints/2:nPoints/2-1)*dt;
 ind1 = [2:nPoints, 1];
 ind2 = [nPoints, 1:nPoints-1];
 while k < nSteps
+	% tic
+	if any(isnan(Et))
+		break
+	end
 	%% Compute variable scalars
 	bdwz = bdiffw0 * (k - 1) * h; % Start step co-ordinate coeff
-	% k = k + stepmod 
 	
 	A0 = Et;
 	%% Nonlinear Solver
@@ -25,18 +28,29 @@ while k < nSteps
 
 	NL = arrayfun(@(a,t) nlfn(a,t,w0,bdwz),A1,t);
 	K2 = arrayfun(@(nl,nl1,nl2) kfn(nl,nl1,nl2,G33(k),w0,h*stepmod,dt),NL,NL(ind1),NL(ind2));
-	% NL = arrayfun(@nlfn,A1,t,w0,bdwz);
-	% K2 = arrayfun(@kfn,NL,NL(ind1),NL(ind2),G33(k),w0,h*stepmod,dt);
 
 	Et = A0 + 0.5*K1 + 0.5*K2;	 % Final field approximation
 	
 	errn = abs(Et - A1);
 	pcterr = 100*max(errn./(abs(Et)+1));
 
-	%% Dispersion Step
-	Et = dfn(Et,xT_h,hBarg,stepmod);
-
-	k = k + stepmod;
+	if pcterr > maxErr && stepmod > 1
+		stepmod = stepmod - 1;
+		Et = A0;
+	else
+		%% Dispersion Step
+		Et = dfn(Et,xT_h,hBarg,stepmod);
+		
+		if pcterr < minErr
+			stepmod = stepmod * 2;
+		end
+	
+		if k < nSteps && (k + stepmod) > nSteps
+			stepmod = nSteps - k;
+		end
+		k = k + stepmod;
+	end
+	% t_elapsed = toc;
 end
 
 Et = Et.';

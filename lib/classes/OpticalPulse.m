@@ -66,7 +66,6 @@ classdef OpticalPulse < matlab.mixin.Copyable
 				if ii ~= opt.Parent.CrystalPosition
 					bOp = exp(-1i*opt.Dispersion);
 				end
-				% bOp = 1;
 				TOp = opt.Transmission .^ 0.5;
 				Ek = TOp .* bOp .* Ek;
 				% obj.refract(optAir);
@@ -119,11 +118,6 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			chirpArg = 0.5.*gdd.*(obj.SimWin.Omegas - wPeak).^2;
 			Ek = Ek .* exp(-1i.*chirpArg);
 			obj.TemporalField = ifft(ifftshift(Ek));
-		end
-
-		function Ek = get.SpectralField(obj)
-			Ek = fftshift(fft(obj.TemporalField));
-			% Ek = fftshift(fft(fftshift(obj.TemporalField)));
 		end
 
 		function Ik = get.EnergySpectralDensity(obj)
@@ -221,6 +215,11 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			plot(obj.SimWin.Times,phase)
 			title(obj.Source.Name + ' Temporal in ' + obj.Medium.Bulk.Material)
 			hold off
+		end
+
+		function Ek = get.SpectralField(obj)
+			Ek = fftshift(fft(obj.TemporalField));
+			% Ek = fftshift(fft(fftshift(obj.TemporalField)));
 		end
 
 		function k2t(obj,Ek)
