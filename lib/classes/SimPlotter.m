@@ -64,6 +64,12 @@ classdef SimPlotter < matlab.mixin.Copyable
 			colormap(ax,obj.CMap);
 			drawnow('limitrate');
 		end
+
+		function updateplots(obj,optSim)
+			obj.SpectralPlot.ZData = optSim.IkEvoData;
+			obj.TemporalPlot.ZData = optSim.ItEvoData;
+			drawnow
+		end
 	end
 
 end

@@ -74,14 +74,16 @@ classdef OpticalSim < matlab.mixin.Copyable
 			obj.System.simulate(obj.SimWin);
 			obj.convertArrays;	% Convert arrays to correct precision and type
 
-			obj.System.Xtal.ppole(obj);
-
 			obj.Source.Pulse.applyGDD(obj.System.PumpChirp);
 			obj.Pulse = copy(obj.Source.Pulse);	% Copy the pump pulse as basis for cavity field
-		
+			refresh(obj);
+		end
+
+		function refresh(obj) % Ideally take varargin to allow changing properties?
 			airOpt = obj.Pulse.Medium;
 			obj.Pulse.refract(obj.System.Xtal);
 
+			obj.System.Xtal.ppole(obj);
 			obj.SpectralProgressShift = repmat(fft(fftshift(obj.Pulse.TemporalField)).',1,obj.ProgressPlots);
 			if obj.ProgressPlotting
 				ydat = linspace(0,obj.System.Xtal.Length*1e3,obj.ProgressPlots);
@@ -89,7 +91,6 @@ classdef OpticalSim < matlab.mixin.Copyable
 			end
 			obj.StepSizeModifiers = obj.convArr(zeros(obj.RoundTrips,obj.System.Xtal.NSteps));
 			obj.Pulse.refract(airOpt);
-
 		end
 
 		function run(obj)
@@ -111,8 +112,8 @@ classdef OpticalSim < matlab.mixin.Copyable
 			hBshift = obj.convArr(hBshift);
 			airOpt = obj.Pulse.Medium;
 			dt = obj.SimWin.DeltaTime;
-			
 			obj.TripNumber = 0;
+			
 			while obj.TripNumber < obj.RoundTrips
 				obj.TripNumber = obj.TripNumber + 1;
 				
@@ -138,9 +139,7 @@ classdef OpticalSim < matlab.mixin.Copyable
 													 );
 
 
-				obj.Plotter.SpectralPlot.ZData = obj.IkEvoData;
-				obj.Plotter.TemporalPlot.ZData = obj.ItEvoData;
-				drawnow 
+				obj.Plotter.updateplots(obj);
 
 				obj.Pulse.TemporalField = fftshift(EtShift.');
 				

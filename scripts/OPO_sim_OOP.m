@@ -41,7 +41,7 @@ simWin.TimeOffset = -0.5e-12;
 optSim = OpticalSim(laser,cav,simWin,[0.2,4],0.25e-6);
 % return
 % load('pbOPOsim.mat');
-optSim.RoundTrips = 90;
+optSim.RoundTrips = 100;
 % optSim.Hardware = "CPU";
 optSim.setup;
 
@@ -60,12 +60,12 @@ optSim.run
 fh1 = figure("Position",[10, 10, 1000, 600]);
 tiledlayout(2,2,'TileSpacing','compact')
 nexttile
-laser.Pulse.kplot([750 1600])
+laser.Pulse.kplot([700 1700])
 nexttile
 laser.Pulse.tplot
 nexttile
 % sLaser.Pulse.kplot([750 900])
-optSim.Pulse.kplot([750 1600])
+optSim.Pulse.kplot([700 1700])
 nexttile
 % sLaser.Pulse.tplot
 optSim.Pulse.tplot
@@ -73,6 +73,10 @@ optSim.Pulse.tplot
 figure
 cav.Optics.xtal.xtalplot
 
+% figure
+% ids = ~isnan(simWin.Lambdanm);
+% findpeaks(fliplr(abs(optSim.Pulse.EnergySpectralDensity(ids)*1e24)),fliplr(simWin.Lambdanm(ids)),...
+% 	"MinPeakProminence",100,'Annotate','extents')
 
 return
 
