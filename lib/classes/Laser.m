@@ -87,6 +87,10 @@ classdef Laser < matlab.mixin.Copyable
 			I0 = peakP/obj.Area;
 		end
 
+		function saveobj(obj,name)
+			obj.Name = name;
+			
+		end
 	end
 
 end
