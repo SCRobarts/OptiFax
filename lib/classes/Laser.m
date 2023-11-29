@@ -9,7 +9,7 @@ classdef Laser < matlab.mixin.Copyable
 		Wavelength
 		LineWidth
 		PeakPowerCoefficient
-		SpectralString
+		SourceString
 		PhaseString
 	end
 	properties (Transient)
@@ -34,14 +34,14 @@ classdef Laser < matlab.mixin.Copyable
 
 	methods
 		% Constructor
-		function obj = Laser(lamda_central,diameter,f_rep,power,spec_str,dtau,dlam,phase_str)
+		function obj = Laser(lamda_central,diameter,f_rep,power,src_str,dtau,dlam,phase_str)
 			arguments
 				lamda_central		% Central wavelength (m)
 				diameter
 				f_rep
 				power
-				spec_str
-				dtau 
+				src_str
+				dtau = 100e-15;
 				dlam = c / (0.315 / dtau);
 				phase_str = NaN;
 			end
@@ -50,7 +50,7 @@ classdef Laser < matlab.mixin.Copyable
 			obj.RepetitionRate = f_rep;
 			obj.AveragePower = power;
 			obj.PulseDuration = dtau;
-			obj.SpectralString = spec_str;
+			obj.SourceString = src_str;
 			obj.PhaseString = phase_str;
 			obj.LineWidth = dlam;
 		end
@@ -87,9 +87,14 @@ classdef Laser < matlab.mixin.Copyable
 			I0 = peakP/obj.Area;
 		end
 
-		function saveobj(obj,name)
+		function store(obj,name)
 			obj.Name = name;
-			
+			currentfolder = pwd;
+			if ~strcmp(currentfolder(end-13:end),'objects\lasers')
+				cd("objects\lasers");
+			end
+			save(name,"obj","-mat");
+			cd("..\..");
 		end
 	end
 

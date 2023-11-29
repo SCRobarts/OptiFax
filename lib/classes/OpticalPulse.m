@@ -33,7 +33,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			obj.Duration = laser.PulseDuration;
 			t = simWin.Times;
 			t_off = simWin.TimeOffset;
-			str = laser.SpectralString;
+			str = laser.SourceString;
 			wPump = 2*pi*c / laser.Wavelength;
 			if strcmp(str,"Gauss")				
 				obj.TemporalField = gaussPulse(t,laser.Wavelength,laser.LineWidth);
@@ -48,6 +48,9 @@ classdef OpticalPulse < matlab.mixin.Copyable
 									simWin.Omegas,laser.PhaseString);
 			end
 			obj.DurationTL = findfwhm(simWin.Times,abs(obj.TemporalField).^2);
+			if obj.Duration < obj.DurationTL
+				obj.Duration = obj.DurationTL;
+			end
 			% Shift the pulse by simWin.TimeOffset
 			obj.timeShift;
 			% Apply calculated GDD to alter duration
@@ -178,7 +181,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			% 	"MinPeakProminence",100);
 			
 			yyaxis left
-			peaksplot(obj.SimWin.Lambdanm,abs(obj.EnergySpectralDensity*1e24),100)
+			peaksplot(obj.SimWin.Lambdanm,abs(obj.EnergySpectralDensity*1e24),1000)
 			% findpeaks(fliplr(abs(obj.EnergySpectralDensity(ids)*1e24)),fliplr(obj.SimWin.Lambdanm(ids)),...
 			% "MinPeakProminence",100,'Annotate','extents')
 			hold on
