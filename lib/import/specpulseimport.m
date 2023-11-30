@@ -16,7 +16,7 @@ end
 if strcmp(ext,".txt")
 	pulsedat = readtable(src_str);			% Read in data from two column file
 else
-	pulsedat = load(src_str,"wavelength","Ek");
+	pulsedat = load(src_str);
 	pulsedat = struct2table(pulsedat);
 end
 
@@ -26,7 +26,7 @@ if any(imag(pulsedat.(2)))
 	phi = unwrap(angle(pulsedat.(2))).';
 	E_ft = abs(E_ft);
 else
-	w = 2e9*pi*c ./ (pulsedat.(1).');	% Convert wavelength to ang. freq. and transpose to row 
+	w = 2*pi*c ./ (pulsedat.(1).');	% Convert wavelength to ang. freq. and transpose to row 
 	E_ft = (pulsedat.(2).') .^ 0.5;	% Convert spectral intensity to field and transpose to row
 	% [~,max_i] = max(E_ft);
 	% w0 = w(max_i);

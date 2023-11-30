@@ -12,8 +12,8 @@ diameter = 28e-6;
 fRep = 49.163e6;
 power = 2.3;
 % spectralString = "pump_spectrum_12mm_reading.txt";
-spectralString = "EA_11mm_Ek_Ret.mat";
-dtau = 160e-15;
+spectralString = "Chromacity1040_11mm_Ret_Data.txt";
+dtau = 165e-15;
 
 laser = Laser(lambdaC,diameter,fRep,power,spectralString,dtau);
 

@@ -90,11 +90,10 @@ classdef Laser < matlab.mixin.Copyable
 		function store(obj,name)
 			obj.Name = name;
 			currentfolder = pwd;
-			if ~strcmp(currentfolder(end-13:end),'objects\lasers')
-				cd("objects\lasers");
-			end
+			cd(OptiFaxRoot);
+			cd("objects" + filesep + "lasers");
 			save(name,"obj","-mat");
-			cd("..\..");
+			cd(currentfolder);
 		end
 	end
 
