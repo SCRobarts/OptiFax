@@ -18,8 +18,7 @@ rng('default');
 % load('pbCav.mat');
 load('pbCavAiry.mat');
 % cav.Xtal.Chi2 = 0;
-cav.Xtal.GratingPeriod = 21.32e-6;
-% optTbl = cav.Optics;
+% cav.Xtal.GratingPeriod = 21.32e-6;
 
 % cav.Optics.prismPB.Bulk.Length =  0.0447;
 % return
