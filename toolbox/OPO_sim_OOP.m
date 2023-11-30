@@ -21,7 +21,7 @@ load('pbCavAiry.mat');
 cav.Xtal.GratingPeriod = 21.32e-6;
 % optTbl = cav.Optics;
 
-cav.Optics.prismPB.Bulk.Length =  0.0447;
+% cav.Optics.prismPB.Bulk.Length =  0.0447;
 % return
 
 %% Initialise Laser / Input Pulse
