@@ -99,21 +99,15 @@ resources/_Project/*
       <param.additional.sw.linux.url />
     </unset>
     <fileset.rootdir>
-      <file>${PROJECT_ROOT}</file>
+      <file>${PROJECT_ROOT}\toolbox</file>
     </fileset.rootdir>
     <fileset.rootfiles>
-      <file>${PROJECT_ROOT}\.gitattributes</file>
-      <file>${PROJECT_ROOT}\.gitignore</file>
-      <file>${PROJECT_ROOT}\buildUtilities</file>
-      <file>${PROJECT_ROOT}\docs</file>
-      <file>${PROJECT_ROOT}\images</file>
-      <file>${PROJECT_ROOT}\LICENSE</file>
-      <file>${PROJECT_ROOT}\obj_tests</file>
-      <file>${PROJECT_ROOT}\README.md</file>
-      <file>${PROJECT_ROOT}\release</file>
-      <file>${PROJECT_ROOT}\resources</file>
-      <file>${PROJECT_ROOT}\tests</file>
-      <file>${PROJECT_ROOT}\toolbox</file>
+      <file>${PROJECT_ROOT}\toolbox\formatSpectrum.mlx</file>
+      <file>${PROJECT_ROOT}\toolbox\lib</file>
+      <file>${PROJECT_ROOT}\toolbox\objects</file>
+      <file>${PROJECT_ROOT}\toolbox\OPO_sim_OOP.m</file>
+      <file>${PROJECT_ROOT}\toolbox\scripts</file>
+      <file>${PROJECT_ROOT}\toolbox\static</file>
     </fileset.rootfiles>
     <fileset.depfun.included />
     <fileset.depfun.excluded />
