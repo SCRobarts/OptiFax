@@ -4,10 +4,10 @@
     <param.authnamewatermark>Sebastian C. Robarts</param.authnamewatermark>
     <param.email>sebrobarts@gmail.com</param.email>
     <param.company>McCracken Lab, Heriot-Watt University</param.company>
-    <param.summary />
+    <param.summary>GPU accelerated modelling of nonlinear optical systems.</param.summary>
     <param.description />
-    <param.screenshot />
-    <param.version>0.1</param.version>
+    <param.screenshot>${PROJECT_ROOT}\images\ToolboxPackaging.jpg</param.screenshot>
+    <param.version>0.1.0</param.version>
     <param.output>${PROJECT_ROOT}\OptiFax.mltbx</param.output>
     <param.products.name />
     <param.products.id />
@@ -39,17 +39,7 @@ _SimulinkProject/*
 resources/.Project/*
 resources/_Project/*
 **/*.prj
-**/.git
-lib/main/NEE_CPU_par.m
-lib/plotting/peaksplot.m
-MEXlib/src/OPOmexbatch.mexw64
-objects/lasers/Chromacity1040
-objects/lasers/Chromacity1040.mat
-scripts/cavity_setup_large_PB_prism_OPO.m
-static/exp_dat/HC OPO EA/pump_spectrum_12mm_reading.txt
-static/exp_dat/Pump Spectra/220719_undepleted_pump_spectrum_700-900.txt
-static/exp_dat/Pump Spectra/Chromacity1040_11mm_Ret_Data.txt
-ToolboxPackagingConfiguration.prj</param.exclude.filters>
+**/.git</param.exclude.filters>
     <param.exclude.pcodedmfiles>true</param.exclude.pcodedmfiles>
     <param.examples />
     <param.demosxml />
@@ -77,9 +67,7 @@ ToolboxPackagingConfiguration.prj</param.exclude.filters>
     <param.additional.sw.mac.url />
     <param.additional.sw.linux.url />
     <unset>
-      <param.summary />
       <param.description />
-      <param.screenshot />
       <param.output />
       <param.products.name />
       <param.products.id />
@@ -117,6 +105,7 @@ ToolboxPackagingConfiguration.prj</param.exclude.filters>
       <file>${PROJECT_ROOT}\.gitattributes</file>
       <file>${PROJECT_ROOT}\.gitignore</file>
       <file>${PROJECT_ROOT}\docs</file>
+      <file>${PROJECT_ROOT}\images</file>
       <file>${PROJECT_ROOT}\lib</file>
       <file>${PROJECT_ROOT}\MEXlib</file>
       <file>${PROJECT_ROOT}\objects</file>
