@@ -20,16 +20,11 @@ else
 	pulsedat = struct2table(pulsedat);
 end
 
-if any(imag(pulsedat.(2)))
-	w = 2*pi*c ./ (pulsedat.(1).');	% Convert wavelength to ang. freq. and transpose to row 
-	E_ft = pulsedat.(2).';
-	phi = unwrap(angle(pulsedat.(2))).';
-	E_ft = abs(E_ft);
-else
-	w = 2*pi*c ./ (pulsedat.(1).');	% Convert wavelength to ang. freq. and transpose to row 
-	E_ft = (pulsedat.(2).') .^ 0.5;	% Convert spectral intensity to field and transpose to row
-	% [~,max_i] = max(E_ft);
-	% w0 = w(max_i);
+w = 2*pi*c ./ (pulsedat.(1).');	% Convert wavelength to ang. freq. and transpose to row 
+E_ft = pulsedat.(2).';
+
+if width(pulsedat) > 2
+	phi = pulsedat.(3).';
 end
 	
 	% E_ft(E_ft<0.14) = 0;

@@ -7,7 +7,7 @@
     <param.summary>GPU accelerated modelling of nonlinear optical systems.</param.summary>
     <param.description />
     <param.screenshot>${PROJECT_ROOT}\images\ToolboxPackaging.jpg</param.screenshot>
-    <param.version>0.1.0</param.version>
+    <param.version>0.1.1</param.version>
     <param.output>${PROJECT_ROOT}\OptiFax.mltbx</param.output>
     <param.products.name />
     <param.products.id />
@@ -39,7 +39,8 @@ _SimulinkProject/*
 resources/.Project/*
 resources/_Project/*
 **/*.prj
-**/.git</param.exclude.filters>
+**/.git
+toolbox/lib/internal/import/specpulseimport.asv</param.exclude.filters>
     <param.exclude.pcodedmfiles>true</param.exclude.pcodedmfiles>
     <param.examples />
     <param.demosxml />
@@ -104,14 +105,16 @@ resources/_Project/*
     <fileset.rootfiles>
       <file>${PROJECT_ROOT}\.gitattributes</file>
       <file>${PROJECT_ROOT}\.gitignore</file>
+      <file>${PROJECT_ROOT}\buildUtilities</file>
       <file>${PROJECT_ROOT}\docs</file>
       <file>${PROJECT_ROOT}\images</file>
-      <file>${PROJECT_ROOT}\lib</file>
-      <file>${PROJECT_ROOT}\MEXlib</file>
-      <file>${PROJECT_ROOT}\objects</file>
+      <file>${PROJECT_ROOT}\LICENSE</file>
+      <file>${PROJECT_ROOT}\obj_tests</file>
+      <file>${PROJECT_ROOT}\README.md</file>
+      <file>${PROJECT_ROOT}\release</file>
       <file>${PROJECT_ROOT}\resources</file>
-      <file>${PROJECT_ROOT}\scripts</file>
-      <file>${PROJECT_ROOT}\static</file>
+      <file>${PROJECT_ROOT}\tests</file>
+      <file>${PROJECT_ROOT}\toolbox</file>
     </fileset.rootfiles>
     <fileset.depfun.included />
     <fileset.depfun.excluded />
