@@ -59,14 +59,6 @@ classdef Dielectric < matlab.mixin.Copyable
 			obj.RefractiveIndex = nr;
 		end
 
-		% function nr = get.RefractiveIndex(obj)
-		% 	lam = obj.Parent.SimWin.Wavelengths;
-		% 	mat = obj.Material;
-		% 	nr = sellmeier(lam*1e6,mat,obj.Temperature);
-		% 	nr = (nr + conj(nr))/2;
-		% 	nr(nr<1) = 1;
-		% end
-
 		function T = get.Transmission(obj)
 			lims = obj.Parent.SimWin.Limits * 1e-9;
 			lam = obj.Parent.SimWin.Wavelengths;

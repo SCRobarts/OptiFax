@@ -43,7 +43,6 @@ classdef Cavity < handle
 
 		function obj = simulate(obj,simWin)
 			obj.SimWin = simWin;
-			% arrayfun(@(opt) simulate(opt,simWin),obj.Optics(1,:));
 			for ii = 1:width(obj.PreCavityOptics)
 				opt = obj.PreCavityOptics.(ii);
 				opt.Parent = obj;
@@ -70,44 +69,6 @@ classdef Cavity < handle
 		function pGDD = get.PumpChirp(obj)
 			dw = obj.SimWin.DeltaOmega;
 			[~,pGDD] = phi2GD(obj.PumpDispersion,dw);
-		end
-
-		function T = get.T(obj)
-			T.E.preOC  = obj.Optics.(obj.CrystalPosition).S2.Transmission;
-			T.E.OC     = obj.Optics.(obj.OCPosition).S1.Transmission;
-			T.E.postOC = obj.Optics.(obj.CrystalPosition).S1.Transmission.*...
-						 obj.Optics.(obj.OCPosition).Bulk.Transmission.*...
-						 obj.Optics.(obj.OCPosition).S2.Transmission;
-			for ii = obj.CrystalPosition+1 : obj.OCPosition-1
-				T.E.preOC = T.E.preOC .* obj.Optics.(ii).Transmission;
-			end
-			for ii = [1:obj.CrystalPosition-1, obj.OCPosition+1:width(obj.Optics)]
-				T.E.postOC = T.E.postOC .* obj.Optics.(ii).Transmission;
-			end
-			T.E = structfun(@(s) power(s,0.5),T.E,'UniformOutput',false);
-		end
-
-		function phi = get.phi(obj)
-			phi.cav.xtal = obj.Optics.(obj.CrystalPosition).Dispersion;
-			phi.cav.preOC  = obj.Optics.(obj.CrystalPosition).S2.Dispersion;
-			% T.E.OC     = obj.Optics.(obj.OC_Position).S1.Transmission;
-			phi.cav.postOC = obj.Optics.(obj.CrystalPosition).S1.Dispersion +...
-						 obj.Optics.(obj.OCPosition).Bulk.Dispersion +...
-						 obj.Optics.(obj.OCPosition).S2.Dispersion;
-			for ii = obj.CrystalPosition+1 : obj.OCPosition-1
-				phi.cav.preOC = phi.cav.preOC + obj.Optics.(ii).Dispersion;
-			end
-			for ii = [1:obj.CrystalPosition-1, obj.OCPosition+1:width(obj.Optics)]
-				phi.cav.postOC = phi.cav.postOC + obj.Optics.(ii).Dispersion;
-			end
-			% phi.cav = structfun(@(s) power(s,0.5),phi.cav,'UniformOutput',false);
-		end
-
-		function GD = get.GD(obj)
-			dw = obj.SimWin.DeltaOmega;
-			GD.cav.xtal = phi2GD(obj.phi.cav.xtal,dw);
-			GD.cav.preOC = phi2GD(obj.phi.cav.preOC,dw);
-			GD.cav.postOC = phi2GD(obj.phi.cav.postOC,dw);
 		end
 
 		function xtalPos = get.CrystalPosition(obj)
@@ -153,6 +114,45 @@ classdef Cavity < handle
 			wavplot(obj.SimWin.Lambdanm,obj.GDD*1e30)
 			xlim(lims)
 			ylabel('GDD (fs^2)')
+		end
+
+		%% Legacy methods for use with old, non-OOP implementation 
+		function T = get.T(obj)
+			T.E.preOC  = obj.Optics.(obj.CrystalPosition).S2.Transmission;
+			T.E.OC     = obj.Optics.(obj.OCPosition).S1.Transmission;
+			T.E.postOC = obj.Optics.(obj.CrystalPosition).S1.Transmission.*...
+						 obj.Optics.(obj.OCPosition).Bulk.Transmission.*...
+						 obj.Optics.(obj.OCPosition).S2.Transmission;
+			for ii = obj.CrystalPosition+1 : obj.OCPosition-1
+				T.E.preOC = T.E.preOC .* obj.Optics.(ii).Transmission;
+			end
+			for ii = [1:obj.CrystalPosition-1, obj.OCPosition+1:width(obj.Optics)]
+				T.E.postOC = T.E.postOC .* obj.Optics.(ii).Transmission;
+			end
+			T.E = structfun(@(s) power(s,0.5),T.E,'UniformOutput',false);
+		end
+
+		function phi = get.phi(obj)
+			phi.cav.xtal = obj.Optics.(obj.CrystalPosition).Dispersion;
+			phi.cav.preOC  = obj.Optics.(obj.CrystalPosition).S2.Dispersion;
+			% T.E.OC     = obj.Optics.(obj.OC_Position).S1.Transmission;
+			phi.cav.postOC = obj.Optics.(obj.CrystalPosition).S1.Dispersion +...
+						 obj.Optics.(obj.OCPosition).Bulk.Dispersion +...
+						 obj.Optics.(obj.OCPosition).S2.Dispersion;
+			for ii = obj.CrystalPosition+1 : obj.OCPosition-1
+				phi.cav.preOC = phi.cav.preOC + obj.Optics.(ii).Dispersion;
+			end
+			for ii = [1:obj.CrystalPosition-1, obj.OCPosition+1:width(obj.Optics)]
+				phi.cav.postOC = phi.cav.postOC + obj.Optics.(ii).Dispersion;
+			end
+			% phi.cav = structfun(@(s) power(s,0.5),phi.cav,'UniformOutput',false);
+		end
+
+		function GD = get.GD(obj)
+			dw = obj.SimWin.DeltaOmega;
+			GD.cav.xtal = phi2GD(obj.phi.cav.xtal,dw);
+			GD.cav.preOC = phi2GD(obj.phi.cav.preOC,dw);
+			GD.cav.postOC = phi2GD(obj.phi.cav.postOC,dw);
 		end
 	end
 
