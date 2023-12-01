@@ -77,6 +77,7 @@ classdef OpticalSim < matlab.mixin.Copyable
 
 			obj.Source.Pulse.applyGDD(obj.System.PumpChirp);
 			obj.Pulse = copy(obj.Source.Pulse);	% Copy the pump pulse as basis for cavity field
+			obj.Pulse.Name = "Intracavity Pulse";
 			refresh(obj);
 		end
 
@@ -113,7 +114,9 @@ classdef OpticalSim < matlab.mixin.Copyable
 			airOpt = obj.Pulse.Medium;
 			dt = obj.SimWin.DeltaTime;
 			obj.TripNumber = 0;
+
 			obj.OutputPulse = copy(obj.Pulse);
+			obj.OutputPulse.Name = "Combined Transmitted Pulse";
 
 			while obj.TripNumber < obj.RoundTrips
 				obj.TripNumber = obj.TripNumber + 1;
@@ -144,12 +147,11 @@ classdef OpticalSim < matlab.mixin.Copyable
 
 				obj.Pulse.TemporalField = fftshift(EtShift.');
 				obj.OutputPulse.TemporalField = obj.Pulse.TemporalField;
+			
 				% obj.Pulse.refract(airOpt);
-
 				obj.Pulse.propagate(obj.System.Optics);
-
 				obj.Pulse.refract(airOpt);
-
+				obj.OutputPulse.minus(obj.Pulse);
 				obj.Pulse.applyGD(obj.Delay);
 
 				obj.pump;

@@ -1,6 +1,7 @@
 classdef OpticalPulse < matlab.mixin.Copyable
 	%	Sebastian C. Robarts 2023 - sebrobarts@gmail.com
 	properties
+		Name
 		TemporalField		% E(t) / (V/m) complex array
 		Source		Laser
 		DurationTL
@@ -27,6 +28,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 	methods
 		% Constructor
 		function obj = OpticalPulse(laser,simWin)
+			obj.Name = laser.Name;
 			obj.Medium.simulate(simWin);
 			obj.SimWin = simWin;
 			obj.Source = laser;
@@ -84,23 +86,11 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			obj.k2t(Ek);
 		end
 
-		function lam_max = get.PeakWavelength(obj)
-			[~,lam_index] = max(obj.EnergySpectralDensity);
-			lam_max = obj.SimWin.Wavelengths(lam_index);
-		end
-
 		function timeShift(obj)
 			Ek = obj.SpectralField;
 			wPump = 2*pi*c / obj.PeakWavelength;
 			Ek = Ek .* exp(-1i.*(obj.SimWin.Omegas-wPump).*obj.SimWin.TimeOffset);
 			obj.k2t(Ek);
-		end
-
-		function gdd = get.GDD(obj)
-			chrp = sqrt( (obj.Duration ^ 2 / obj.DurationTL^ 2) - 1);
-			% Gaussian would use 2*sqrt(log(2)), Sech uses 1 + sqrt(2) = 2.4142
-			% will need to update to work as a function of pulse profile
-			gdd = chrp * ((obj.DurationTL/(2*sqrt(log(2.4142))))^2);
 		end
 		
 		function applyGD(obj,gd)
@@ -116,6 +106,26 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			chirpArg = 0.5.*gdd.*(obj.SimWin.Omegas - wPeak).^2;
 			Ek = Ek .* exp(-1i.*chirpArg);
 			obj.TemporalField = ifft(ifftshift(Ek));
+		end
+
+		function add(obj,pulse)
+			obj.TemporalField = obj.TemporalField + pulse.TemporalField;
+		end
+
+		function minus(obj,pulse)
+			obj.TemporalField = obj.TemporalField - pulse.TemporalField;
+		end
+
+		function lam_max = get.PeakWavelength(obj)
+			[~,lam_index] = max(obj.EnergySpectralDensity);
+			lam_max = obj.SimWin.Wavelengths(lam_index);
+		end
+
+		function gdd = get.GDD(obj)
+			chrp = sqrt( (obj.Duration ^ 2 / obj.DurationTL^ 2) - 1);
+			% Gaussian would use 2*sqrt(log(2)), Sech uses 1 + sqrt(2) = 2.4142
+			% will need to update to work as a function of pulse profile
+			gdd = chrp * ((obj.DurationTL/(2*sqrt(log(2.4142))))^2);
 		end
 
 		function Ik = get.EnergySpectralDensity(obj)
@@ -176,7 +186,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			% 	"MinPeakProminence",100);
 			
 			yyaxis left
-			peaksplot(obj.SimWin.Lambdanm,abs(obj.EnergySpectralDensity*1e24),100)
+			peaksplot(obj.SimWin.Lambdanm,abs(obj.EnergySpectralDensity*1e24),50)
 			% findpeaks(fliplr(abs(obj.EnergySpectralDensity(ids)*1e24)),fliplr(obj.SimWin.Lambdanm(ids)),...
 			% "MinPeakProminence",100,'Annotate','extents')
 			hold on
@@ -198,7 +208,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			yyaxis right
 			ylabel('Relative Phase / rad')
 			plot(obj.SimWin.Lambdanm,phase)
-			title(obj.Source.Name + ' Spectral in ' + obj.Medium.Bulk.Material)
+			title(obj.Name + ' Spectral in ' + obj.Medium.Bulk.Material)
 
 			legend off
 			hold off
@@ -227,7 +237,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			yyaxis right
 			ylabel('Relative Phase / rad')
 			plot(obj.SimWin.Times,phase)
-			title(obj.Source.Name + ' Temporal in ' + obj.Medium.Bulk.Material)
+			title(obj.Name + ' Temporal in ' + obj.Medium.Bulk.Material)
 			hold off
 		end
 
