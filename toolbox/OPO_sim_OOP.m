@@ -15,10 +15,10 @@ rng('default');
 
 
 %% Initialise Optical Cavity
-% load('pbCav.mat');
+% load('pbCav.mat');t
 load('pbCavAiry.mat');
 % cav.Xtal.Chi2 = 0;
-% cav.Xtal.GratingPeriod = 21.32e-6;
+cav.Xtal.GratingPeriod = 21.32e-6;
 
 % cav.Optics.prismPB.Bulk.Length =  0.0447;
 % return

@@ -18,6 +18,7 @@ classdef Optic < matlab.mixin.Copyable
 	end
 	properties (Dependent)
 		Length
+		OpticalPath
 		GroupDelay
 		RelativeGD
 		GDD
@@ -101,9 +102,27 @@ classdef Optic < matlab.mixin.Copyable
 			[~,GDD] = phi2GD(obj.Dispersion,obj.SimWin.DeltaOmega);
 		end
 
-		function l = get.Length(obj) 
-			l = obj.Bulk.Length;
+		function set.Length(obj,l)
+			obj.Bulk.Length = l;
 		end
+
+		function l = get.Length(obj)
+			if strcmp(obj.Regime,"T")
+				l = obj.Bulk.PathLength;
+			else
+				l = 0;
+			end
+		end
+
+		function opl = get.OpticalPath(obj)
+			if strcmp(obj.Regime,"T")
+				nr = obj.Bulk.RefractiveIndex;
+			else
+				nr = 0;
+			end
+			opl = obj.Length .* nr;
+		end
+
 		function plot(obj,lims)
 			arguments
 				obj

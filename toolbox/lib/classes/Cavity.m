@@ -10,6 +10,7 @@ classdef Cavity < handle
 	end
 	properties (Transient)
 		SimWin SimWindow
+		OpticalPathLength = 0;
 		PumpDispersion = 0;
 		Transmission = 1;
 		Dispersion = 0;
@@ -57,6 +58,7 @@ classdef Cavity < handle
 				obj.Dispersion = obj.Dispersion + opt.Dispersion;
 				obj.GroupDelay = obj.GroupDelay + opt.GroupDelay;
 				obj.GDD = obj.GDD + opt.GDD;
+				obj.OpticalPathLength = obj.OpticalPathLength + opt.OpticalPath;
 			end
 		end
 
