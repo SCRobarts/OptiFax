@@ -114,7 +114,10 @@ classdef OpticalPulse < matlab.mixin.Copyable
 		end
 
 		function minus(obj,pulse)
-			obj.TemporalField = obj.TemporalField - pulse.TemporalField;
+			EkMag = abs(obj.SpectralField) - abs(pulse.SpectralField);
+			EkPhase = unwrap(angle(obj.SpectralField));
+			Ek = EkMag .* exp(1i * EkPhase);
+			obj.k2t(Ek)
 		end
 
 		function lam_max = get.PeakWavelength(obj)

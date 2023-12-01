@@ -149,9 +149,9 @@ classdef OpticalSim < matlab.mixin.Copyable
 				obj.Plotter.updateplots(obj);
 
 				obj.Pulse.TemporalField = fftshift(EtShift.');
+				obj.Pulse.refract(airOpt);
 				obj.OutputPulse.TemporalField = obj.Pulse.TemporalField;
 			
-				% obj.Pulse.refract(airOpt);
 				obj.Pulse.propagate(obj.System.Optics);
 				obj.Pulse.refract(airOpt);
 				obj.OutputPulse.minus(obj.Pulse);
