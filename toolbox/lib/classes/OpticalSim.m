@@ -78,21 +78,22 @@ classdef OpticalSim < matlab.mixin.Copyable
 			obj.Source.Pulse.applyGDD(obj.System.PumpChirp);
 			obj.Pulse = copy(obj.Source.Pulse);	% Copy the pump pulse as basis for cavity field
 			obj.Pulse.Name = "Intracavity Pulse";
+			obj.Pulse.TemporalField = 0;
 			refresh(obj);
 		end
 
 		function refresh(obj) % Ideally take varargin to allow changing properties?
-			airOpt = obj.Pulse.Medium;
-			obj.Pulse.refract(obj.System.Xtal);
+			airOpt = obj.Source.Pulse.Medium;
+			obj.Source.Pulse.refract(obj.System.Xtal);
 
 			obj.System.Xtal.ppole(obj);
-			obj.SpectralProgressShift = repmat(fft(fftshift(obj.Pulse.TemporalField)).',1,obj.ProgressPlots);
+			obj.SpectralProgressShift = repmat(fft(fftshift(obj.Source.Pulse.TemporalField)).',1,obj.ProgressPlots);
 			if obj.ProgressPlotting
 				ydat = linspace(0,obj.System.Xtal.Length*1e3,obj.ProgressPlots);
 				obj.Plotter = SimPlotter(obj,ydat);
 			end
 			obj.StepSizeModifiers = obj.convArr(zeros(obj.RoundTrips,obj.System.Xtal.NSteps));
-			obj.Pulse.refract(airOpt);
+			obj.Source.Pulse.refract(airOpt);
 		end
 
 		function run(obj)
@@ -121,6 +122,8 @@ classdef OpticalSim < matlab.mixin.Copyable
 			while obj.TripNumber < obj.RoundTrips
 				obj.TripNumber = obj.TripNumber + 1;
 				
+				obj.pump;
+
 				obj.Pulse.refract(xtal);
 				EtShift = fftshift(obj.Pulse.TemporalField).';
 				obj.SpectralProgressShift(:,1) = fft(EtShift);
@@ -154,7 +157,7 @@ classdef OpticalSim < matlab.mixin.Copyable
 				obj.OutputPulse.minus(obj.Pulse);
 				obj.Pulse.applyGD(obj.Delay);
 
-				obj.pump;
+				% obj.pump;
 				
 			end
 		end
@@ -165,7 +168,7 @@ classdef OpticalSim < matlab.mixin.Copyable
 		end
 
 		function convertArrays(obj)
-			xtal = obj.System.Optics.(obj.System.CrystalPosition);
+			xtal = obj.System.Xtal;
 		
 			obj.AdaptiveError = obj.convArr(obj.AdaptiveError);
 			obj.StepSizeModifiers = obj.convArr(obj.StepSizeModifiers);

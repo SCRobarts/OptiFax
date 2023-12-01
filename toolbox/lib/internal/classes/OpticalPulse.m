@@ -4,7 +4,6 @@ classdef OpticalPulse < matlab.mixin.Copyable
 		Name
 		TemporalField		% E(t) / (V/m) complex array
 		Source		Laser
-		DurationTL
 		Duration
 	end
 	properties (Transient)
@@ -13,11 +12,13 @@ classdef OpticalPulse < matlab.mixin.Copyable
 	end
 	properties (Dependent)
 		SpectralField
+		TemporalFieldTL		% Transform limited version of TemporalField
 		EnergySpectralDensity
 		FrequencyFWHM
 		WavelengthFWHM
 		TemporalIntensity
-		DurationCheck
+		DurationTL		% Transform limited current pulse duration (I fwhm)
+		DurationCheck	% Current pulse duration (I fwhm)
 		TBPTL			% TimeBandwidthProduct Transform Limited
 		TBP				% TimeBandwidthProduct
 		GDD				% GroupDelayDispersion (s^2)
@@ -49,7 +50,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 				obj.TemporalField = specpulseimport(str,t,t_off,...
 									simWin.Omegas,laser.PhaseString);
 			end
-			obj.DurationTL = findfwhm(simWin.Times,abs(obj.TemporalField).^2);
+			
 			if obj.Duration < obj.DurationTL
 				obj.Duration = obj.DurationTL;
 			end
@@ -128,6 +129,12 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			gdd = chrp * ((obj.DurationTL/(2*sqrt(log(2.4142))))^2);
 		end
 
+		function EtTL = get.TemporalFieldTL(obj)
+			Ek = obj.SpectralField;
+			EkMag = abs(Ek);
+			EtTL = (fftshift(ifft(ifftshift(EkMag))));
+		end
+
 		function Ik = get.EnergySpectralDensity(obj)
 			Ik = (abs(obj.SpectralField)).^2;
 			A = obj.Source.Area;
@@ -162,6 +169,10 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			nr = obj.Medium.Bulk.RefractiveIndex;
 			Esq2I = 1./(2./nr./eps0./c);
 			It = Esq2I .* (abs(obj.TemporalField)).^2;
+		end
+
+		function dtTL = get.DurationTL(obj)
+			dtTL = findfwhm(obj.SimWin.Times,abs(obj.TemporalFieldTL).^2);
 		end
 
 		function dt = get.DurationCheck(obj)
