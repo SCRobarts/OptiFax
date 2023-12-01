@@ -15,8 +15,8 @@ rng('default');
 
 
 %% Initialise Optical Cavity
-% load('pbCav.mat');t
-load('pbCavAiry.mat');
+load('pbCav.mat');
+% load('pbCavAiry.mat');
 % cav.Xtal.Chi2 = 0;
 cav.Xtal.GratingPeriod = 21.32e-6;
 
@@ -58,17 +58,24 @@ optSim.run
 
 %% Test Plots
 fh1 = figure("Position",[10, 10, 1000, 600]);
-tiledlayout(2,2,'TileSpacing','compact')
+tiledlayout(3,2,'TileSpacing','compact')
+xlims = [700 1700];
+
 nexttile
-laser.Pulse.kplot([700 1700])
+laser.Pulse.kplot(xlims)
 nexttile
 laser.Pulse.tplot
+
 nexttile
-% sLaser.Pulse.kplot([750 900])
-optSim.Pulse.kplot([700 1700])
+optSim.Pulse.kplot(xlims)
 nexttile
-% sLaser.Pulse.tplot
 optSim.Pulse.tplot
+
+nexttile
+optSim.OutputPulse.kplot(xlims)
+nexttile
+optSim.OutputPulse.tplot
+
 
 figure
 cav.Optics.xtal.xtalplot

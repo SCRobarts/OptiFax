@@ -23,6 +23,7 @@ classdef OpticalSim < matlab.mixin.Copyable
 		ProgressPlots = 4;
 	end
 	properties (Transient)
+		OutputPulse	OpticalPulse	% Pulse object to store what exits the cavity each trip
 		Hardware = "CPU"
 		TripNumber = 0;
 		StepSizeModifiers
@@ -76,6 +77,7 @@ classdef OpticalSim < matlab.mixin.Copyable
 
 			obj.Source.Pulse.applyGDD(obj.System.PumpChirp);
 			obj.Pulse = copy(obj.Source.Pulse);	% Copy the pump pulse as basis for cavity field
+			obj.Pulse.Name = "Intracavity Pulse";
 			refresh(obj);
 		end
 
@@ -98,7 +100,6 @@ classdef OpticalSim < matlab.mixin.Copyable
 		% Should probably convert to correct precision and array type in the setup
 			
 			xtal = obj.System.Xtal;
-			% sel = obj.convArr(round(xtal.NSteps/(obj.ProgressPlots - 1)));
 			sel = (round(xtal.NSteps/(obj.ProgressPlots - 1)));
 			n0 = xtal.Bulk.RefractiveIndex(obj.SimWin.ReferenceIndex);
 			w0 = obj.convArr(obj.SimWin.ReferenceOmega);
@@ -113,7 +114,10 @@ classdef OpticalSim < matlab.mixin.Copyable
 			airOpt = obj.Pulse.Medium;
 			dt = obj.SimWin.DeltaTime;
 			obj.TripNumber = 0;
-			
+
+			obj.OutputPulse = copy(obj.Pulse);
+			obj.OutputPulse.Name = "Combined Transmitted Pulse";
+
 			while obj.TripNumber < obj.RoundTrips
 				obj.TripNumber = obj.TripNumber + 1;
 				
@@ -142,13 +146,12 @@ classdef OpticalSim < matlab.mixin.Copyable
 				obj.Plotter.updateplots(obj);
 
 				obj.Pulse.TemporalField = fftshift(EtShift.');
-				
-				obj.Pulse.refract(airOpt);
-
+				obj.OutputPulse.TemporalField = obj.Pulse.TemporalField;
+			
+				% obj.Pulse.refract(airOpt);
 				obj.Pulse.propagate(obj.System.Optics);
-
 				obj.Pulse.refract(airOpt);
-
+				obj.OutputPulse.minus(obj.Pulse);
 				obj.Pulse.applyGD(obj.Delay);
 
 				obj.pump;
