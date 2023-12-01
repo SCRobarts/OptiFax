@@ -31,12 +31,10 @@ classdef Cavity < handle
 		function obj = Cavity(optics,ocPos,preCavOptics)
 			arguments
 				optics = Optic.empty;
-				% xtalPos = 2;
 				ocPos = 4;
 				preCavOptics = Optic.empty;
 			end
 			obj.Optics = optics;
-			% obj.CrystalPosition = xtalPos;
 			obj.OCPosition = ocPos;
 			obj.PreCavityOptics = preCavOptics;
 		end

@@ -39,11 +39,7 @@ end
 a_step = -log(T)./Nsteps;
 a_step = a_step/2;
 T_step = exp(-2*a_step);
-% T_step(l_sim < 300*1E-9) = 0;
-% T(l_sim < 300*1E-9) = 0;
-% T_step(l_sim > 5500*1E-9) = 0;
-% T(l_sim > 5500*1E-9) = 0;
-% T_step(and(l_sim > 740*1E-9,l_sim < 2670*1E-9)) = 1;
+
 	function y = pct(x)
 		y = x./100;
 	end

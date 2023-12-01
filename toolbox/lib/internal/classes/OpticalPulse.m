@@ -85,7 +85,6 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			Ek = obj.SpectralField;
 			wPump = 2*pi*c / obj.PeakWavelength;
 			Ek = Ek .* exp(-1i.*(obj.SimWin.Omegas-wPump).*obj.SimWin.TimeOffset);
-			% obj.TemporalField = ifft(ifftshift(Ek));
 			obj.k2t(Ek);
 		end
 
@@ -100,18 +99,14 @@ classdef OpticalPulse < matlab.mixin.Copyable
 		function gdd = get.GDD(obj)
 			chrp = sqrt( (obj.Duration ^ 2 / obj.DurationTL^ 2) - 1);
 			% Gaussian would use 2*sqrt(log(2)), Sech uses 1 + sqrt(2) = 2.4142
+			% will need to update to work as a function of pulse profile
 			gdd = chrp * ((obj.DurationTL/(2*sqrt(log(2.4142))))^2);
 		end
 		
 		function applyGD(obj,gd)
 			Ek = obj.SpectralField;
-			% Et = obj.TemporalField;
-			% EkShift = fft(fftshift(Et));
 			beta = gd * obj.SimWin.RelativeOmegas;
-			% betaShift = fftshift(beta);
-			% EkShift = EkShift .* exp(-1i .* betaShift);
-			Ek = 1 * Ek .* exp(-1i * beta);
-			% Ek = ifftshift(EkShift);
+			Ek = Ek .* exp(-1i * beta);
 			obj.k2t(Ek);
 		end
 
@@ -181,7 +176,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			% 	"MinPeakProminence",100);
 			
 			yyaxis left
-			peaksplot(obj.SimWin.Lambdanm,abs(obj.EnergySpectralDensity*1e24),1000)
+			peaksplot(obj.SimWin.Lambdanm,abs(obj.EnergySpectralDensity*1e24),100)
 			% findpeaks(fliplr(abs(obj.EnergySpectralDensity(ids)*1e24)),fliplr(obj.SimWin.Lambdanm(ids)),...
 			% "MinPeakProminence",100,'Annotate','extents')
 			hold on
