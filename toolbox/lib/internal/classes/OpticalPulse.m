@@ -64,8 +64,8 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			for ii = 1:width(opt_tbl)
 				% optAir = obj.Medium;
 				opt = opt_tbl.(ii);
-				obj.refract(opt);
-				Ek = obj.SpectralField;
+				Ek = obj.refract(opt);
+				% Ek = obj.SpectralField;
 				if ii ~= opt.Parent.CrystalPosition
 					bOp = exp(-1i*opt.Dispersion);
 				end
@@ -74,6 +74,14 @@ classdef OpticalPulse < matlab.mixin.Copyable
 				% obj.refract(optAir);
 			    obj.k2t(Ek);
 			end
+		end
+
+		function Ek = refract(obj,optic2)
+			nr1 = obj.Medium.Bulk.RefractiveIndex;
+			obj.Medium = optic2;
+			nr2 = obj.Medium.Bulk.RefractiveIndex;
+			Ek = obj.SpectralField .* abs(sqrt(nr1./nr2));
+			obj.k2t(Ek);
 		end
 
 		function lam_max = get.PeakWavelength(obj)
@@ -85,14 +93,6 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			Ek = obj.SpectralField;
 			wPump = 2*pi*c / obj.PeakWavelength;
 			Ek = Ek .* exp(-1i.*(obj.SimWin.Omegas-wPump).*obj.SimWin.TimeOffset);
-			obj.k2t(Ek);
-		end
-
-		function refract(obj,optic2)
-			nr1 = obj.Medium.Bulk.RefractiveIndex;
-			obj.Medium = optic2;
-			nr2 = obj.Medium.Bulk.RefractiveIndex;
-			Ek = obj.SpectralField .* abs(sqrt(nr1./nr2));
 			obj.k2t(Ek);
 		end
 
