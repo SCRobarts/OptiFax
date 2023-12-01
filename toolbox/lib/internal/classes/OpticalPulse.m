@@ -33,7 +33,6 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			obj.Medium.simulate(simWin);
 			obj.SimWin = simWin;
 			obj.Source = laser;
-			obj.Duration = laser.PulseDuration;
 			t = simWin.Times;
 			t_off = simWin.TimeOffset;
 			str = laser.SourceString;
@@ -51,8 +50,10 @@ classdef OpticalPulse < matlab.mixin.Copyable
 									simWin.Omegas,laser.PhaseString);
 			end
 			
-			if obj.Duration < obj.DurationTL
+			if laser.PulseDuration < obj.DurationTL
 				obj.Duration = obj.DurationTL;
+			else
+				obj.Duration = laser.PulseDuration;
 			end
 			% Shift the pulse by simWin.TimeOffset
 			obj.timeShift;
