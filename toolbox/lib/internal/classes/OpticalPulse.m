@@ -4,7 +4,6 @@ classdef OpticalPulse < matlab.mixin.Copyable
 		Name
 		TemporalField		% E(t) / (V/m) complex array
 		Source		Laser
-		DurationTL
 		Duration
 	end
 	properties (Transient)
@@ -13,11 +12,13 @@ classdef OpticalPulse < matlab.mixin.Copyable
 	end
 	properties (Dependent)
 		SpectralField
+		TemporalFieldTL		% Transform limited version of TemporalField
 		EnergySpectralDensity
 		FrequencyFWHM
 		WavelengthFWHM
 		TemporalIntensity
-		DurationCheck
+		DurationTL		% Transform limited current pulse duration (I fwhm)
+		DurationCheck	% Current pulse duration (I fwhm)
 		TBPTL			% TimeBandwidthProduct Transform Limited
 		TBP				% TimeBandwidthProduct
 		GDD				% GroupDelayDispersion (s^2)
@@ -32,7 +33,6 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			obj.Medium.simulate(simWin);
 			obj.SimWin = simWin;
 			obj.Source = laser;
-			obj.Duration = laser.PulseDuration;
 			t = simWin.Times;
 			t_off = simWin.TimeOffset;
 			str = laser.SourceString;
@@ -49,9 +49,11 @@ classdef OpticalPulse < matlab.mixin.Copyable
 				obj.TemporalField = specpulseimport(str,t,t_off,...
 									simWin.Omegas,laser.PhaseString);
 			end
-			obj.DurationTL = findfwhm(simWin.Times,abs(obj.TemporalField).^2);
-			if obj.Duration < obj.DurationTL
+			
+			if laser.PulseDuration < obj.DurationTL
 				obj.Duration = obj.DurationTL;
+			else
+				obj.Duration = laser.PulseDuration;
 			end
 			% Shift the pulse by simWin.TimeOffset
 			obj.timeShift;
@@ -109,11 +111,17 @@ classdef OpticalPulse < matlab.mixin.Copyable
 		end
 
 		function add(obj,pulse)
-			obj.TemporalField = obj.TemporalField + pulse.TemporalField;
+			EkMag = abs(obj.SpectralField) + abs(pulse.SpectralField);
+			EkPhase = unwrap(angle(obj.SpectralField));
+			Ek = EkMag .* exp(1i * EkPhase);
+			obj.k2t(Ek)
 		end
 
 		function minus(obj,pulse)
-			obj.TemporalField = obj.TemporalField - pulse.TemporalField;
+			EkMag = abs(obj.SpectralField) - abs(pulse.SpectralField);
+			EkPhase = unwrap(angle(obj.SpectralField));
+			Ek = EkMag .* exp(1i * EkPhase);
+			obj.k2t(Ek)
 		end
 
 		function lam_max = get.PeakWavelength(obj)
@@ -126,6 +134,12 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			% Gaussian would use 2*sqrt(log(2)), Sech uses 1 + sqrt(2) = 2.4142
 			% will need to update to work as a function of pulse profile
 			gdd = chrp * ((obj.DurationTL/(2*sqrt(log(2.4142))))^2);
+		end
+
+		function EtTL = get.TemporalFieldTL(obj)
+			Ek = obj.SpectralField;
+			EkMag = abs(Ek);
+			EtTL = (fftshift(ifft(ifftshift(EkMag))));
 		end
 
 		function Ik = get.EnergySpectralDensity(obj)
@@ -162,6 +176,10 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			nr = obj.Medium.Bulk.RefractiveIndex;
 			Esq2I = 1./(2./nr./eps0./c);
 			It = Esq2I .* (abs(obj.TemporalField)).^2;
+		end
+
+		function dtTL = get.DurationTL(obj)
+			dtTL = findfwhm(obj.SimWin.Times,abs(obj.TemporalFieldTL).^2);
 		end
 
 		function dt = get.DurationCheck(obj)
