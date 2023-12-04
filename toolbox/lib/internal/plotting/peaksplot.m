@@ -1,4 +1,4 @@
-function peaksplot(x,y,minProm)
+function axh = peaksplot(x,y,minProm)
 ids = ~isnan(x);
 
 x = x(ids);
@@ -12,6 +12,7 @@ end
 [pks,locs,fwhps] = findpeaks(y,x,"MinPeakProminence",minProm);
 
 findpeaks(y,x,"MinPeakProminence",minProm,'Annotate','extents');
+axh = gca;
 
 text(locs,pks+30,[num2str(locs'," % 5.2f")  num2str(pks',",% 5.2f")],...
 				'FontSize',7,'HorizontalAlignment','center')

@@ -159,8 +159,6 @@ classdef OpticalSim < matlab.mixin.Copyable
 				obj.Pulse.refract(airOpt);
 				obj.OutputPulse.minus(obj.Pulse);
 				obj.Pulse.applyGD(obj.Delay);
-
-				% obj.pump;
 				
 			end
 		end

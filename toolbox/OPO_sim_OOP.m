@@ -35,7 +35,7 @@ load('simWin.mat');
 simWin.Limits = [300 6000];
 simWin.TemporalRange = simWin.TemporalRange / 4;
 simWin.TimeOffset = -0.5e-12;
-% simWin.NumberOfPoints = 2^16;
+simWin.NumberOfPoints = 2^17;
 
 %% Optical Simulation Setup
 optSim = OpticalSim(laser,cav,simWin,[0.2,4],0.25e-6);
@@ -61,24 +61,29 @@ fh1 = figure("Position",[10, 10, 1000, 600]);
 tiledlayout(3,2,'TileSpacing','compact')
 xlims = [700 1700];
 
-nexttile
-laser.Pulse.kplot(xlims)
-nexttile
-laser.Pulse.tplot
+% nexttile
+% laser.Pulse.kplot(xlims);
+% nexttile
+% laser.Pulse.tplot;
 
 nexttile
-optSim.Pulse.kplot(xlims)
+optSim.PumpPulse.kplot(xlims);
 nexttile
-optSim.Pulse.tplot
+optSim.PumpPulse.tplot;
 
 nexttile
-optSim.OutputPulse.kplot(xlims)
+optSim.Pulse.kplot(xlims);
 nexttile
-optSim.OutputPulse.tplot
+optSim.Pulse.tplot;
+
+nexttile
+optSim.OutputPulse.kplot(xlims);
+nexttile
+optSim.OutputPulse.tplot;
 
 
 figure
-cav.Optics.xtal.xtalplot
+cav.Optics.xtal.xtalplot;
 
 % figure
 % ids = ~isnan(simWin.Lambdanm);

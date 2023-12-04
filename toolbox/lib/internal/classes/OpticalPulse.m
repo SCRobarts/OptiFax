@@ -194,7 +194,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			tbp = obj.FrequencyFWHM * obj.Duration;
 		end
 
-		function kplot(obj,lims)
+		function kaxh = kplot(obj,lims)
 			arguments
 				obj
 				lims = [500 1600]
@@ -204,7 +204,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			% 	"MinPeakProminence",100);
 			
 			yyaxis left
-			peaksplot(obj.SimWin.Lambdanm,abs(obj.EnergySpectralDensity*1e24),50)
+			kaxh = peaksplot(obj.SimWin.Lambdanm,abs(obj.EnergySpectralDensity*1e24),50);
 			% findpeaks(fliplr(abs(obj.EnergySpectralDensity(ids)*1e24)),fliplr(obj.SimWin.Lambdanm(ids)),...
 			% "MinPeakProminence",100,'Annotate','extents')
 			hold on
@@ -223,40 +223,47 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			% 
 			xlim(lims)
 			ylabel('ESD / (pJ/THz)')
-			yyaxis right
-			ylabel('Relative Phase / rad')
-			plot(obj.SimWin.Lambdanm,phase)
-			title(obj.Name + ' Spectral in ' + obj.Medium.Bulk.Material)
+			hold off
 
+			yyaxis right
+			plot(obj.SimWin.Lambdanm,phase)
+			hold on
+			ylabel('Relative Phase / rad')
+			title(obj.Name + ' Spectral in ' + obj.Medium.Bulk.Material)
 			legend off
 			hold off
 		end
 
-		function tplot(obj)
+		function taxh = tplot(obj,lims)
 			arguments
 				obj
-				% lims = 2*[-obj.DurationCheck obj.DurationCheck] + obj.SimWin.TimeOffset;
+				lims = 2*[-obj.DurationCheck obj.DurationCheck];
 			end
 			[IMax,indexMax] = max(obj.TemporalIntensity);
 			[IHMax,indexHMax] = findnearest(obj.TemporalIntensity,IMax/2,2);
 			tmax = obj.SimWin.Times(indexMax);
 			phase = unwrap(angle(obj.TemporalField));
 			yyaxis left
-			plot(obj.SimWin.Times,obj.TemporalIntensity)
+			plot(obj.SimWin.Times,obj.TemporalIntensity);
 			hold on
+			taxh = gca;
 			plot(obj.SimWin.Times(indexHMax),IHMax,'-+')
 			text(obj.SimWin.Times(indexHMax(end)),IMax/2,['  FWHM = ', num2str(obj.DurationCheck*1e15,3), ' fs'])
 			text(tmax,IMax*1.05,['IMax = ', num2str(IMax/1e9/1e4,3), ' GWcm^{-2}'],'HorizontalAlignment','center')
-			lims = 2*[-obj.DurationCheck obj.DurationCheck] + tmax;
+			lims = lims + tmax;
 			xlim(lims)
 			ylim([0 1.1*IMax])
 			xlabel('Time, t / s')
 			ylabel('Temporal Intensity / (W/m^2)')
+			hold off
+
 			yyaxis right
-			ylabel('Relative Phase / rad')
 			plot(obj.SimWin.Times,phase)
+			hold on
+			ylabel('Relative Phase / rad')
 			title(obj.Name + ' Temporal in ' + obj.Medium.Bulk.Material)
 			hold off
+
 		end
 
 		function Ek = get.SpectralField(obj)
