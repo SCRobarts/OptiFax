@@ -9,6 +9,8 @@ classdef SimPlotter < matlab.mixin.Copyable
 		Screen								= 0;
 		FontSize							= 14;
 		CMap								= jet;		
+	end
+	properties (Transient)
 		Figure			
 		Tiles			
 		SpectralAxes	
@@ -33,7 +35,8 @@ classdef SimPlotter < matlab.mixin.Copyable
 
 			ph1 = uipanel(obj.Figure,"Position",[0 0.1 1 0.8]);
 			obj.Tiles = tiledlayout(ph1,"horizontal","TileSpacing","compact","Padding","tight");
-			
+			title(obj.Tiles,'Round Trip Number: ');
+
 			obj.SpectralAxes = obj.createaxes;
 			xlabel(obj.SpectralAxes,"Wavelength (nm)")
 			xlim(obj.SpectralAxes, [350 2000]);
@@ -66,6 +69,7 @@ classdef SimPlotter < matlab.mixin.Copyable
 		end
 
 		function updateplots(obj,optSim)
+			obj.Tiles.Title.String = ['Round Trip Number: ', int2str(optSim.TripNumber)];
 			obj.SpectralPlot.ZData = optSim.IkEvoData;
 			obj.TemporalPlot.ZData = optSim.ItEvoData;
 			drawnow
