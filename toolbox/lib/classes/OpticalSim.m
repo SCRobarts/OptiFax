@@ -23,6 +23,7 @@ classdef OpticalSim < matlab.mixin.Copyable
 		ProgressPlots = 4;
 	end
 	properties (Transient)
+		PumpPulse	OpticalPulse	% Pulse object for intracavity pump field
 		OutputPulse	OpticalPulse	% Pulse object to store what exits the cavity each trip
 		Hardware = "CPU"
 		TripNumber = 0;
@@ -73,27 +74,29 @@ classdef OpticalSim < matlab.mixin.Copyable
 
 			obj.Source.simulate(obj.SimWin);	% Will we need to load these objects?
 			obj.System.simulate(obj.SimWin);
-			obj.convertArrays;	% Convert arrays to correct precision and type
 
-			obj.Source.Pulse.applyGDD(obj.System.PumpChirp);
-			obj.Pulse = copy(obj.Source.Pulse);	% Copy the pump pulse as basis for cavity field
+			obj.PumpPulse = copy(obj.Source.Pulse);	% Copy the source pulse to create modifiable pump
+			obj.PumpPulse.Name = "Pump Pulse";
+			obj.convertArrays;	% Convert arrays to correct precision and type
+			obj.PumpPulse.applyGDD(obj.System.PumpChirp);
+			obj.Pulse = copy(obj.PumpPulse);	% Copy the pump pulse as basis for cavity field
 			obj.Pulse.Name = "Intracavity Pulse";
 			obj.Pulse.TemporalField = 0;
 			refresh(obj);
 		end
 
 		function refresh(obj) % Ideally take varargin to allow changing properties?
-			airOpt = obj.Source.Pulse.Medium;
-			obj.Source.Pulse.refract(obj.System.Xtal);
+			airOpt = obj.PumpPulse.Medium;
+			obj.PumpPulse.refract(obj.System.Xtal);
 
 			obj.System.Xtal.ppole(obj);
-			obj.SpectralProgressShift = repmat(fft(fftshift(obj.Source.Pulse.TemporalField)).',1,obj.ProgressPlots);
+			obj.SpectralProgressShift = repmat(fft(fftshift(obj.PumpPulse.TemporalField)).',1,obj.ProgressPlots);
 			if obj.ProgressPlotting
 				ydat = linspace(0,obj.System.Xtal.Length*1e3,obj.ProgressPlots);
 				obj.Plotter = SimPlotter(obj,ydat);
 			end
 			obj.StepSizeModifiers = obj.convArr(zeros(obj.RoundTrips,obj.System.Xtal.NSteps));
-			obj.Source.Pulse.refract(airOpt);
+			obj.PumpPulse.refract(airOpt);
 		end
 
 		function run(obj)
@@ -164,7 +167,7 @@ classdef OpticalSim < matlab.mixin.Copyable
 		
 		function pump(obj)
 			obj.Pulse.TemporalField = obj.Pulse.TemporalField...
-									+ obj.Source.Pulse.TemporalField;
+									+ obj.PumpPulse.TemporalField;
 		end
 
 		function convertArrays(obj)
@@ -172,7 +175,7 @@ classdef OpticalSim < matlab.mixin.Copyable
 		
 			obj.AdaptiveError = obj.convArr(obj.AdaptiveError);
 			obj.StepSizeModifiers = obj.convArr(obj.StepSizeModifiers);
-			obj.Source.Pulse.TemporalField = obj.convArr(obj.Source.Pulse.TemporalField);
+			obj.PumpPulse.TemporalField = obj.convArr(obj.PumpPulse.TemporalField);
 			xtal.Chi2 = obj.convArr(xtal.Chi2);
 			xtal.Transmission = obj.convArr(xtal.Transmission);
 		end
