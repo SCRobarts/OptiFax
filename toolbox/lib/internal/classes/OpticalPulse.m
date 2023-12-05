@@ -13,6 +13,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 	properties (Dependent)
 		SpectralField
 		SpectralPhase
+		TemporalPhase
 		TemporalFieldTL		% Transform limited version of TemporalField
 		EnergySpectralDensity
 		ESD_pJ_THz
@@ -214,6 +215,11 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			sp = gather(sp);
 		end
 
+		function tp = get.TemporalPhase(obj)
+			tp = unwrap(angle(obj.TemporalField));
+			tp = gather(tp);
+		end
+
 		function [lmagPH,lphiPH] = lplot(obj,lims)
 			arguments
 				obj
@@ -255,7 +261,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			hold off
 		end
 
-		function taxh = tplot(obj,lims)
+		function [tmagPH,tphiPH] = tplot(obj,lims)
 			arguments
 				obj
 				lims = 2*[-obj.DurationCheck obj.DurationCheck];
@@ -265,10 +271,9 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			tmax = obj.SimWin.Times(indexMax);
 			phase = unwrap(angle(obj.TemporalField));
 			yyaxis left
-			plot(obj.SimWin.Times,obj.TemporalIntensity);
+			tmagPH = plot(obj.SimWin.Times,obj.TemporalIntensity);
 			hold on
-			taxh = gca;
-			plot(obj.SimWin.Times(indexHMax),IHMax,'-+')
+			plot(obj.SimWin.Times(indexHMax),IHMax,'-+');
 			text(obj.SimWin.Times(indexHMax(end)),IMax/2,['  FWHM = ', num2str(obj.DurationCheck*1e15,3), ' fs'])
 			text(tmax,IMax*1.05,['IMax = ', num2str(IMax/1e9/1e4,3), ' GWcm^{-2}'],'HorizontalAlignment','center')
 			lims = lims + tmax;
@@ -279,7 +284,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			hold off
 
 			yyaxis right
-			plot(obj.SimWin.Times,phase)
+			tphiPH = plot(obj.SimWin.Times,phase);
 			hold on
 			ylabel('Relative Phase / rad')
 			title(obj.Name + ' Temporal in ' + obj.Medium.Bulk.Material)

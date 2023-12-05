@@ -26,7 +26,8 @@ classdef SimPlotter < matlab.mixin.Copyable
 		SpectralMagPlot
 		SpectralPhiPlot
 		TemporalInOutAxes
-		TemporalInOutPlot
+		TemporalMagPlot
+		TemporalPhiPlot
 		YData
 	end
 
@@ -73,8 +74,10 @@ classdef SimPlotter < matlab.mixin.Copyable
 
 			obj.TemporalInOutAxes = obj.createInOutAxes;
 			xlabel(obj.TemporalInOutAxes,obj.TimeLabel)
-			% obj.TemporalInOutPlot = obj.Parent.PumpPulse.tplot;
-			obj.TemporalInOutAxes = obj.Parent.PumpPulse.tplot;
+			obj.TimeLims = [min(obj.Parent.SimWin.Times) max(obj.Parent.SimWin.Times)];
+			% xlim(obj.TemporalInOutAxes, obj.TimeLims);
+			[obj.TemporalMagPlot,obj.TemporalPhiPlot] = obj.Parent.PumpPulse.tplot(obj.TimeLims);
+
 
 			drawnow('limitrate');
 		end
@@ -111,10 +114,14 @@ classdef SimPlotter < matlab.mixin.Copyable
 			obj.TemporalEvoPlot.ZData = optSim.ItEvoData;
 			obj.SpectralMagPlot.YData = optSim.Pulse.ESD_pJ_THz;
 			obj.SpectralPhiPlot.YData = optSim.Pulse.SpectralPhase;
+			obj.TemporalMagPlot.YData = gather(optSim.Pulse.TemporalIntensity);
+			obj.TemporalPhiPlot.YData = optSim.Pulse.TemporalPhase;
+			% obj.TemporalMagPlot.YData = optSim.ItEvoData(end,:);
+			% obj.TemporalPhiPlot.YData = optSim.Pulse.SpectralPhase;
 			% obj.SpectralInOutAxes;
 			% obj.Parent.Pulse.lplot(obj.SpecLims);
 			% obj.TemporalInOutAxes;
-			obj.Parent.Pulse.tplot;
+			% obj.Parent.Pulse.tplot;
 			drawnow
 		end
 	end
