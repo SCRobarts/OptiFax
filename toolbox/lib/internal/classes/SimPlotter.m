@@ -68,8 +68,8 @@ classdef SimPlotter < matlab.mixin.Copyable
 			obj.SpectralInOutAxes = obj.createInOutAxes;
 			xlabel(obj.SpectralInOutAxes,obj.SpecLabel)
 			xlim(obj.SpectralInOutAxes, obj.SpecLims);
-			% obj.SpectralInOutPlot = obj.Parent.PumpPulse.kplot(obj.SpecLims);
-			obj.SpectralInOutAxes = obj.Parent.PumpPulse.kplot(obj.SpecLims);
+			% obj.SpectralInOutPlot = obj.Parent.PumpPulse.lplot(obj.SpecLims);
+			obj.SpectralInOutAxes = obj.Parent.PumpPulse.lplot(obj.SpecLims);
 
 			obj.TemporalInOutAxes = obj.createInOutAxes;
 			xlabel(obj.TemporalInOutAxes,obj.TimeLabel)
@@ -110,7 +110,7 @@ classdef SimPlotter < matlab.mixin.Copyable
 			obj.SpectralEvoPlot.ZData = optSim.IkEvoData;
 			obj.TemporalEvoPlot.ZData = optSim.ItEvoData;
 			% obj.SpectralInOutAxes;
-			% obj.Parent.Pulse.kplot(obj.SpecLims);
+			% obj.Parent.Pulse.lplot(obj.SpecLims);
 			% obj.TemporalInOutAxes;
 			obj.Parent.Pulse.tplot;
 			drawnow

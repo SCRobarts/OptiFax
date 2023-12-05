@@ -195,7 +195,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			tbp = obj.FrequencyFWHM * obj.Duration;
 		end
 
-		function kaxh = kplot(obj,lims)
+		function kaxh = lplot(obj,lims)
 			arguments
 				obj
 				lims = [500 1600]

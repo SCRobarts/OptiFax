@@ -70,17 +70,17 @@ xlims = [700 1700];
 optSim.PumpPulse.refract(cav.Xtal);
 
 nexttile
-optSim.PumpPulse.kplot(xlims);
+optSim.PumpPulse.lplot(xlims);
 nexttile
 optSim.PumpPulse.tplot;
 
 nexttile
-optSim.Pulse.kplot(xlims);
+optSim.Pulse.lplot(xlims);
 nexttile
 optSim.Pulse.tplot;
 
 nexttile
-optSim.OutputPulse.kplot(xlims);
+optSim.OutputPulse.lplot(xlims);
 nexttile
 optSim.OutputPulse.tplot;
 
