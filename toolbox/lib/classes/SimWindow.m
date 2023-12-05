@@ -20,6 +20,7 @@ classdef SimWindow < handle
 		Wavelengths
 		RelativeOmegas
 		Lambdanm
+		LambdanmPlot
 	end
 
 	methods
@@ -82,6 +83,16 @@ classdef SimWindow < handle
 		function l = get.Lambdanm(obj)
 			l = obj.Wavelengths*1e9;
 			l(or(l<obj.Limits(1), l>obj.Limits(2))) = NaN;
+		end
+
+		function lp = get.LambdanmPlot(obj)
+			x = obj.Lambdanm;
+			id = ~isnan(x);
+			lp = x(id);
+			if lp(1)>lp(end)
+				lp = fliplr(lp);
+			end
+
 		end
 
 		function cidx = get.ReferenceIndex(obj)

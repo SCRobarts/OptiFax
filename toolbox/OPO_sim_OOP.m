@@ -42,7 +42,7 @@ simWin.TimeOffset = -0.5e-12;
 optSim = OpticalSim(laser,cav,simWin,[0.2,4],0.25e-6);
 % return
 % load('pbOPOsim.mat');
-optSim.RoundTrips = 1;
+optSim.RoundTrips = 80;
 % optSim.Hardware = "CPU";
 optSim.setup;
 

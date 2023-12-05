@@ -12,8 +12,10 @@ classdef OpticalPulse < matlab.mixin.Copyable
 	end
 	properties (Dependent)
 		SpectralField
+		SpectralPhase
 		TemporalFieldTL		% Transform limited version of TemporalField
 		EnergySpectralDensity
+		ESD_pJ_THz
 		FrequencyFWHM
 		WavelengthFWHM
 		TemporalIntensity
@@ -195,7 +197,24 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			tbp = obj.FrequencyFWHM * obj.Duration;
 		end
 
-		function kaxh = lplot(obj,lims)
+		function esd = get.ESD_pJ_THz(obj)
+			x = obj.SimWin.Lambdanm;
+			y = abs(obj.EnergySpectralDensity*1e24);
+			ids = ~isnan(x);
+			x = x(ids);
+			y = y(ids);
+			if x(1) > x(end)
+				y = fliplr(y);
+			end
+			esd = gather(y);
+		end
+
+		function sp = get.SpectralPhase(obj)
+			sp = unwrap(angle(obj.SpectralField));
+			sp = gather(sp);
+		end
+
+		function [lmagPH,lphiPH] = lplot(obj,lims)
 			arguments
 				obj
 				lims = [500 1600]
@@ -205,7 +224,8 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			% 	"MinPeakProminence",100);
 			
 			yyaxis left
-			kaxh = peaksplot(obj.SimWin.Lambdanm,abs(obj.EnergySpectralDensity*1e24),50);
+			% lmagPH = peaksplot(obj.SimWin.Lambdanm,abs(obj.EnergySpectralDensity*1e24),50);
+			lmagPH = peaksplot(obj.SimWin.LambdanmPlot,obj.ESD_pJ_THz,50);
 			% findpeaks(fliplr(abs(obj.EnergySpectralDensity(ids)*1e24)),fliplr(obj.SimWin.Lambdanm(ids)),...
 			% "MinPeakProminence",100,'Annotate','extents')
 			hold on
@@ -227,7 +247,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			hold off
 
 			yyaxis right
-			plot(obj.SimWin.Lambdanm,phase)
+			lphiPH = plot(obj.SimWin.Lambdanm,phase);
 			hold on
 			ylabel('Relative Phase / rad')
 			title(obj.Name + ' Spectral in ' + obj.Medium.Bulk.Material)

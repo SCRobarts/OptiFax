@@ -148,10 +148,9 @@ classdef OpticalSim < matlab.mixin.Copyable
 													 obj.StepSizeModifiers(obj.TripNumber,:)...
 													 );
 
-
+				obj.Pulse.TemporalField = fftshift(EtShift.');
 				obj.Plotter.updateplots(obj);
 
-				obj.Pulse.TemporalField = fftshift(EtShift.');
 				obj.Pulse.refract(airOpt);
 				obj.OutputPulse.TemporalField = obj.Pulse.TemporalField;
 			
