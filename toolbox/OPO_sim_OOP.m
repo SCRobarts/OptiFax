@@ -19,6 +19,7 @@ load('pbCav.mat');
 % load('pbCavAiry.mat');
 % cav.Xtal.Chi2 = 0;
 cav.Xtal.GratingPeriod = 21.32e-6;
+% cav.Xtal.GratingPeriod = cav.Xtal.Length;
 
 % cav.Optics.prismPB.Bulk.Length =  0.0447;
 % return
@@ -33,15 +34,15 @@ load('GigajetTiSapph.mat');
 %%% or load in an existing simulation window?:
 load('simWin.mat');
 simWin.Limits = [300 6000];
-simWin.TemporalRange = simWin.TemporalRange / 4;
+simWin.TemporalRange = simWin.TemporalRange / 2;
 simWin.TimeOffset = -0.5e-12;
-simWin.NumberOfPoints = 2^17;
+% simWin.NumberOfPoints = 2^17;
 
 %% Optical Simulation Setup
 optSim = OpticalSim(laser,cav,simWin,[0.2,4],0.25e-6);
 % return
 % load('pbOPOsim.mat');
-optSim.RoundTrips = 80;
+optSim.RoundTrips = 1;
 % optSim.Hardware = "CPU";
 optSim.setup;
 
@@ -65,6 +66,8 @@ xlims = [700 1700];
 % laser.Pulse.kplot(xlims);
 % nexttile
 % laser.Pulse.tplot;
+
+optSim.PumpPulse.refract(cav.Xtal);
 
 nexttile
 optSim.PumpPulse.kplot(xlims);

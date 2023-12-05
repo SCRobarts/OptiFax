@@ -109,9 +109,9 @@ classdef SimPlotter < matlab.mixin.Copyable
 			obj.EvoTiles.Title.String = ['Round Trip Number: ', int2str(optSim.TripNumber)];
 			obj.SpectralEvoPlot.ZData = optSim.IkEvoData;
 			obj.TemporalEvoPlot.ZData = optSim.ItEvoData;
-			obj.SpectralInOutAxes;
-			obj.Parent.Pulse.kplot(obj.SpecLims);
-			obj.TemporalInOutAxes;
+			% obj.SpectralInOutAxes;
+			% obj.Parent.Pulse.kplot(obj.SpecLims);
+			% obj.TemporalInOutAxes;
 			obj.Parent.Pulse.tplot;
 			drawnow
 		end

@@ -143,10 +143,11 @@ classdef Optic < matlab.mixin.Copyable
 			ylabel('Dispersion, \Phi (rad)')
 
 			nexttile
-			wavplot(obj.SimWin.Lambdanm,obj.RelativeGD*1e15)
-			% wavplot(obj.SimWin.Lambdanm,obj.GroupDelay*1e15,lims)
+			% wavplot(obj.SimWin.Lambdanm,obj.RelativeGD*1e15)
+			wavplot(obj.SimWin.Lambdanm,obj.GroupDelay*1e15)
 			xlim(lims)
-			ylabel('Relative GD (fs)')
+			% ylabel('Relative GD (fs)')
+			ylabel('Group Delay (fs)')
 
 			nexttile
 			wavplot(obj.SimWin.Lambdanm,obj.GDD*1e30)

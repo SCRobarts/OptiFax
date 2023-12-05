@@ -108,6 +108,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			chirpArg = 0.5.*gdd.*(obj.SimWin.Omegas - wPeak).^2;
 			Ek = Ek .* exp(-1i.*chirpArg);
 			obj.TemporalField = ifft(ifftshift(Ek));
+			obj.Duration = obj.DurationCheck;
 		end
 
 		function add(obj,pulse)
