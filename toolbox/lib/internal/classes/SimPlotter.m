@@ -116,7 +116,7 @@ classdef SimPlotter < matlab.mixin.Copyable
 			obj.SpectralEvoPlot.ZData = optSim.IkEvoData;
 			obj.TemporalEvoPlot.ZData = optSim.ItEvoData;
 			obj.SpectralMagPlot.YData = pulse.ESD_pJ_THz;
-			% obj.SpectralMagPlot = peaksplot(optSim.SimWin.LambdanmPlot,pulse.ESD_pJ_THz,50,obj.SpectralInOutAxes);
+			updatepeaks(obj.SpectralMagPlot);
 			obj.SpectralPhiPlot.YData = pulse.SpectralPhase;
 			obj.TemporalMagPlot.YData = gather(pulse.TemporalIntensity);
 			obj.TemporalPhiPlot.YData = pulse.TemporalPhase;

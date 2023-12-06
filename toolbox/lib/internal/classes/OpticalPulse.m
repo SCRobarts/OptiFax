@@ -236,37 +236,20 @@ classdef OpticalPulse < matlab.mixin.Copyable
 				obj
 				lims = [500 1600]
 			end
-			% ids = ~isnan(obj.SimWin.Lambdanm);
-			% [pks,locs,fwhps] = findpeaks(fliplr(abs(obj.EnergySpectralDensity(ids)*1e24)),fliplr(obj.SimWin.Lambdanm(ids)),...
-			% 	"MinPeakProminence",100);
-			
+	
 			yyaxis left
 			lmagPH = plot(obj.SimWin.LambdanmPlot,obj.ESD_pJ_THz);
 			% [lmagPH, lTextH]= peaksplot(obj.SimWin.LambdanmPlot,obj.ESD_pJ_THz,50,axh);
-			% findpeaks(fliplr(abs(obj.EnergySpectralDensity(ids)*1e24)),fliplr(obj.SimWin.Lambdanm(ids)),...
-			% "MinPeakProminence",100,'Annotate','extents')
 			hold on
-			% text(locs,pks+30,[num2str(locs'," % 5.2f")  num2str(pks',",% 5.2f")],...
-			% 	'FontSize',7,'HorizontalAlignment','center')
-			
-			phase = unwrap(angle(obj.SpectralField));
-
-			% [IMax,~] = max(obj.EnergySpectralDensity);
-			% [IHMax,indexHMax] = findnearest(obj.EnergySpectralDensity,IMax/2,2);
-			% yyaxis left
-			% wavplot(obj.SimWin.Lambdanm,abs(obj.EnergySpectralDensity*1e24))
-			% hold on
-			% plot(obj.SimWin.Lambdanm(indexHMax),IHMax*1e24,'-+')
-			% text(obj.SimWin.Lambdanm(indexHMax(1)),IMax*1e24/2,['  FWHM = ', num2str(obj.WavelengthFWHM*1e9,3), ' nm'])
-			% 
-			xlim(lims)
+			updatepeaks(lmagPH);
 			xlabel('Wavelength / (nm)')
 			ylabel('ESD / (pJ/THz)')
 			hold off
 
 			yyaxis right
-			lphiPH = plot(obj.SimWin.Lambdanm,phase);
+			lphiPH = plot(obj.SimWin.Lambdanm,obj.SpectralPhase);
 			hold on
+			xlim(lims)
 			ylabel('Relative Phase / rad')
 			title(obj.Name + ' Spectral in ' + obj.Medium.Bulk.Material)
 			legend off
