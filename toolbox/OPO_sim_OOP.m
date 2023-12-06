@@ -89,6 +89,26 @@ optSim.OutputPulse.tplot(tlims);
 figure
 cav.Optics.xtal.xtalplot;
 
+figure
+tiledlayout('flow')
+
+laxh = nexttile;
+disableDefaultInteractivity(laxh);
+laxh.Interactions = [];
+laxh.Toolbar.Visible = 'off';
+hold(laxh,"on");
+lsurfH = surf(optSim.SimWin.LambdanmPlot,1:optSim.RoundTrips,optSim.StoredPulses.ESD_pJ_THz);
+shading('interp');
+
+taxh = nexttile;
+disableDefaultInteractivity(taxh);
+taxh.Interactions = [];
+taxh.Toolbar.Visible = 'off';
+hold(taxh,"on");
+tsurfH = surf(optSim.SimWin.Timesfs,1:optSim.RoundTrips,optSim.StoredPulses.TemporalIntensity);
+shading('interp');
+
+
 % figure
 % ids = ~isnan(simWin.Lambdanm);
 % findpeaks(fliplr(abs(optSim.Pulse.EnergySpectralDensity(ids)*1e24)),fliplr(simWin.Lambdanm(ids)),...

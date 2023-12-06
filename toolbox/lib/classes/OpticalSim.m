@@ -21,6 +21,7 @@ classdef OpticalSim < matlab.mixin.Copyable
 		Precision = 'single';
 		ProgressPlotting = 1;
 		ProgressPlots = 4;
+		StoredPulses	OpticalPulse
 	end
 	properties (Transient)
 		PumpPulse	OpticalPulse	% Pulse object for intracavity pump field
@@ -81,7 +82,7 @@ classdef OpticalSim < matlab.mixin.Copyable
 			obj.PumpPulse.applyGDD(obj.System.PumpChirp);
 			obj.Pulse = copy(obj.PumpPulse);	% Copy the pump pulse as basis for cavity field
 			obj.Pulse.Name = "Intracavity Pulse";
-			obj.Pulse.TemporalField = 0;
+			obj.Pulse.TemporalField = obj.Pulse.TemporalField * 0;
 			refresh(obj);
 		end
 
@@ -97,6 +98,8 @@ classdef OpticalSim < matlab.mixin.Copyable
 			end
 			obj.StepSizeModifiers = obj.convArr(zeros(obj.RoundTrips,obj.System.Xtal.NSteps));
 			obj.PumpPulse.refract(airOpt);
+			obj.StoredPulses = obj.Pulse.store;
+			obj.StoredPulses.addDims([obj.RoundTrips,1]);
 		end
 
 		function run(obj)
@@ -149,6 +152,7 @@ classdef OpticalSim < matlab.mixin.Copyable
 													 );
 
 				obj.Pulse.TemporalField = fftshift(EtShift.');
+				obj.StoredPulses.TemporalField(obj.TripNumber,:) = gather(obj.Pulse.TemporalField);
 				obj.Plotter.updateplots(obj);
 
 				obj.Pulse.refract(airOpt);

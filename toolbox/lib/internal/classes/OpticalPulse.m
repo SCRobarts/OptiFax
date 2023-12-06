@@ -132,15 +132,15 @@ classdef OpticalPulse < matlab.mixin.Copyable
 		end
 
 		function lam_max = get.PeakWavelength(obj)
-			[~,lam_index] = max(obj.EnergySpectralDensity);
+			[~,lam_index] = max(obj.EnergySpectralDensity,[],2);
 			lam_max = obj.SimWin.Wavelengths(lam_index);
 		end
 
 		function gdd = get.GDD(obj)
-			chrp = sqrt( (obj.Duration ^ 2 / obj.DurationTL^ 2) - 1);
+			chrp = sqrt( (obj.Duration .^ 2 ./ obj.DurationTL .^ 2) - 1);
 			% Gaussian would use 2*sqrt(log(2)), Sech uses 1 + sqrt(2) = 2.4142
 			% will need to update to work as a function of pulse profile
-			gdd = chrp * ((obj.DurationTL/(2*sqrt(log(2.4142))))^2);
+			gdd = chrp .* ((obj.DurationTL./(2*sqrt(log(2.4142)))).^2);
 		end
 
 		function EtTL = get.TemporalFieldTL(obj)
@@ -150,7 +150,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 		end
 
 		function Qe = get.Energy(obj)
-			Qe = sum(obj.EnergySpectralDensity)*obj.SimWin.DeltaNu;
+			Qe = sum(obj.EnergySpectralDensity,2)*obj.SimWin.DeltaNu;
 		end
 
 		function Ik = get.EnergySpectralDensity(obj)
@@ -192,11 +192,11 @@ classdef OpticalPulse < matlab.mixin.Copyable
 		end
 
 		function tbptl = get.TBPTL(obj)
-			tbptl = obj.FrequencyFWHM * obj.DurationTL;
+			tbptl = obj.FrequencyFWHM .* obj.DurationTL;
 		end
 
 		function tbp = get.TBP(obj)
-			tbp = obj.FrequencyFWHM * obj.DurationCheck;
+			tbp = obj.FrequencyFWHM .* obj.DurationCheck;
 		end
 
 		function esd = get.ESD_pJ_THz(obj)
@@ -204,7 +204,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			y = abs(obj.EnergySpectralDensity*1e24);
 			ids = ~isnan(x);
 			x = x(ids);
-			y = y(ids);
+			y = y(:,ids);
 			if x(1) > x(end)
 				y = fliplr(y);
 			end
@@ -222,19 +222,30 @@ classdef OpticalPulse < matlab.mixin.Copyable
 		end
 
 		function Ek = get.SpectralField(obj)
-			Ek = fftshift(fft(obj.TemporalField));
+			n = obj.SimWin.NumberOfPoints;
+			Ek = fftshift(fft(obj.TemporalField,n,2),2);
 			% Ek = fftshift(fft(fftshift(obj.TemporalField)));
 		end
 
 		function k2t(obj,Ek)
-			obj.TemporalField = ifft(ifftshift(Ek));
+			n = obj.SimWin.NumberOfPoints;
+			obj.TemporalField = ifft(ifftshift(Ek,2),n,2);
 			% obj.TemporalField = ifftshift(ifft(ifftshift(Ek)));
 			% obj.TemporalField = ifftshift(ifft(Ek));
+		end
+
+		function addDims(obj,sz)
+			obj.TemporalField = repmat(obj.TemporalField,sz);
 		end
 
 		function gather(obj)
 			obj.TemporalField = gather(obj.TemporalField);
 			obj.Duration = gather(obj.DurationCheck);
+		end
+
+		function pulse = store(obj)
+			pulse = copy(obj);
+			pulse.gather;
 		end
 
 		%% Plotting
