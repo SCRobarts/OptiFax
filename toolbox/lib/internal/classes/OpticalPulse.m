@@ -241,7 +241,6 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			lmagPH = plot(obj.SimWin.LambdanmPlot,obj.ESD_pJ_THz);
 			% [lmagPH, lTextH]= peaksplot(obj.SimWin.LambdanmPlot,obj.ESD_pJ_THz,50,axh);
 			hold on
-			updatepeaks(lmagPH);
 			xlabel('Wavelength / (nm)')
 			ylabel('ESD / (pJ/THz)')
 			hold off
@@ -253,6 +252,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			ylabel('Relative Phase / rad')
 			title(obj.Name + ' Spectral in ' + obj.Medium.Bulk.Material)
 			legend off
+			updatepeaks(lmagPH);
 			hold off
 		end
 
