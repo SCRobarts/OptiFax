@@ -21,7 +21,7 @@ classdef SimPlotter < matlab.mixin.Copyable
 		SpectralEvoPlot
 		TemporalEvoAxes	
 		TemporalEvoPlot
-		InOutTiles
+		OutTiles
 		SpectralOutAxes
 		SpectralMagOutPlot
 		SpectralPhiOutPlot
@@ -33,8 +33,16 @@ classdef SimPlotter < matlab.mixin.Copyable
 	end
 
 	methods(Static)
-		function tl = createTiles(pH)
-			tl = tiledlayout(pH,"horizontal","TileSpacing","compact","Padding","tight");
+		function tl = createTiles(panH)
+			tl = tiledlayout(panH,"horizontal","TileSpacing","compact","Padding","tight");
+		end
+
+		function ax = createInOutAxes(tH)
+			% t = obj.OutTiles;
+			ax = nexttile(tH);
+			ax.Interactions = [];
+			ax.Toolbar.Visible = 'off';
+			% hold(ax,"on");
 		end
 	end
 
@@ -60,7 +68,7 @@ classdef SimPlotter < matlab.mixin.Copyable
 			posOut(2) = mod(posEvo(2)+posEvo(4),1);
 			posOut(4) = 1 - posEvo(4);
 			ph2 = uipanel(obj.Figure,"Position",posOut);
-			obj.InOutTiles = obj.createTiles(ph2);
+			obj.OutTiles = obj.createTiles(ph2);
 
 			obj.SpectralEvoAxes = obj.createEvoAxes;
 			xlabel(obj.SpectralEvoAxes,obj.SpecLabel)
@@ -72,13 +80,13 @@ classdef SimPlotter < matlab.mixin.Copyable
 			% xlim(obj.TemporalAxes,[-2 2].*(obj.Parent.Pulse.DurationCheck - obj.Parent.Delay))
 			obj.TemporalEvoPlot = obj.cplot(obj.TemporalEvoAxes, obj.Parent.SimWin.Timesfs, obj.Parent.ItEvoData);
 			
-			obj.SpectralOutAxes = obj.createInOutAxes;
+			obj.SpectralOutAxes = obj.createInOutAxes(obj.OutTiles);
 			xlabel(obj.SpectralOutAxes,obj.SpecLabel)
 			xlim(obj.SpectralOutAxes, obj.SpecLims);
 			[obj.SpectralMagOutPlot, obj.SpectralPhiOutPlot] = obj.Parent.PumpPulse.lplot(obj.SpecLims);
 			% [obj.SpectralMagPlot, obj.SpectralPhiPlot] = obj.Parent.PumpPulse.lplot(obj.SpectralInOutAxes, obj.SpecLims);
 
-			obj.TemporalOutAxes = obj.createInOutAxes;
+			obj.TemporalOutAxes = obj.createInOutAxes(obj.OutTiles);
 			xlabel(obj.TemporalOutAxes,obj.TimeLabel)
 			obj.TimeLims = [min(obj.Parent.SimWin.Timesfs) max(obj.Parent.SimWin.Timesfs)];
 			% xlim(obj.TemporalInOutAxes, obj.TimeLims);
@@ -97,14 +105,6 @@ classdef SimPlotter < matlab.mixin.Copyable
 			ax.Interactions = [];
 			ax.Toolbar.Visible = 'off';
 			hold(ax,"on");
-		end
-
-		function ax = createInOutAxes(obj)
-			t = obj.InOutTiles;
-			ax = nexttile(t);
-			ax.Interactions = [];
-			ax.Toolbar.Visible = 'off';
-			% hold(ax,"on");
 		end
 
 		function ph = cplot(obj,ax,x,z)

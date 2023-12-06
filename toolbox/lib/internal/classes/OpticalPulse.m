@@ -33,36 +33,38 @@ classdef OpticalPulse < matlab.mixin.Copyable
 	methods
 		% Constructor
 		function obj = OpticalPulse(laser,simWin)
-			obj.Name = laser.Name;
-			obj.Medium.simulate(simWin);
-			obj.SimWin = simWin;
-			obj.Source = laser;
-			t = simWin.Times;
-			t_off = simWin.TimeOffset;
-			str = laser.SourceString;
-			wPump = 2*pi*c / laser.Wavelength;
-			if strcmp(str,"Gauss")				
-				obj.TemporalField = gaussPulse(t,laser.Wavelength,laser.LineWidth);
-				% Shift spectrum from reference to pump wavelength
-				obj.TemporalField = obj.TemporalField .* exp(1i*(wPump-simWin.ReferenceOmega)*t);
-			elseif strcmp(str,"Sech")
-				obj.TemporalField = sechPulse(t,laser.Wavelength,laser.LineWidth);
-				% Shift spectrum from reference to pump wavelength
-				obj.TemporalField = obj.TemporalField .* exp(1i*(wPump-simWin.ReferenceOmega)*t);
-			else
-				obj.TemporalField = specpulseimport(str,t,t_off,...
-									simWin.Omegas,laser.PhaseString);
+			if nargin > 0
+				obj.Name = laser.Name;
+				obj.Medium.simulate(simWin);
+				obj.SimWin = simWin;
+				obj.Source = laser;
+				t = simWin.Times;
+				t_off = simWin.TimeOffset;
+				str = laser.SourceString;
+				wPump = 2*pi*c / laser.Wavelength;
+				if strcmp(str,"Gauss")				
+					obj.TemporalField = gaussPulse(t,laser.Wavelength,laser.LineWidth);
+					% Shift spectrum from reference to pump wavelength
+					obj.TemporalField = obj.TemporalField .* exp(1i*(wPump-simWin.ReferenceOmega)*t);
+				elseif strcmp(str,"Sech")
+					obj.TemporalField = sechPulse(t,laser.Wavelength,laser.LineWidth);
+					% Shift spectrum from reference to pump wavelength
+					obj.TemporalField = obj.TemporalField .* exp(1i*(wPump-simWin.ReferenceOmega)*t);
+				else
+					obj.TemporalField = specpulseimport(str,t,t_off,...
+										simWin.Omegas,laser.PhaseString);
+				end
+				
+				if laser.PulseDuration < obj.DurationTL
+					obj.Duration = obj.DurationTL;
+				else
+					obj.Duration = laser.PulseDuration;
+				end
+				% Shift the pulse by simWin.TimeOffset
+				obj.timeShift;
+				% Apply calculated GDD to alter duration
+				obj.applyGDD(obj.GDD);
 			end
-			
-			if laser.PulseDuration < obj.DurationTL
-				obj.Duration = obj.DurationTL;
-			else
-				obj.Duration = laser.PulseDuration;
-			end
-			% Shift the pulse by simWin.TimeOffset
-			obj.timeShift;
-			% Apply calculated GDD to alter duration
-			obj.applyGDD(obj.GDD);
 		end
 		
 		function propagate(obj,opt_tbl)
@@ -194,7 +196,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 		end
 
 		function tbp = get.TBP(obj)
-			tbp = obj.FrequencyFWHM * obj.Duration;
+			tbp = obj.FrequencyFWHM * obj.DurationCheck;
 		end
 
 		function esd = get.ESD_pJ_THz(obj)
@@ -228,6 +230,11 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			obj.TemporalField = ifft(ifftshift(Ek));
 			% obj.TemporalField = ifftshift(ifft(ifftshift(Ek)));
 			% obj.TemporalField = ifftshift(ifft(Ek));
+		end
+
+		function gather(obj)
+			obj.TemporalField = gather(obj.TemporalField);
+			obj.Duration = gather(obj.DurationCheck);
 		end
 
 		%% Plotting
