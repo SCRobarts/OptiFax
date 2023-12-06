@@ -9,8 +9,8 @@ classdef SimPlotter < matlab.mixin.Copyable
 		Screen								= 0;
 		FontSize							= 14;
 		CMap								= jet;
-		SpecLabel							= "Wavelength (nm)";
-		TimeLabel							= "Delay (fs)";
+		SpecLabel							= "Wavelength / (nm)";
+		TimeLabel							= "Delay / (fs)";
 		SpecLims							= [350 2000];
 		TimeLims
 	end
@@ -72,6 +72,7 @@ classdef SimPlotter < matlab.mixin.Copyable
 			xlabel(obj.SpectralInOutAxes,obj.SpecLabel)
 			xlim(obj.SpectralInOutAxes, obj.SpecLims);
 			[obj.SpectralMagPlot, obj.SpectralPhiPlot] = obj.Parent.PumpPulse.lplot(obj.SpecLims);
+			% [obj.SpectralMagPlot, obj.SpectralPhiPlot] = obj.Parent.PumpPulse.lplot(obj.SpectralInOutAxes, obj.SpecLims);
 
 			obj.TemporalInOutAxes = obj.createInOutAxes;
 			xlabel(obj.TemporalInOutAxes,obj.TimeLabel)
@@ -115,6 +116,7 @@ classdef SimPlotter < matlab.mixin.Copyable
 			obj.SpectralEvoPlot.ZData = optSim.IkEvoData;
 			obj.TemporalEvoPlot.ZData = optSim.ItEvoData;
 			obj.SpectralMagPlot.YData = pulse.ESD_pJ_THz;
+			% obj.SpectralMagPlot = peaksplot(optSim.SimWin.LambdanmPlot,pulse.ESD_pJ_THz,50,obj.SpectralInOutAxes);
 			obj.SpectralPhiPlot.YData = pulse.SpectralPhase;
 			obj.TemporalMagPlot.YData = gather(pulse.TemporalIntensity);
 			obj.TemporalPhiPlot.YData = pulse.TemporalPhase;

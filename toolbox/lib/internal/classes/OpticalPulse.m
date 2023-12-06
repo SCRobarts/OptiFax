@@ -231,7 +231,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 		end
 
 		%% Plotting
-		function [lmagPH,lphiPH] = lplot(obj,lims)
+		function [lmagPH,lphiPH,lTextH] = lplot(obj,lims)
 			arguments
 				obj
 				lims = [500 1600]
@@ -241,8 +241,8 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			% 	"MinPeakProminence",100);
 			
 			yyaxis left
-			% lmagPH = peaksplot(obj.SimWin.Lambdanm,abs(obj.EnergySpectralDensity*1e24),50);
-			lmagPH = peaksplot(obj.SimWin.LambdanmPlot,obj.ESD_pJ_THz,50);
+			lmagPH = plot(obj.SimWin.LambdanmPlot,obj.ESD_pJ_THz);
+			% [lmagPH, lTextH]= peaksplot(obj.SimWin.LambdanmPlot,obj.ESD_pJ_THz,50,axh);
 			% findpeaks(fliplr(abs(obj.EnergySpectralDensity(ids)*1e24)),fliplr(obj.SimWin.Lambdanm(ids)),...
 			% "MinPeakProminence",100,'Annotate','extents')
 			hold on
@@ -260,6 +260,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			% text(obj.SimWin.Lambdanm(indexHMax(1)),IMax*1e24/2,['  FWHM = ', num2str(obj.WavelengthFWHM*1e9,3), ' nm'])
 			% 
 			xlim(lims)
+			xlabel('Wavelength / (nm)')
 			ylabel('ESD / (pJ/THz)')
 			hold off
 
@@ -298,7 +299,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			end
 			xlim(lims)
 			ylim([0 1.1*IMax])
-			xlabel('Delay (fs)')
+			xlabel('Delay / (fs)')
 			ylabel('Temporal Intensity / (W/m^2)')
 			hold off
 

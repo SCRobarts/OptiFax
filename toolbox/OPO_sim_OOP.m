@@ -70,17 +70,17 @@ tlims = [-650 -150];
 
 optSim.PumpPulse.refract(cav.Xtal);
 
-nexttile
+axh = nexttile;
 optSim.PumpPulse.lplot(xlims);
 nexttile
 optSim.PumpPulse.tplot(tlims);
 
-nexttile
+axh = nexttile;
 optSim.Pulse.lplot(xlims);
 nexttile
 optSim.Pulse.tplot(tlims);
 
-nexttile
+axh = nexttile;
 optSim.OutputPulse.lplot(xlims);
 nexttile
 optSim.OutputPulse.tplot(tlims);
