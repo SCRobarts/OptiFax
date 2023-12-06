@@ -34,7 +34,7 @@ load('GigajetTiSapph.mat');
 %%% or load in an existing simulation window?:
 load('simWin.mat');
 simWin.Limits = [300 6000];
-simWin.TemporalRange = simWin.TemporalRange / 2;
+% simWin.TemporalRange = simWin.TemporalRange / 2;
 simWin.TimeOffset = -0.5e-12;
 % simWin.NumberOfPoints = 2^17;
 
@@ -61,6 +61,7 @@ optSim.run
 fh1 = figure("Position",[10, 10, 1000, 600]);
 tiledlayout(3,2,'TileSpacing','compact')
 xlims = [700 1700];
+tlims = [-650 -150];
 
 % nexttile
 % laser.Pulse.kplot(xlims);
@@ -72,17 +73,17 @@ optSim.PumpPulse.refract(cav.Xtal);
 nexttile
 optSim.PumpPulse.lplot(xlims);
 nexttile
-optSim.PumpPulse.tplot;
+optSim.PumpPulse.tplot(tlims);
 
 nexttile
 optSim.Pulse.lplot(xlims);
 nexttile
-optSim.Pulse.tplot;
+optSim.Pulse.tplot(tlims);
 
 nexttile
 optSim.OutputPulse.lplot(xlims);
 nexttile
-optSim.OutputPulse.tplot;
+optSim.OutputPulse.tplot(tlims);
 
 
 figure

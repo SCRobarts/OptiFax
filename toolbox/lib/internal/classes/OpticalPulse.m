@@ -15,6 +15,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 		SpectralPhase
 		TemporalPhase
 		TemporalFieldTL		% Transform limited version of TemporalField
+		Energy
 		EnergySpectralDensity
 		ESD_pJ_THz
 		FrequencyFWHM
@@ -146,6 +147,10 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			EtTL = (fftshift(ifft(ifftshift(EkMag))));
 		end
 
+		function Qe = get.Energy(obj)
+			Qe = sum(obj.EnergySpectralDensity)*obj.SimWin.DeltaNu;
+		end
+
 		function Ik = get.EnergySpectralDensity(obj)
 			Ik = (abs(obj.SpectralField)).^2;
 			A = obj.Source.Area;
@@ -159,13 +164,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 		end
 
 		function P = get.Power(obj)
-			Ik = (abs(obj.SpectralField)).^2;
-			A = obj.Source.Area;
-			frep = obj.Source.RepetitionRate;
-			dt = obj.SimWin.DeltaTime;
-			np = obj.SimWin.NumberOfPoints;
-			nr = obj.Medium.Bulk.RefractiveIndex;
-			[P,~,~] = I2pow(Ik,nr,A,frep,dt,np);
+			P = obj.Energy * obj.Source.RepetitionRate;
 		end
 
 		function dNu = get.FrequencyFWHM(obj)
@@ -261,30 +260,38 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			hold off
 		end
 
-		function [tmagPH,tphiPH] = tplot(obj,lims)
+		function [tmagPH,tphiPH,tTextH] = tplot(obj,lims)
 			arguments
 				obj
-				lims = 2*[-obj.DurationCheck obj.DurationCheck];
+				lims = 2e15*[-obj.DurationCheck obj.DurationCheck];
 			end
 			[IMax,indexMax] = max(obj.TemporalIntensity);
 			[IHMax,indexHMax] = findnearest(obj.TemporalIntensity,IMax/2,2);
-			tmax = obj.SimWin.Times(indexMax);
+			tmax = obj.SimWin.Timesfs(indexMax);
 			phase = unwrap(angle(obj.TemporalField));
 			yyaxis left
-			tmagPH = plot(obj.SimWin.Times,obj.TemporalIntensity);
+			tmagPH = plot(obj.SimWin.Timesfs,obj.TemporalIntensity);
 			hold on
-			plot(obj.SimWin.Times(indexHMax),IHMax,'-+');
-			text(obj.SimWin.Times(indexHMax(end)),IMax/2,['  FWHM = ', num2str(obj.DurationCheck*1e15,3), ' fs'])
-			text(tmax,IMax*1.05,['IMax = ', num2str(IMax/1e9/1e4,3), ' GWcm^{-2}'],'HorizontalAlignment','center')
-			lims = lims + tmax;
+			% plot(obj.SimWin.Times(indexHMax),IHMax,'-+');
+			% text(obj.SimWin.Timesfs(indexHMax(end)),IMax/2,['  FWHM = ', num2str(obj.DurationCheck*1e15,3), ' fs'])
+			% text(tmax,IMax*1.05,['IMax = ', num2str(IMax/1e9/1e4,3), ' GWcm^{-2}'],'HorizontalAlignment','center')
+			% istr = {['IMax = ', num2str(IMax/1e9/1e4,3), ' GWcm^{-2}'],...
+			istr = {['Energy = ', num2str(obj.Energy*1e9,3), ' nJ'],...
+					['FWHM = ', num2str(obj.DurationCheck*1e15,3), ' fs']};
+			tTextH = text(0.69,0.85,istr,'Units','Normalized','FontSize',8,...
+				'EdgeColor',"k","BackgroundColor","w","Margin",1,"Clipping","on");
+
+			if lims(1) > tmax || lims(2) < tmax
+				lims = lims + tmax;
+			end
 			xlim(lims)
 			ylim([0 1.1*IMax])
-			xlabel('Time, t / s')
+			xlabel('Delay (fs)')
 			ylabel('Temporal Intensity / (W/m^2)')
 			hold off
 
 			yyaxis right
-			tphiPH = plot(obj.SimWin.Times,phase);
+			tphiPH = plot(obj.SimWin.Timesfs,phase);
 			hold on
 			ylabel('Relative Phase / rad')
 			title(obj.Name + ' Temporal in ' + obj.Medium.Bulk.Material)

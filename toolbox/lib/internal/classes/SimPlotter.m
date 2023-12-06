@@ -10,7 +10,7 @@ classdef SimPlotter < matlab.mixin.Copyable
 		FontSize							= 14;
 		CMap								= jet;
 		SpecLabel							= "Wavelength (nm)";
-		TimeLabel							= "Delay (s)";
+		TimeLabel							= "Delay (fs)";
 		SpecLims							= [350 2000];
 		TimeLims
 	end
@@ -65,7 +65,7 @@ classdef SimPlotter < matlab.mixin.Copyable
 			obj.TemporalEvoAxes = obj.createEvoAxes;
 			xlabel(obj.TemporalEvoAxes,obj.TimeLabel)
 			% xlim(obj.TemporalAxes,[-2 2].*(obj.Parent.Pulse.DurationCheck - obj.Parent.Delay))
-			obj.TemporalEvoPlot = obj.cplot(obj.TemporalEvoAxes, obj.Parent.SimWin.Times, obj.Parent.ItEvoData);
+			obj.TemporalEvoPlot = obj.cplot(obj.TemporalEvoAxes, obj.Parent.SimWin.Timesfs, obj.Parent.ItEvoData);
 			
 			obj.SpectralInOutAxes = obj.createInOutAxes;
 			xlabel(obj.SpectralInOutAxes,obj.SpecLabel)
@@ -74,7 +74,7 @@ classdef SimPlotter < matlab.mixin.Copyable
 
 			obj.TemporalInOutAxes = obj.createInOutAxes;
 			xlabel(obj.TemporalInOutAxes,obj.TimeLabel)
-			obj.TimeLims = [min(obj.Parent.SimWin.Times) max(obj.Parent.SimWin.Times)];
+			obj.TimeLims = [min(obj.Parent.SimWin.Timesfs) max(obj.Parent.SimWin.Timesfs)];
 			% xlim(obj.TemporalInOutAxes, obj.TimeLims);
 			[obj.TemporalMagPlot,obj.TemporalPhiPlot] = obj.Parent.PumpPulse.tplot(obj.TimeLims);
 
