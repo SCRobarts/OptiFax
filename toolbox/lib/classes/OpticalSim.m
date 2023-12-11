@@ -22,6 +22,7 @@ classdef OpticalSim < matlab.mixin.Copyable
 		ProgressPlotting = 1;
 		ProgressPlots = 4;
 		StoredPulses	OpticalPulse
+		TripNumber = 0;
 	end
 	properties (Transient)
 		PumpPulse	OpticalPulse	% Pulse object for intracavity pump field
@@ -29,7 +30,7 @@ classdef OpticalSim < matlab.mixin.Copyable
 		XOutPulse	OpticalPulse	% Pulse object to temp. store Xtal output
 		OutputPulse	OpticalPulse	% Pulse object to store what exits the cavity each trip
 		Hardware = "CPU"
-		TripNumber = 0;
+		SimTripNumber = 0;
 		StepSizeModifiers
 		SpectralProgressShift
 	end
@@ -106,6 +107,7 @@ classdef OpticalSim < matlab.mixin.Copyable
 			obj.PumpPulse.refract(airOpt);
 			obj.StoredPulses = obj.Pulse.store;
 			obj.StoredPulses.addDims([obj.RoundTrips,1]);
+			obj.TripNumber = 0;
 		end
 
 		function run(obj)
@@ -126,21 +128,19 @@ classdef OpticalSim < matlab.mixin.Copyable
 			hBshift = obj.convArr(hBshift);
 			airOpt = obj.Pulse.Medium;
 			dt = obj.SimWin.DeltaTime;
-			obj.TripNumber = 0;
+			obj.SimTripNumber = 0;
 
 			obj.OutputPulse = copy(obj.Pulse);
 			obj.OutputPulse.Name = "Combined Transmitted Pulse";
 
-			while obj.TripNumber < obj.RoundTrips
-				obj.TripNumber = obj.TripNumber + 1;
+			while obj.SimTripNumber < obj.RoundTrips
+
+				obj.nexttrip
 				
-				obj.pump;
-				
-				obj.XInPulse.update(obj.Pulse);
 				EtShift = fftshift(obj.Pulse.TemporalField).';
 				obj.SpectralProgressShift(:,1) = fft(EtShift);
 
-				[EtShift,obj.SpectralProgressShift(:,2:obj.ProgressPlots),obj.StepSizeModifiers(obj.TripNumber,:)] =...
+				[EtShift,obj.SpectralProgressShift(:,2:obj.ProgressPlots),obj.StepSizeModifiers(obj.SimTripNumber,:)] =...
 										obj.Solver(EtShift,...
 													 xtal.TStepShift,...
 													 G33,...
@@ -154,11 +154,11 @@ classdef OpticalSim < matlab.mixin.Copyable
 													 obj.AdaptiveError(1),...
 													 sel,...
 													 obj.SpectralProgressShift(:,2:obj.ProgressPlots),...
-													 obj.StepSizeModifiers(obj.TripNumber,:)...
+													 obj.StepSizeModifiers(obj.SimTripNumber,:)...
 													 );
 
 				obj.Pulse.TemporalField = fftshift(EtShift.');
-				obj.StoredPulses.TemporalField(obj.TripNumber,:) = gather(obj.Pulse.TemporalField);
+				obj.StoredPulses.TemporalField(obj.SimTripNumber,:) = gather(obj.Pulse.TemporalField);
 				obj.XOutPulse.update(obj.Pulse);
 				obj.Plotter.updateplots(obj);
 
@@ -176,6 +176,13 @@ classdef OpticalSim < matlab.mixin.Copyable
 		function pump(obj)
 			obj.Pulse.add(obj.PumpPulse);
 			obj.Pulse.refract(obj.System.Xtal);
+		end
+
+		function nexttrip(obj)
+			obj.SimTripNumber = obj.SimTripNumber + 1;
+			obj.TripNumber = obj.TripNumber + 1;
+			obj.pump;
+			obj.XInPulse.update(obj.Pulse);
 		end
 
 		function convertArrays(obj)
