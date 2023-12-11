@@ -118,10 +118,11 @@ classdef OpticalPulse < matlab.mixin.Copyable
 		end
 
 		function add(obj,pulse)
-			EkMag = abs(obj.SpectralField) + abs(pulse.SpectralField);
-			EkPhase = unwrap(angle(obj.SpectralField));
-			Ek = EkMag .* exp(1i * EkPhase);
-			obj.k2t(Ek)
+			% EkMag = abs(obj.SpectralField) + abs(pulse.SpectralField);
+			% EkPhase = unwrap(angle(obj.SpectralField));
+			% Ek = EkMag .* exp(1i * EkPhase);
+			% obj.k2t(Ek)
+			obj.TemporalField = obj.TemporalField + pulse.TemporalField;
 		end
 
 		function minus(obj,pulse)
@@ -129,6 +130,10 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			EkPhase = unwrap(angle(obj.SpectralField));
 			Ek = EkMag .* exp(1i * EkPhase);
 			obj.k2t(Ek)
+		end
+
+		function update(obj,pulse)
+			obj.TemporalField = pulse.TemporalField;
 		end
 
 		function lam_max = get.PeakWavelength(obj)
@@ -280,7 +285,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 				lims = 2e15*[-obj.DurationCheck obj.DurationCheck];
 			end
 			[IMax,indexMax] = max(obj.TemporalIntensity);
-			[IHMax,indexHMax] = findnearest(obj.TemporalIntensity,IMax/2,2);
+			% [IHMax,indexHMax] = findnearest(obj.TemporalIntensity,IMax/2,2);
 			tmax = obj.SimWin.Timesfs(indexMax);
 			phase = unwrap(angle(obj.TemporalField));
 			yyaxis left
@@ -299,7 +304,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 				lims = lims + tmax;
 			end
 			xlim(lims)
-			ylim([0 1.1*IMax])
+			% ylim([0 1.1*IMax+1])
 			xlabel('Delay / (fs)')
 			ylabel('Temporal Intensity / (W/m^2)')
 			hold off

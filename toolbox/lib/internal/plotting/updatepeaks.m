@@ -20,20 +20,21 @@ end
 [pks,locs,fwhps,proms] = findpeaks(y,x,"MinPeakDistance",minDist,"MinPeakProminence",minProm);
 [~,maxPkid] = max(pks);
 
-h = findobj(axh,'Type','hggroup');
-if ishandle(h)
-	delete(h.Children);
-	textGroupH = h;
-else
-	textGroupH = hggroup(axh);
+if ~isempty(pks)
+	h = findobj(axh,'Type','hggroup');
+	if ishandle(h)
+		delete(h.Children);
+		textGroupH = h;
+	else
+		textGroupH = hggroup(axh);
+	end
+	pstr = [num2str(locs',"%5.0f")  num2str(pks',",%4.0f")];
+	
+	text(textGroupH,locs-1,pks+1,pstr,'FontSize',7,'HorizontalAlignment','left','Clipping','on',...
+								 	'Rotation',90);
+	
+	textGroupH.Children = flip(textGroupH.Children);
+	ymax = textGroupH.Children(maxPkid).Extent(2) + textGroupH.Children(maxPkid).Extent(4);
+	axh.YAxis(1).Limits = [0 1.1*ymax];
 end
-pstr = [num2str(locs',"%5.0f")  num2str(pks',",%4.0f")];
-
-text(textGroupH,locs-1,pks+1,pstr,'FontSize',7,'HorizontalAlignment','left','Clipping','on',...
-								 'Rotation',90);
-
-textGroupH.Children = flip(textGroupH.Children);
-ymax = textGroupH.Children(maxPkid).Extent(2) + textGroupH.Children(maxPkid).Extent(4);
-axh.YAxis(1).Limits = [0 1.1*ymax];
-
 end

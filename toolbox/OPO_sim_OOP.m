@@ -42,7 +42,7 @@ simWin.TimeOffset = -0.5e-12;
 optSim = OpticalSim(laser,cav,simWin,[0.2,4],0.25e-6);
 % return
 % load('pbOPOsim.mat');
-optSim.RoundTrips = 80;
+optSim.RoundTrips = 60;
 % optSim.Hardware = "CPU";
 optSim.setup;
 
@@ -61,7 +61,7 @@ optSim.run
 fh1 = figure("Position",[10, 10, 1000, 600]);
 tiledlayout(3,2,'TileSpacing','compact')
 xlims = [700 1700];
-tlims = [-650 -150];
+tlims = [-800 200];
 
 % nexttile
 % laser.Pulse.kplot(xlims);
@@ -97,17 +97,20 @@ disableDefaultInteractivity(laxh);
 laxh.Interactions = [];
 laxh.Toolbar.Visible = 'off';
 hold(laxh,"on");
+xlim(laxh,xlims);
 lsurfH = surf(optSim.SimWin.LambdanmPlot,1:optSim.RoundTrips,optSim.StoredPulses.ESD_pJ_THz);
 shading('interp');
+colormap('jet')
 
 taxh = nexttile;
 disableDefaultInteractivity(taxh);
 taxh.Interactions = [];
 taxh.Toolbar.Visible = 'off';
 hold(taxh,"on");
+xlim(taxh,tlims);
 tsurfH = surf(optSim.SimWin.Timesfs,1:optSim.RoundTrips,optSim.StoredPulses.TemporalIntensity);
 shading('interp');
-
+colormap('jet')
 
 % figure
 % ids = ~isnan(simWin.Lambdanm);

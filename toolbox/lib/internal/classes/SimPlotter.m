@@ -15,19 +15,20 @@ classdef SimPlotter < matlab.mixin.Copyable
 		TimeLims
 	end
 	properties (Transient)
-		Figure			
+		ProgressFigure			
 		EvoTiles			
 		SpectralEvoAxes	
 		SpectralEvoPlot
 		TemporalEvoAxes	
 		TemporalEvoPlot
 		OutTiles
-		SpectralOutAxes
-		SpectralMagOutPlot
-		SpectralPhiOutPlot
-		TemporalOutAxes
-		TemporalMagOutPlot
-		TemporalPhiOutPlot
+		InTiles
+		SpectralAxes
+		SpectralMagPlot
+		SpectralPhiPlot
+		TemporalAxes
+		TemporalMagPlot
+		TemporalPhiPlot
 		TemporalText
 		YData
 	end
@@ -36,14 +37,6 @@ classdef SimPlotter < matlab.mixin.Copyable
 		function tl = createTiles(panH)
 			tl = tiledlayout(panH,"horizontal","TileSpacing","compact","Padding","tight");
 		end
-
-		function ax = createInOutAxes(tH)
-			% t = obj.OutTiles;
-			ax = nexttile(tH);
-			ax.Interactions = [];
-			ax.Toolbar.Visible = 'off';
-			% hold(ax,"on");
-		end
 	end
 
 	methods
@@ -51,24 +44,30 @@ classdef SimPlotter < matlab.mixin.Copyable
 		%SIMPLOTTER Construct an instance of this class
 			obj.Parent = optSim;
 			obj.YData = ydat;
+			obj.TimeLims = [min(obj.Parent.SimWin.Timesfs) max(obj.Parent.SimWin.Timesfs)];
 			obj.createfigure;
 		end
 		
 		function createfigure(obj)
-			obj.Figure = figure;
-			set(obj.Figure,'Color',[1 1 1],'Position',[(200+(obj.Screen*1920)) 50 1200 900], 'Visible', 'on')
-			fontsize(obj.Figure,obj.FontSize,'points');
+			obj.ProgressFigure = figure;
+			set(obj.ProgressFigure,'Color',[1 1 1],'Position',[(200+(obj.Screen*1920)) 50 1200 900], 'Visible', 'on')
+			fontsize(obj.ProgressFigure,obj.FontSize,'points');
 
-			posEvo = [0 0 1 0.8];
-			ph1 = uipanel(obj.Figure,"Position",posEvo);
+			posEvo = [0 0.2 1 0.6];
+			ph1 = uipanel(obj.ProgressFigure,"Position",posEvo);
 			obj.EvoTiles = obj.createTiles(ph1);
 			title(obj.EvoTiles,'Round Trip Number: ');
 
 			posOut = posEvo;
 			posOut(2) = mod(posEvo(2)+posEvo(4),1);
-			posOut(4) = 1 - posEvo(4);
-			ph2 = uipanel(obj.Figure,"Position",posOut);
+			posOut(4) = 1 - posOut(2);
+			ph2 = uipanel(obj.ProgressFigure,"Position",posOut);
 			obj.OutTiles = obj.createTiles(ph2);
+
+			posIn = posOut;
+			posIn(1:2) = [0 0];
+			ph3 = uipanel(obj.ProgressFigure,"Position",posIn);
+			obj.InTiles = obj.createTiles(ph3);
 
 			obj.SpectralEvoAxes = obj.createEvoAxes;
 			xlabel(obj.SpectralEvoAxes,obj.SpecLabel)
@@ -80,20 +79,34 @@ classdef SimPlotter < matlab.mixin.Copyable
 			% xlim(obj.TemporalAxes,[-2 2].*(obj.Parent.Pulse.DurationCheck - obj.Parent.Delay))
 			obj.TemporalEvoPlot = obj.cplot(obj.TemporalEvoAxes, obj.Parent.SimWin.Timesfs, obj.Parent.ItEvoData);
 			
-			obj.SpectralOutAxes = obj.createInOutAxes(obj.OutTiles);
-			xlabel(obj.SpectralOutAxes,obj.SpecLabel)
-			xlim(obj.SpectralOutAxes, obj.SpecLims);
-			[obj.SpectralMagOutPlot, obj.SpectralPhiOutPlot] = obj.Parent.PumpPulse.lplot(obj.SpecLims);
-			% [obj.SpectralMagPlot, obj.SpectralPhiPlot] = obj.Parent.PumpPulse.lplot(obj.SpectralInOutAxes, obj.SpecLims);
+			obj.SpectralAxes = obj.createInOutAxes(obj.OutTiles,"l");
+			[obj.SpectralMagPlot, obj.SpectralPhiPlot] = obj.Parent.XOutPulse.lplot(obj.SpecLims);
 
-			obj.TemporalOutAxes = obj.createInOutAxes(obj.OutTiles);
-			xlabel(obj.TemporalOutAxes,obj.TimeLabel)
-			obj.TimeLims = [min(obj.Parent.SimWin.Timesfs) max(obj.Parent.SimWin.Timesfs)];
-			% xlim(obj.TemporalInOutAxes, obj.TimeLims);
-			[obj.TemporalMagOutPlot,obj.TemporalPhiOutPlot,obj.TemporalText] = obj.Parent.PumpPulse.tplot(obj.TimeLims);
+			obj.TemporalAxes = obj.createInOutAxes(obj.OutTiles,"t");
+			[obj.TemporalMagPlot,obj.TemporalPhiPlot,obj.TemporalText] = obj.Parent.XOutPulse.tplot(obj.TimeLims);
 
+			obj.SpectralAxes(2) = obj.createInOutAxes(obj.InTiles,"l");
+			[obj.SpectralMagPlot(2), obj.SpectralPhiPlot(2)] = obj.Parent.XInPulse.lplot(obj.SpecLims);
+
+			obj.TemporalAxes(2) = obj.createInOutAxes(obj.InTiles,"t");
+			[obj.TemporalMagPlot(2),obj.TemporalPhiPlot(2),obj.TemporalText(2)] = obj.Parent.XInPulse.tplot(obj.TimeLims);
 
 			drawnow('limitrate');
+		end
+
+		function ax = createInOutAxes(obj,tH,type)
+			% t = obj.OutTiles;
+			ax = nexttile(tH);
+			ax.Interactions = [];
+			ax.Toolbar.Visible = 'off';
+			% hold(ax,"on");
+			if strcmp(type,"t")
+				xlabel(ax,obj.TimeLabel)
+				xlim(ax, obj.TimeLims);
+			else
+				xlabel(ax,obj.SpecLabel)
+				xlim(ax, obj.SpecLims);
+			end
 		end
 
 		function ax = createEvoAxes(obj)
@@ -115,28 +128,35 @@ classdef SimPlotter < matlab.mixin.Copyable
 		end
 
 		function updateplots(obj,optSim)
-			pulse = optSim.Pulse;
-			obj.EvoTiles.Title.String = ['Round Trip Number: ', int2str(optSim.TripNumber)];
+			trip = optSim.TripNumber;
+			obj.EvoTiles.Title.String = ['Round Trip Number: ', int2str(trip)];
 			obj.SpectralEvoPlot.ZData = optSim.IkEvoData;
 			obj.TemporalEvoPlot.ZData = optSim.ItEvoData;
 
-			obj.SpectralMagOutPlot.YData = pulse.ESD_pJ_THz;
-			obj.SpectralPhiOutPlot.YData = pulse.SpectralPhase;
-			updatepeaks(obj.SpectralMagOutPlot);
-			obj.TemporalMagOutPlot.YData = gather(pulse.TemporalIntensity);
-			obj.TemporalPhiOutPlot.YData = pulse.TemporalPhase;
+			specplot(1,optSim.XOutPulse);
+			timeplot(1,optSim.XOutPulse);
+		
+			specplot(2,optSim.XInPulse);
+			timeplot(2,optSim.XInPulse);
 
-			tstr = {['Energy = ', num2str(pulse.Energy*1e9,3), ' nJ'],...
-					['FWHM = ', num2str(pulse.DurationCheck*1e15,3), ' fs']};
-
-			obj.TemporalText.String = tstr;
-			% obj.TemporalMagPlot.YData = optSim.ItEvoData(end,:);
-			% obj.TemporalPhiPlot.YData = optSim.Pulse.SpectralPhase;
-			% obj.SpectralInOutAxes;
-			% obj.Parent.Pulse.lplot(obj.SpecLims);
-			% obj.TemporalInOutAxes;
-			% obj.Parent.Pulse.tplot;
 			drawnow
+
+			function specplot(n,pulse)
+				obj.SpectralMagPlot(n).YData = pulse.ESD_pJ_THz;
+				obj.SpectralPhiPlot(n).YData = pulse.SpectralPhase;
+				updatepeaks(obj.SpectralMagPlot(n));
+			end
+
+			function timeplot(n,pulse)
+				obj.TemporalMagPlot(n).YData = gather(pulse.TemporalIntensity);
+				obj.TemporalPhiPlot(n).YData = pulse.TemporalPhase;
+
+				tstr = {['Energy = ', num2str(pulse.Energy*1e9,3), ' nJ'],...
+						['FWHM = ', num2str(pulse.DurationCheck*1e15,3), ' fs']};
+
+				obj.TemporalText(n).String = tstr;
+			end
+
 		end
 	end
 

@@ -25,6 +25,8 @@ classdef OpticalSim < matlab.mixin.Copyable
 	end
 	properties (Transient)
 		PumpPulse	OpticalPulse	% Pulse object for intracavity pump field
+		XInPulse	OpticalPulse	% Pulse object to temp. store Xtal input
+		XOutPulse	OpticalPulse	% Pulse object to temp. store Xtal output
 		OutputPulse	OpticalPulse	% Pulse object to store what exits the cavity each trip
 		Hardware = "CPU"
 		TripNumber = 0;
@@ -66,7 +68,6 @@ classdef OpticalSim < matlab.mixin.Copyable
 			% Will need individual class functions to convert to gpuArray?
 			%	or just do it here for those required in .run?
 
-			% nSteps = uint32(obj.System.Optics.(obj.System.CrystalPosition).Bulk.Length./obj.StepSize);
 			if strcmp(obj.Hardware, "GPU")	% Could probably add actual GPU model info here
 				obj.Solver = @OPOmexBatch;
 			else 
@@ -80,6 +81,11 @@ classdef OpticalSim < matlab.mixin.Copyable
 			obj.PumpPulse.Name = "Pump Pulse";
 			obj.convertArrays;	% Convert arrays to correct precision and type
 			obj.PumpPulse.applyGDD(obj.System.PumpChirp);
+			
+			obj.XInPulse = copy(obj.PumpPulse);
+			obj.XInPulse.Name = "Xtal In Pulse";
+			obj.XOutPulse = copy(obj.PumpPulse);
+			obj.XOutPulse.Name = "Xtal Out Pulse";
 			obj.Pulse = copy(obj.PumpPulse);	% Copy the pump pulse as basis for cavity field
 			obj.Pulse.Name = "Intracavity Pulse";
 			obj.Pulse.TemporalField = obj.Pulse.TemporalField * 0;
@@ -129,8 +135,8 @@ classdef OpticalSim < matlab.mixin.Copyable
 				obj.TripNumber = obj.TripNumber + 1;
 				
 				obj.pump;
-
-				obj.Pulse.refract(xtal);
+				
+				obj.XInPulse.update(obj.Pulse);
 				EtShift = fftshift(obj.Pulse.TemporalField).';
 				obj.SpectralProgressShift(:,1) = fft(EtShift);
 
@@ -153,6 +159,7 @@ classdef OpticalSim < matlab.mixin.Copyable
 
 				obj.Pulse.TemporalField = fftshift(EtShift.');
 				obj.StoredPulses.TemporalField(obj.TripNumber,:) = gather(obj.Pulse.TemporalField);
+				obj.XOutPulse.update(obj.Pulse);
 				obj.Plotter.updateplots(obj);
 
 				obj.Pulse.refract(airOpt);
@@ -167,8 +174,8 @@ classdef OpticalSim < matlab.mixin.Copyable
 		end
 		
 		function pump(obj)
-			obj.Pulse.TemporalField = obj.Pulse.TemporalField...
-									+ obj.PumpPulse.TemporalField;
+			obj.Pulse.add(obj.PumpPulse);
+			obj.Pulse.refract(obj.System.Xtal);
 		end
 
 		function convertArrays(obj)
