@@ -13,6 +13,8 @@ classdef SimPlotter < matlab.mixin.Copyable
 		TimeLabel							= "Delay / (fs)";
 		SpecLims							= [350 2000];
 		TimeLims
+		YData
+		YLabel
 	end
 	properties (Transient)
 		ProgressFigure			
@@ -30,7 +32,6 @@ classdef SimPlotter < matlab.mixin.Copyable
 		TemporalMagPlot
 		TemporalPhiPlot
 		TemporalText
-		YData
 	end
 
 	methods(Static)
@@ -40,15 +41,16 @@ classdef SimPlotter < matlab.mixin.Copyable
 	end
 
 	methods
-		function obj = SimPlotter(optSim,ydat)
+		function obj = SimPlotter(optSim,ydat,ylab)
 		%SIMPLOTTER Construct an instance of this class
 			obj.Parent = optSim;
 			obj.YData = ydat;
-			obj.TimeLims = [min(obj.Parent.SimWin.Timesfs) max(obj.Parent.SimWin.Timesfs)];
-			obj.createfigure;
+			obj.YLabel = ylab;
+			obj.TimeLims = 0.95*[min(obj.Parent.SimWin.Timesfs) max(obj.Parent.SimWin.Timesfs)];
+			obj.xtalpassfig;
 		end
 		
-		function createfigure(obj)
+		function xtalpassfig(obj)
 			obj.ProgressFigure = figure;
 			set(obj.ProgressFigure,'Color',[1 1 1],'Position',[(200+(obj.Screen*1920)) 50 1200 900], 'Visible', 'on')
 			fontsize(obj.ProgressFigure,obj.FontSize,'points');
@@ -72,12 +74,14 @@ classdef SimPlotter < matlab.mixin.Copyable
 			obj.SpectralEvoAxes = obj.createEvoAxes;
 			xlabel(obj.SpectralEvoAxes,obj.SpecLabel)
 			xlim(obj.SpectralEvoAxes, obj.SpecLims);
-			obj.SpectralEvoPlot = obj.cplot(obj.SpectralEvoAxes, obj.Parent.SimWin.Lambdanm, obj.Parent.IkEvoData);
+			% obj.SpectralEvoPlot = obj.cplot(obj.SpectralEvoAxes, obj.Parent.SimWin.Lambdanm, obj.Parent.IkEvoData);
+			obj.SpectralEvoPlot = obj.cplot(obj.SpectralEvoAxes, obj.Parent.SimWin.Lambdanm);
 			
 			obj.TemporalEvoAxes = obj.createEvoAxes;
 			xlabel(obj.TemporalEvoAxes,obj.TimeLabel)
-			% xlim(obj.TemporalAxes,[-2 2].*(obj.Parent.Pulse.DurationCheck - obj.Parent.Delay))
-			obj.TemporalEvoPlot = obj.cplot(obj.TemporalEvoAxes, obj.Parent.SimWin.Timesfs, obj.Parent.ItEvoData);
+			xlim(obj.TemporalEvoAxes,obj.TimeLims)
+			% obj.TemporalEvoPlot = obj.cplot(obj.TemporalEvoAxes, obj.Parent.SimWin.Timesfs, obj.Parent.ItEvoData);
+			obj.TemporalEvoPlot = obj.cplot(obj.TemporalEvoAxes, obj.Parent.SimWin.Timesfs);
 			
 			obj.SpectralAxes = obj.createInOutAxes(obj.OutTiles,"l");
 			[obj.SpectralMagPlot, obj.SpectralPhiPlot] = obj.Parent.XOutPulse.lplot(obj.SpecLims);
@@ -91,15 +95,13 @@ classdef SimPlotter < matlab.mixin.Copyable
 			obj.TemporalAxes(2) = obj.createInOutAxes(obj.InTiles,"t");
 			[obj.TemporalMagPlot(2),obj.TemporalPhiPlot(2),obj.TemporalText(2)] = obj.Parent.XInPulse.tplot(obj.TimeLims);
 
-			drawnow('limitrate');
+			drawnow('limitrate'); 
 		end
 
 		function ax = createInOutAxes(obj,tH,type)
-			% t = obj.OutTiles;
 			ax = nexttile(tH);
 			ax.Interactions = [];
 			ax.Toolbar.Visible = 'off';
-			% hold(ax,"on");
 			if strcmp(type,"t")
 				xlabel(ax,obj.TimeLabel)
 				xlim(ax, obj.TimeLims);
@@ -112,52 +114,73 @@ classdef SimPlotter < matlab.mixin.Copyable
 		function ax = createEvoAxes(obj)
 			t = obj.EvoTiles;
 			ax = nexttile(t);
-         	ylabel('Distance (mm)')
-			ylim([0 obj.Parent.System.Xtal.Length*1e3])
+         	ylabel(obj.YLabel);
 			disableDefaultInteractivity(ax);
 			ax.Interactions = [];
 			ax.Toolbar.Visible = 'off';
 			hold(ax,"on");
 		end
 
-		function ph = cplot(obj,ax,x,z)
+		function ph = cplot(obj,ax,x)
+			z = ones(length(obj.YData),length(x));
 			ph = surf(ax,x,obj.YData,z);
 			shading(ax,'interp');
 			colormap(ax,obj.CMap);
 			drawnow('limitrate');
 		end
 
-		function updateplots(obj,optSim)
+		function updateplots(obj)
+			optSim = obj.Parent;
 			trip = optSim.TripNumber;
 			obj.EvoTiles.Title.String = ['Round Trip Number: ', int2str(trip)];
 			obj.SpectralEvoPlot.ZData = optSim.IkEvoData;
 			obj.TemporalEvoPlot.ZData = optSim.ItEvoData;
 
-			specplot(1,optSim.XOutPulse);
-			timeplot(1,optSim.XOutPulse);
+			obj.ioplots(1,optSim.XOutPulse);
+			% obj.timeplot(1,optSim.XOutPulse);
 		
-			specplot(2,optSim.XInPulse);
-			timeplot(2,optSim.XInPulse);
+			obj.ioplots(2,optSim.XInPulse);
+			% obj.timeplot(2,optSim.XInPulse);
 
 			drawnow
-
-			function specplot(n,pulse)
-				obj.SpectralMagPlot(n).YData = pulse.ESD_pJ_THz;
-				obj.SpectralPhiPlot(n).YData = pulse.SpectralPhase;
-				updatepeaks(obj.SpectralMagPlot(n));
-			end
-
-			function timeplot(n,pulse)
-				obj.TemporalMagPlot(n).YData = gather(pulse.TemporalIntensity);
-				obj.TemporalPhiPlot(n).YData = pulse.TemporalPhase;
-
-				tstr = {['Energy = ', num2str(pulse.Energy*1e9,3), ' nJ'],...
-						['FWHM = ', num2str(pulse.DurationCheck*1e15,3), ' fs']};
-
-				obj.TemporalText(n).String = tstr;
-			end
-
 		end
+
+		function ioplots(obj,n,pulse)
+			obj.SpectralMagPlot(n).YData = pulse.ESD_pJ_THz;
+			obj.SpectralPhiPlot(n).YData = pulse.SpectralPhase;
+			updatepeaks(obj.SpectralMagPlot(n));
+			obj.TemporalMagPlot(n).YData = gather(pulse.TemporalIntensity);
+			obj.TemporalPhiPlot(n).YData = pulse.TemporalPhase;
+
+			tstr = {['Energy = ', num2str(pulse.Energy*1e9,3), ' nJ'],...
+					['FWHM = ', num2str(pulse.DurationCheck*1e15,3), ' fs']};
+
+			obj.TemporalText(n).String = tstr;
+		end
+
+		% function timeplot(obj,n,pulse)
+		% 	obj.TemporalMagPlot(n).YData = gather(pulse.TemporalIntensity);
+		% 	obj.TemporalPhiPlot(n).YData = pulse.TemporalPhase;
+		% 
+		% 	tstr = {['Energy = ', num2str(pulse.Energy*1e9,3), ' nJ'],...
+				% 	['FWHM = ', num2str(pulse.DurationCheck*1e15,3), ' fs']};
+		% 
+		% 	obj.TemporalText(n).String = tstr;
+		% end
+
+		function roundtripplots(obj)
+			optSim = obj.Parent;
+			obj.SpectralEvoPlot.ZData = optSim.StoredPulses.EnergySpectralDensity;
+			obj.TemporalEvoPlot.ZData = optSim.StoredPulses.TemporalIntensity;
+
+			inPulse = optSim.PumpPulse;
+			specstr = inPulse.Name + ' Spectral in ' + inPulse.Medium.Bulk.Material;
+			tempstr = inPulse.Name + ' Temporal in ' + inPulse.Medium.Bulk.Material;
+			obj.SpectralAxes(2).Title.String = specstr;
+			obj.TemporalAxes(2).Title.String = tempstr;
+			obj.ioplots(2,inPulse);
+		end
+
 	end
 
 end

@@ -101,7 +101,8 @@ classdef OpticalSim < matlab.mixin.Copyable
 			obj.SpectralProgressShift = repmat(fft(fftshift(obj.PumpPulse.TemporalField)).',1,obj.ProgressPlots);
 			if obj.ProgressPlotting
 				ydat = linspace(0,obj.System.Xtal.Length*1e3,obj.ProgressPlots);
-				obj.Plotter = SimPlotter(obj,ydat);
+				ylab = "Distance (mm)";
+				obj.Plotter = SimPlotter(obj,ydat,ylab);
 			end
 			obj.StepSizeModifiers = obj.convArr(zeros(obj.RoundTrips,obj.System.Xtal.NSteps));
 			obj.PumpPulse.refract(airOpt);
@@ -160,7 +161,7 @@ classdef OpticalSim < matlab.mixin.Copyable
 				obj.Pulse.TemporalField = fftshift(EtShift.');
 				obj.StoredPulses.TemporalField(obj.SimTripNumber,:) = gather(obj.Pulse.TemporalField);
 				obj.XOutPulse.update(obj.Pulse);
-				obj.Plotter.updateplots(obj);
+				obj.Plotter.updateplots;
 
 				obj.Pulse.refract(airOpt);
 				obj.OutputPulse.TemporalField = obj.Pulse.TemporalField;
@@ -168,9 +169,12 @@ classdef OpticalSim < matlab.mixin.Copyable
 				obj.Pulse.propagate(obj.System.Optics);
 				obj.Pulse.refract(airOpt);
 				obj.OutputPulse.minus(obj.Pulse);
-				obj.Pulse.applyGD(obj.Delay);
-				
+				obj.Pulse.applyGD(obj.Delay);	
 			end
+
+			finalPlotter = SimPlotter(obj,1:obj.RoundTrips,"Round Trip Number");
+			finalPlotter.roundtripplots;
+
 		end
 		
 		function pump(obj)

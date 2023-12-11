@@ -42,7 +42,7 @@ simWin.TimeOffset = -0.5e-12;
 optSim = OpticalSim(laser,cav,simWin,[0.2,4],0.25e-6);
 % return
 % load('pbOPOsim.mat');
-optSim.RoundTrips = 60;
+optSim.RoundTrips = 40;
 % optSim.Hardware = "CPU";
 optSim.setup;
 
@@ -89,6 +89,10 @@ optSim.OutputPulse.tplot(tlims);
 figure
 cav.Optics.xtal.xtalplot;
 
+
+return
+
+%% Plot tests
 figure
 tiledlayout('flow')
 
@@ -111,13 +115,6 @@ xlim(taxh,tlims);
 tsurfH = surf(optSim.SimWin.Timesfs,1:optSim.RoundTrips,optSim.StoredPulses.TemporalIntensity);
 shading('interp');
 colormap('jet')
-
-% figure
-% ids = ~isnan(simWin.Lambdanm);
-% findpeaks(fliplr(abs(optSim.Pulse.EnergySpectralDensity(ids)*1e24)),fliplr(simWin.Lambdanm(ids)),...
-% 	"MinPeakProminence",100,'Annotate','extents')
-
-return
 
 %% Laser tests
 % gLaser = copy(laser);
