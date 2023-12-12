@@ -20,14 +20,15 @@ classdef OpticalSim < matlab.mixin.Copyable
 		Precision = 'single';
 		ProgressPlotting = 1;
 		ProgressPlots = 4;
-		StoredPulses	OpticalPulse
+		StoredPulses	OpticalPulse	% Pulse object with multiple fields, storing desired pulse each trip (currently XIn)
 		TripNumber = 0;
 	end
 	properties (Transient)
 		PumpPulse	OpticalPulse	% Pulse object for intracavity pump field
 		XInPulse	OpticalPulse	% Pulse object to temp. store Xtal input
 		XOutPulse	OpticalPulse	% Pulse object to temp. store Xtal output
-		OutputPulse	OpticalPulse	% Pulse object to store what exits the cavity each trip
+		InputPulse	OpticalPulse	% Pulse object to store what enters the cavity each SIM
+		OutputPulse	OpticalPulse	% Pulse object to temp. store what exits the cavity each TRIP
 		Hardware = "CPU"
 		SimTripNumber = 0;
 		StepSizeModifiers
@@ -84,10 +85,12 @@ classdef OpticalSim < matlab.mixin.Copyable
 			obj.convertArrays;	% Convert arrays to correct precision and type
 			obj.PumpPulse.applyGDD(obj.System.PumpChirp);
 			
-			obj.XInPulse = copy(obj.PumpPulse);
-			obj.XInPulse.Name = "Xtal In Pulse";
-			obj.XOutPulse = copy(obj.PumpPulse);
-			obj.XOutPulse.Name = "Xtal Out Pulse";
+			obj.InputPulse = obj.PumpPulse.copyto;
+			obj.InputPulse.Name = "Simulation-In Pulse";
+			obj.XInPulse = obj.PumpPulse.copyto;
+			obj.XInPulse.Name = "Xtal-In Pulse";
+			obj.XOutPulse = obj.PumpPulse.copyto;
+			obj.XOutPulse.Name = "Xtal-Out Pulse";
 			obj.Pulse = copy(obj.PumpPulse);	% Copy the pump pulse as basis for cavity field
 			obj.Pulse.Name = "Intracavity Pulse";
 			obj.Pulse.TemporalField = obj.Pulse.TemporalField * 0;
@@ -132,6 +135,8 @@ classdef OpticalSim < matlab.mixin.Copyable
 			dt = obj.SimWin.DeltaTime;
 			obj.SimTripNumber = 0;
 
+			obj.InputPulse.copyfrom(obj.PumpPulse);
+			obj.InputPulse.add(obj.Pulse);
 			obj.OutputPulse = copy(obj.Pulse);
 			obj.OutputPulse.Name = "Combined Transmitted Pulse";
 

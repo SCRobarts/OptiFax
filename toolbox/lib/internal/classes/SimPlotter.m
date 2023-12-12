@@ -194,7 +194,7 @@ classdef SimPlotter < matlab.mixin.Copyable
 			obj.TemporalAxes(1).Title.String = outtempstr;
 			obj.ioplots(1,outPulse);
 
-			inPulse = optSim.PumpPulse;
+			inPulse = optSim.InputPulse;
 			inspecstr = inPulse.Name + ' Spectral in ' + inPulse.Medium.Bulk.Material;
 			intempstr = inPulse.Name + ' Temporal in ' + inPulse.Medium.Bulk.Material;
 			obj.SpectralAxes(2).Title.String = inspecstr;

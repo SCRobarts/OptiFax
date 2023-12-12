@@ -86,12 +86,13 @@ optSim.OutputPulse.lplot(xlims);
 nexttile
 optSim.OutputPulse.tplot(tlims);
 
+optSim.PumpPulse.refract(cav.Optics.cavAir);
+return
 
 figure
 cav.Optics.xtal.xtalplot;
 
 
-return
 
 %% Plot tests
 figure

@@ -237,8 +237,9 @@ classdef OpticalPulse < matlab.mixin.Copyable
 
 		function copyfrom(obj,pulse)
 			obj.TemporalField = pulse.TemporalField;
+			obj.Medium = pulse.Medium;
 		end
-		
+
 		function pulse = copyto(obj)
 			pulse = copy(obj);
 			pulse.gather;
