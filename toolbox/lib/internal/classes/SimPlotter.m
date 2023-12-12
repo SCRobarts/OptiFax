@@ -124,6 +124,7 @@ classdef SimPlotter < matlab.mixin.Copyable
 		function ph = cplot(obj,ax,x)
 			z = ones(length(obj.YData),length(x));
 			ph = surf(ax,x,obj.YData,z);
+			ylim(ax,[min(obj.YData) max(obj.YData)])
 			shading(ax,'interp');
 			colormap(ax,obj.CMap);
 			drawnow('limitrate');
@@ -158,27 +159,28 @@ classdef SimPlotter < matlab.mixin.Copyable
 			obj.TemporalText(n).String = tstr;
 		end
 
-		% function timeplot(obj,n,pulse)
-		% 	obj.TemporalMagPlot(n).YData = gather(pulse.TemporalIntensity);
-		% 	obj.TemporalPhiPlot(n).YData = pulse.TemporalPhase;
-		% 
-		% 	tstr = {['Energy = ', num2str(pulse.Energy*1e9,3), ' nJ'],...
-				% 	['FWHM = ', num2str(pulse.DurationCheck*1e15,3), ' fs']};
-		% 
-		% 	obj.TemporalText(n).String = tstr;
-		% end
-
 		function roundtripplots(obj)
 			optSim = obj.Parent;
+			trip = optSim.TripNumber;
+			obj.EvoTiles.Title.String = ['Evolution over ', int2str(trip), ' round trips'];
 			obj.SpectralEvoPlot.ZData = optSim.StoredPulses.EnergySpectralDensity;
 			obj.TemporalEvoPlot.ZData = optSim.StoredPulses.TemporalIntensity;
 
+			outPulse = optSim.OutputPulse;
+			outspecstr = outPulse.Name + ' Spectral in ' + outPulse.Medium.Bulk.Material;
+			outtempstr = outPulse.Name + ' Temporal in ' + outPulse.Medium.Bulk.Material;
+			obj.SpectralAxes(1).Title.String = outspecstr;
+			obj.TemporalAxes(1).Title.String = outtempstr;
+			obj.ioplots(1,outPulse);
+
 			inPulse = optSim.PumpPulse;
-			specstr = inPulse.Name + ' Spectral in ' + inPulse.Medium.Bulk.Material;
-			tempstr = inPulse.Name + ' Temporal in ' + inPulse.Medium.Bulk.Material;
-			obj.SpectralAxes(2).Title.String = specstr;
-			obj.TemporalAxes(2).Title.String = tempstr;
+			inspecstr = inPulse.Name + ' Spectral in ' + inPulse.Medium.Bulk.Material;
+			intempstr = inPulse.Name + ' Temporal in ' + inPulse.Medium.Bulk.Material;
+			obj.SpectralAxes(2).Title.String = inspecstr;
+			obj.TemporalAxes(2).Title.String = intempstr;
 			obj.ioplots(2,inPulse);
+
+
 		end
 
 	end
