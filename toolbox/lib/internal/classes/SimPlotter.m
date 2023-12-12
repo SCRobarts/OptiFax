@@ -137,7 +137,9 @@ classdef SimPlotter < matlab.mixin.Copyable
 		function updateplots(obj)
 			optSim = obj.Parent;
 			trip = optSim.TripNumber;
-			obj.EvoTiles.Title.String = ['Round Trip Number: ', int2str(trip)];
+			tripstr = ['Round Trip Number: ', int2str(trip)];
+			obj.ProgressFigure.Name = tripstr;
+			obj.EvoTiles.Title.String = tripstr;
 			obj.SpectralEvoPlot.ZData = optSim.IkEvoData;
 			obj.TemporalEvoPlot.ZData = optSim.ItEvoData;
 
@@ -165,7 +167,9 @@ classdef SimPlotter < matlab.mixin.Copyable
 			obj.scalefigs;
 			optSim = obj.Parent;
 			trip = optSim.TripNumber;
-			obj.EvoTiles.Title.String = ['Evolution over ', int2str(trip), ' round trips'];
+			roundstr = ['Evolution over ', int2str(trip), ' round trips'];
+			obj.ProgressFigure.Name = roundstr;
+			obj.EvoTiles.Title.String = roundstr;
 			obj.SpectralEvoPlot.ZData = optSim.StoredPulses.EnergySpectralDensity;
 			obj.TemporalEvoPlot.ZData = optSim.StoredPulses.TemporalIntensity;
 
