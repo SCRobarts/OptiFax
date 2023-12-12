@@ -175,6 +175,14 @@ classdef SimPlotter < matlab.mixin.Copyable
 					['FWHM = ', num2str(pulse.DurationCheck*1e15,3), ' fs']};
 
 			obj.TemporalText(n).String = tstr;
+			obj.updatetitles(n,pulse);
+		end
+
+		function updatetitles(obj,n,pulse)
+			specstr = pulse.Name + ' Spectral in ' + pulse.Medium.Bulk.Material;
+			tempstr = pulse.Name + ' Temporal in ' + pulse.Medium.Bulk.Material;
+			obj.SpectralAxes(n).Title.String = specstr;
+			obj.TemporalAxes(n).Title.String = tempstr;
 		end
 
 		function roundtripplots(obj)
@@ -188,17 +196,17 @@ classdef SimPlotter < matlab.mixin.Copyable
 			obj.TemporalEvoPlot.ZData = optSim.StoredPulses.TemporalIntensity;
 
 			outPulse = optSim.OutputPulse;
-			outspecstr = outPulse.Name + ' Spectral in ' + outPulse.Medium.Bulk.Material;
-			outtempstr = outPulse.Name + ' Temporal in ' + outPulse.Medium.Bulk.Material;
-			obj.SpectralAxes(1).Title.String = outspecstr;
-			obj.TemporalAxes(1).Title.String = outtempstr;
+			% outspecstr = outPulse.Name + ' Spectral in ' + outPulse.Medium.Bulk.Material;
+			% outtempstr = outPulse.Name + ' Temporal in ' + outPulse.Medium.Bulk.Material;
+			% obj.SpectralAxes(1).Title.String = outspecstr;
+			% obj.TemporalAxes(1).Title.String = outtempstr;
 			obj.ioplots(1,outPulse);
 
 			inPulse = optSim.InputPulse;
-			inspecstr = inPulse.Name + ' Spectral in ' + inPulse.Medium.Bulk.Material;
-			intempstr = inPulse.Name + ' Temporal in ' + inPulse.Medium.Bulk.Material;
-			obj.SpectralAxes(2).Title.String = inspecstr;
-			obj.TemporalAxes(2).Title.String = intempstr;
+			% inspecstr = inPulse.Name + ' Spectral in ' + inPulse.Medium.Bulk.Material;
+			% intempstr = inPulse.Name + ' Temporal in ' + inPulse.Medium.Bulk.Material;
+			% obj.SpectralAxes(2).Title.String = inspecstr;
+			% obj.TemporalAxes(2).Title.String = intempstr;
 			obj.ioplots(2,inPulse);
 			
 			if ~obj.ProgressFigure.Visible
