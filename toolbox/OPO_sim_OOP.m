@@ -31,8 +31,9 @@ load('GigajetTiSapph.mat');
 %% Initialise Simulation Window
 %%% Either create a simulation window like so:
 % simWin = SimWindow(lambda0_m,n_points,t_axis_s,t_off_s);
-%%% or load in an existing simulation window?:
+%%% or load in an existing simulation window:
 load('simWin.mat');
+%%% then customise simulation window properties if required:
 simWin.Limits = [300 6000];
 % simWin.TemporalRange = simWin.TemporalRange / 2;
 simWin.TimeOffset = -0.5e-12;

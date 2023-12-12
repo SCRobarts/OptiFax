@@ -6,7 +6,7 @@ classdef SimPlotter < matlab.mixin.Copyable
 
 	properties
 		Parent			OpticalSim
-		Screen								= 0;
+		Screen								= 2;
 		FontSize							= 14;
 		CMap								= jet;
 		SpecLabel							= "Wavelength / (nm)";
@@ -32,6 +32,7 @@ classdef SimPlotter < matlab.mixin.Copyable
 		TemporalMagPlot
 		TemporalPhiPlot
 		TemporalText
+		ScreenPositions
 	end
 
 	methods(Static)
@@ -47,12 +48,17 @@ classdef SimPlotter < matlab.mixin.Copyable
 			obj.YData = ydat;
 			obj.YLabel = ylab;
 			obj.TimeLims = 0.95*[min(obj.Parent.SimWin.Timesfs) max(obj.Parent.SimWin.Timesfs)];
+			obj.ScreenPositions = groot().MonitorPositions + 50*[1 1 -2 -3];
+			if length(obj.ScreenPositions(:,1)) < obj.Screen
+				obj.Screen = length(obj.ScreenPositions(:,1));
+			end
 			obj.xtalpassfig;
 		end
 		
 		function xtalpassfig(obj)
 			obj.ProgressFigure = figure;
-			set(obj.ProgressFigure,'Color',[1 1 1],'Position',[(200+(obj.Screen*1920)) 50 1200 900], 'Visible', 'on')
+			figPos = obj.ScreenPositions(obj.Screen,:);
+			set(obj.ProgressFigure,'Color',[1 1 1],'Position',figPos, 'Visible', 'on')
 			fontsize(obj.ProgressFigure,obj.FontSize,'points');
 
 			posEvo = [0 0.2 1 0.6];
@@ -74,13 +80,11 @@ classdef SimPlotter < matlab.mixin.Copyable
 			obj.SpectralEvoAxes = obj.createEvoAxes;
 			xlabel(obj.SpectralEvoAxes,obj.SpecLabel)
 			xlim(obj.SpectralEvoAxes, obj.SpecLims);
-			% obj.SpectralEvoPlot = obj.cplot(obj.SpectralEvoAxes, obj.Parent.SimWin.Lambdanm, obj.Parent.IkEvoData);
 			obj.SpectralEvoPlot = obj.cplot(obj.SpectralEvoAxes, obj.Parent.SimWin.Lambdanm);
 			
 			obj.TemporalEvoAxes = obj.createEvoAxes;
 			xlabel(obj.TemporalEvoAxes,obj.TimeLabel)
 			xlim(obj.TemporalEvoAxes,obj.TimeLims)
-			% obj.TemporalEvoPlot = obj.cplot(obj.TemporalEvoAxes, obj.Parent.SimWin.Timesfs, obj.Parent.ItEvoData);
 			obj.TemporalEvoPlot = obj.cplot(obj.TemporalEvoAxes, obj.Parent.SimWin.Timesfs);
 			
 			obj.SpectralAxes = obj.createInOutAxes(obj.OutTiles,"l");
@@ -138,10 +142,8 @@ classdef SimPlotter < matlab.mixin.Copyable
 			obj.TemporalEvoPlot.ZData = optSim.ItEvoData;
 
 			obj.ioplots(1,optSim.XOutPulse);
-			% obj.timeplot(1,optSim.XOutPulse);
 		
 			obj.ioplots(2,optSim.XInPulse);
-			% obj.timeplot(2,optSim.XInPulse);
 
 			drawnow
 		end
@@ -160,6 +162,7 @@ classdef SimPlotter < matlab.mixin.Copyable
 		end
 
 		function roundtripplots(obj)
+			obj.scalefigs;
 			optSim = obj.Parent;
 			trip = optSim.TripNumber;
 			obj.EvoTiles.Title.String = ['Evolution over ', int2str(trip), ' round trips'];
@@ -179,8 +182,16 @@ classdef SimPlotter < matlab.mixin.Copyable
 			obj.SpectralAxes(2).Title.String = inspecstr;
 			obj.TemporalAxes(2).Title.String = intempstr;
 			obj.ioplots(2,inPulse);
+		end
 
+		function scalefigs(obj)
+			optSim = obj.Parent;
+			progPos = optSim.ProgressPlotter.ProgressFigure.Position;
+			progPos(3) = progPos(3)./2;
+			optSim.ProgressPlotter.ProgressFigure.Position =  progPos;
 
+			progPos(1) = progPos(1) + progPos(3);
+			obj.ProgressFigure.Position = progPos;
 		end
 
 	end

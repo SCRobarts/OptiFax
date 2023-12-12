@@ -12,7 +12,6 @@ classdef OpticalSim < matlab.mixin.Copyable
 		Source	Laser		% Potentially just a pulse?
 		System	Cavity		% Leaving cavity here for now, but should open up in future
 		SimWin	SimWindow
-		Plotter	SimPlotter
 		StepSize
 		AdaptiveError
 		RoundTrips = 1;
@@ -33,6 +32,8 @@ classdef OpticalSim < matlab.mixin.Copyable
 		SimTripNumber = 0;
 		StepSizeModifiers
 		SpectralProgressShift
+		ProgressPlotter		SimPlotter
+		FinalPlotter		SimPlotter
 	end
 	properties (Dependent)
 		IkEvoData
@@ -102,7 +103,7 @@ classdef OpticalSim < matlab.mixin.Copyable
 			if obj.ProgressPlotting
 				ydat = linspace(0,obj.System.Xtal.Length*1e3,obj.ProgressPlots);
 				ylab = "Distance (mm)";
-				obj.Plotter = SimPlotter(obj,ydat,ylab);
+				obj.ProgressPlotter = SimPlotter(obj,ydat,ylab);
 			end
 			obj.StepSizeModifiers = obj.convArr(zeros(obj.RoundTrips,obj.System.Xtal.NSteps));
 			obj.PumpPulse.refract(airOpt);
@@ -161,7 +162,7 @@ classdef OpticalSim < matlab.mixin.Copyable
 				obj.Pulse.TemporalField = fftshift(EtShift.');
 				obj.StoredPulses.TemporalField(obj.SimTripNumber,:) = gather(obj.Pulse.TemporalField);
 				obj.XOutPulse.update(obj.Pulse);
-				obj.Plotter.updateplots;
+				obj.ProgressPlotter.updateplots;
 
 				obj.Pulse.refract(airOpt);
 				obj.OutputPulse.TemporalField = obj.Pulse.TemporalField;
@@ -172,8 +173,8 @@ classdef OpticalSim < matlab.mixin.Copyable
 				obj.Pulse.applyGD(obj.Delay);	
 			end
 
-			finalPlotter = SimPlotter(obj,1:obj.RoundTrips,"Round Trip Number");
-			finalPlotter.roundtripplots;
+			obj.FinalPlotter = SimPlotter(obj,1:obj.RoundTrips,"Round Trip Number");
+			obj.FinalPlotter.roundtripplots;
 
 		end
 		
