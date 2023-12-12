@@ -117,25 +117,6 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			obj.Duration = obj.DurationCheck;
 		end
 
-		function add(obj,pulse)
-			% EkMag = abs(obj.SpectralField) + abs(pulse.SpectralField);
-			% EkPhase = unwrap(angle(obj.SpectralField));
-			% Ek = EkMag .* exp(1i * EkPhase);
-			% obj.k2t(Ek)
-			obj.TemporalField = obj.TemporalField + pulse.TemporalField;
-		end
-
-		function minus(obj,pulse)
-			EkMag = abs(obj.SpectralField) - abs(pulse.SpectralField);
-			EkPhase = unwrap(angle(obj.SpectralField));
-			Ek = EkMag .* exp(1i * EkPhase);
-			obj.k2t(Ek)
-		end
-
-		function update(obj,pulse)
-			obj.TemporalField = pulse.TemporalField;
-		end
-
 		function lam_max = get.PeakWavelength(obj)
 			[~,lam_index] = max(obj.EnergySpectralDensity,[],2);
 			lam_max = obj.SimWin.Wavelengths(lam_index);
@@ -239,6 +220,30 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			% obj.TemporalField = ifftshift(ifft(Ek));
 		end
 
+		function add(obj,pulse)
+			% EkMag = abs(obj.SpectralField) + abs(pulse.SpectralField);
+			% EkPhase = unwrap(angle(obj.SpectralField));
+			% Ek = EkMag .* exp(1i * EkPhase);
+			% obj.k2t(Ek)
+			obj.TemporalField = obj.TemporalField + pulse.TemporalField;
+		end
+
+		function minus(obj,pulse)
+			EkMag = abs(obj.SpectralField) - abs(pulse.SpectralField);
+			EkPhase = unwrap(angle(obj.SpectralField));
+			Ek = EkMag .* exp(1i * EkPhase);
+			obj.k2t(Ek)
+		end
+
+		function copyfrom(obj,pulse)
+			obj.TemporalField = pulse.TemporalField;
+		end
+		
+		function pulse = copyto(obj)
+			pulse = copy(obj);
+			pulse.gather;
+		end
+
 		function addDims(obj,sz)
 			obj.TemporalField = repmat(obj.TemporalField,sz);
 		end
@@ -248,10 +253,6 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			obj.Duration = gather(obj.DurationCheck);
 		end
 
-		function pulse = store(obj)
-			pulse = copy(obj);
-			pulse.gather;
-		end
 
 		%% Plotting
 		function [lmagPH,lphiPH,lTextH] = lplot(obj,lims)

@@ -75,7 +75,7 @@ classdef OpticalSim < matlab.mixin.Copyable
 			else 
 				obj.Solver = @NEE_CPU_par;	% Need to make a stand alone CPU adaptive solver
 			end
-
+			obj.TripNumber = 0;
 			obj.Source.simulate(obj.SimWin);	% Will we need to load these objects?
 			obj.System.simulate(obj.SimWin);
 
@@ -100,6 +100,7 @@ classdef OpticalSim < matlab.mixin.Copyable
 
 			obj.System.Xtal.ppole(obj);
 			obj.SpectralProgressShift = repmat(fft(fftshift(obj.PumpPulse.TemporalField)).',1,obj.ProgressPlots);
+			obj.FinalPlotter = SimPlotter(obj,obj.TripNumber + (1:obj.RoundTrips),"Round Trip Number");
 			if obj.ProgressPlotting
 				ydat = linspace(0,obj.System.Xtal.Length*1e3,obj.ProgressPlots);
 				ylab = "Distance (mm)";
@@ -107,9 +108,8 @@ classdef OpticalSim < matlab.mixin.Copyable
 			end
 			obj.StepSizeModifiers = obj.convArr(zeros(obj.RoundTrips,obj.System.Xtal.NSteps));
 			obj.PumpPulse.refract(airOpt);
-			obj.StoredPulses = obj.Pulse.store;
+			obj.StoredPulses = obj.Pulse.copyto;
 			obj.StoredPulses.addDims([obj.RoundTrips,1]);
-			obj.TripNumber = 0;
 		end
 
 		function run(obj)
@@ -161,7 +161,7 @@ classdef OpticalSim < matlab.mixin.Copyable
 
 				obj.Pulse.TemporalField = fftshift(EtShift.');
 				obj.StoredPulses.TemporalField(obj.SimTripNumber,:) = gather(obj.Pulse.TemporalField);
-				obj.XOutPulse.update(obj.Pulse);
+				obj.XOutPulse.copyfrom(obj.Pulse);
 				obj.ProgressPlotter.updateplots;
 
 				obj.Pulse.refract(airOpt);
@@ -173,7 +173,7 @@ classdef OpticalSim < matlab.mixin.Copyable
 				obj.Pulse.applyGD(obj.Delay);	
 			end
 
-			obj.FinalPlotter = SimPlotter(obj,1:obj.RoundTrips,"Round Trip Number");
+			obj.FinalPlotter.updateYData((obj.TripNumber-obj.RoundTrips) + (1:obj.RoundTrips));
 			obj.FinalPlotter.roundtripplots;
 
 		end
@@ -187,7 +187,7 @@ classdef OpticalSim < matlab.mixin.Copyable
 			obj.SimTripNumber = obj.SimTripNumber + 1;
 			obj.TripNumber = obj.TripNumber + 1;
 			obj.pump;
-			obj.XInPulse.update(obj.Pulse);
+			obj.XInPulse.copyfrom(obj.Pulse);
 		end
 
 		function convertArrays(obj)

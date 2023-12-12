@@ -11,10 +11,10 @@ classdef SimPlotter < matlab.mixin.Copyable
 		CMap								= jet;
 		SpecLabel							= "Wavelength / (nm)";
 		TimeLabel							= "Delay / (fs)";
-		SpecLims							= [350 2000];
-		TimeLims
-		YData
 		YLabel
+		SpecLimits							= [350 2000];
+		YData
+
 	end
 	properties (Transient)
 		ProgressFigure			
@@ -34,10 +34,14 @@ classdef SimPlotter < matlab.mixin.Copyable
 		TemporalText
 		ScreenPositions
 	end
+	properties (Dependent)
+		TimeLimits
+		YLimits
+	end
 
 	methods(Static)
 		function tl = createTiles(panH)
-			tl = tiledlayout(panH,"horizontal","TileSpacing","compact","Padding","tight");
+			tl = tiledlayout(panH,"horizontal","TileSpacing","loose","Padding","compact");
 		end
 	end
 
@@ -47,18 +51,17 @@ classdef SimPlotter < matlab.mixin.Copyable
 			obj.Parent = optSim;
 			obj.YData = ydat;
 			obj.YLabel = ylab;
-			obj.TimeLims = 0.95*[min(obj.Parent.SimWin.Timesfs) max(obj.Parent.SimWin.Timesfs)];
 			obj.ScreenPositions = groot().MonitorPositions + 50*[1 1 -2 -3];
 			if length(obj.ScreenPositions(:,1)) < obj.Screen
 				obj.Screen = length(obj.ScreenPositions(:,1));
 			end
-			obj.xtalpassfig;
+			obj.evofig;
 		end
 		
-		function xtalpassfig(obj)
+		function evofig(obj)
 			obj.ProgressFigure = figure;
 			figPos = obj.ScreenPositions(obj.Screen,:);
-			set(obj.ProgressFigure,'Color',[1 1 1],'Position',figPos, 'Visible', 'on')
+			set(obj.ProgressFigure,'Color',[1 1 1],'Position',figPos, 'Visible', 'off')
 			fontsize(obj.ProgressFigure,obj.FontSize,'points');
 
 			posEvo = [0 0.2 1 0.6];
@@ -79,25 +82,25 @@ classdef SimPlotter < matlab.mixin.Copyable
 
 			obj.SpectralEvoAxes = obj.createEvoAxes;
 			xlabel(obj.SpectralEvoAxes,obj.SpecLabel)
-			xlim(obj.SpectralEvoAxes, obj.SpecLims);
+			xlim(obj.SpectralEvoAxes, obj.SpecLimits);
 			obj.SpectralEvoPlot = obj.cplot(obj.SpectralEvoAxes, obj.Parent.SimWin.Lambdanm);
 			
 			obj.TemporalEvoAxes = obj.createEvoAxes;
 			xlabel(obj.TemporalEvoAxes,obj.TimeLabel)
-			xlim(obj.TemporalEvoAxes,obj.TimeLims)
+			xlim(obj.TemporalEvoAxes,obj.TimeLimits)
 			obj.TemporalEvoPlot = obj.cplot(obj.TemporalEvoAxes, obj.Parent.SimWin.Timesfs);
 			
 			obj.SpectralAxes = obj.createInOutAxes(obj.OutTiles,"l");
-			[obj.SpectralMagPlot, obj.SpectralPhiPlot] = obj.Parent.XOutPulse.lplot(obj.SpecLims);
+			[obj.SpectralMagPlot, obj.SpectralPhiPlot] = obj.Parent.XOutPulse.lplot(obj.SpecLimits);
 
 			obj.TemporalAxes = obj.createInOutAxes(obj.OutTiles,"t");
-			[obj.TemporalMagPlot,obj.TemporalPhiPlot,obj.TemporalText] = obj.Parent.XOutPulse.tplot(obj.TimeLims);
+			[obj.TemporalMagPlot,obj.TemporalPhiPlot,obj.TemporalText] = obj.Parent.XOutPulse.tplot(obj.TimeLimits);
 
 			obj.SpectralAxes(2) = obj.createInOutAxes(obj.InTiles,"l");
-			[obj.SpectralMagPlot(2), obj.SpectralPhiPlot(2)] = obj.Parent.XInPulse.lplot(obj.SpecLims);
+			[obj.SpectralMagPlot(2), obj.SpectralPhiPlot(2)] = obj.Parent.XInPulse.lplot(obj.SpecLimits);
 
 			obj.TemporalAxes(2) = obj.createInOutAxes(obj.InTiles,"t");
-			[obj.TemporalMagPlot(2),obj.TemporalPhiPlot(2),obj.TemporalText(2)] = obj.Parent.XInPulse.tplot(obj.TimeLims);
+			[obj.TemporalMagPlot(2),obj.TemporalPhiPlot(2),obj.TemporalText(2)] = obj.Parent.XInPulse.tplot(obj.TimeLimits);
 
 			drawnow('limitrate'); 
 		end
@@ -108,10 +111,10 @@ classdef SimPlotter < matlab.mixin.Copyable
 			ax.Toolbar.Visible = 'off';
 			if strcmp(type,"t")
 				xlabel(ax,obj.TimeLabel)
-				xlim(ax, obj.TimeLims);
+				xlim(ax, obj.TimeLimits);
 			else
 				xlabel(ax,obj.SpecLabel)
-				xlim(ax, obj.SpecLims);
+				xlim(ax, obj.SpecLimits);
 			end
 		end
 
@@ -128,7 +131,7 @@ classdef SimPlotter < matlab.mixin.Copyable
 		function ph = cplot(obj,ax,x)
 			z = ones(length(obj.YData),length(x));
 			ph = surf(ax,x,obj.YData,z);
-			ylim(ax,[min(obj.YData) max(obj.YData)])
+			ylim(ax,obj.YLimits)
 			shading(ax,'interp');
 			colormap(ax,obj.CMap);
 			drawnow('limitrate');
@@ -147,7 +150,18 @@ classdef SimPlotter < matlab.mixin.Copyable
 		
 			obj.ioplots(2,optSim.XInPulse);
 
+			if ~obj.ProgressFigure.Visible
+				obj.ProgressFigure.Visible = "on";
+			end
 			drawnow
+		end
+
+		function updateYData(obj,ydat)
+			obj.YData = ydat;
+			obj.SpectralEvoPlot.YData = obj.YData;
+			obj.TemporalEvoPlot.YData = obj.YData;
+			ylim(obj.SpectralEvoAxes,obj.YLimits);
+			ylim(obj.TemporalEvoAxes,obj.YLimits);
 		end
 
 		function ioplots(obj,n,pulse)
@@ -166,7 +180,7 @@ classdef SimPlotter < matlab.mixin.Copyable
 		function roundtripplots(obj)
 			obj.scalefigs;
 			optSim = obj.Parent;
-			trip = optSim.TripNumber;
+			trip = optSim.SimTripNumber;
 			roundstr = ['Evolution over ', int2str(trip), ' round trips'];
 			obj.ProgressFigure.Name = roundstr;
 			obj.EvoTiles.Title.String = roundstr;
@@ -186,16 +200,34 @@ classdef SimPlotter < matlab.mixin.Copyable
 			obj.SpectralAxes(2).Title.String = inspecstr;
 			obj.TemporalAxes(2).Title.String = intempstr;
 			obj.ioplots(2,inPulse);
+			
+			if ~obj.ProgressFigure.Visible
+				obj.ProgressFigure.Visible = "on";
+			end
+			drawnow
+
 		end
 
 		function scalefigs(obj)
 			optSim = obj.Parent;
 			progPos = optSim.ProgressPlotter.ProgressFigure.Position;
-			progPos(3) = progPos(3)./2;
-			optSim.ProgressPlotter.ProgressFigure.Position =  progPos;
+			if progPos(3) > (obj.ScreenPositions(obj.Screen,3)/2 + 1)
+				progPos(3) = progPos(3)./2;
+				optSim.ProgressPlotter.ProgressFigure.Position =  progPos;
+			end
 
-			progPos(1) = progPos(1) + progPos(3);
-			obj.ProgressFigure.Position = progPos;
+			% if obj.ProgressFigure.Position(3) > obj.ScreenPositions(obj.Screen,3)
+				progPos(1) = progPos(1) + progPos(3);
+				obj.ProgressFigure.Position = progPos;
+			% end
+		end
+
+		function tls = get.TimeLimits(obj)
+			tls = 0.95*[min(obj.Parent.SimWin.Timesfs) max(obj.Parent.SimWin.Timesfs)];
+		end
+
+		function yls = get.YLimits(obj)
+			yls = [min(obj.YData) max(obj.YData)];
 		end
 
 	end
