@@ -7,7 +7,7 @@
     <param.summary>GPU accelerated modelling of nonlinear optical systems.</param.summary>
     <param.description />
     <param.screenshot>${PROJECT_ROOT}\images\ToolboxPackaging.jpg</param.screenshot>
-    <param.version>0.1.2</param.version>
+    <param.version>0.2.0</param.version>
     <param.output>${PROJECT_ROOT}\OptiFax.mltbx</param.output>
     <param.products.name />
     <param.products.id />
@@ -117,7 +117,7 @@ resources/_Project/*
     </build-deliverables>
     <workflow />
     <matlab>
-      <root>D:\MATLAB\R2023a</root>
+      <root>D:\MATLAB\R2023b</root>
       <toolboxes />
     </matlab>
     <platform>

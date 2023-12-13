@@ -90,7 +90,8 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			nr1 = obj.Medium.Bulk.RefractiveIndex;
 			obj.Medium = optic2;
 			nr2 = obj.Medium.Bulk.RefractiveIndex;
-			Ek = obj.SpectralField .* abs(sqrt(nr1./nr2));
+			% Ek = obj.SpectralField .* abs(sqrt(nr1./nr2));
+			Ek = obj.SpectralField .* (sqrt(nr1./nr2));
 			obj.k2t(Ek);
 		end
 
@@ -101,6 +102,16 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			obj.k2t(Ek);
 		end
 		
+		function spectralShift(obj,lam)
+			wNew = 2*pi*c / lam;
+			% wRef = obj.SimWin.ReferenceOmega;
+			wOld = 2*pi*c / obj.PeakWavelength;
+			t = obj.SimWin.Times;
+			Et = obj.TemporalField;
+			Et = Et .* exp(1i*(wNew-wOld)*t);
+			obj.TemporalField = Et;
+		end
+
 		function applyGD(obj,gd)
 			Ek = obj.SpectralField;
 			beta = gd * obj.SimWin.RelativeOmegas;
@@ -164,7 +175,8 @@ classdef OpticalPulse < matlab.mixin.Copyable
 		end
 
 		function It = get.TemporalIntensity(obj)
-			nr = obj.Medium.Bulk.RefractiveIndex;
+			% nr = obj.Medium.Bulk.RefractiveIndex; 
+			nr = 1;
 			Esq2I = 1./(2./nr./eps0./c);
 			It = Esq2I .* (abs(obj.TemporalField)).^2;
 		end
