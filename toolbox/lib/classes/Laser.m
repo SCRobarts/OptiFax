@@ -8,6 +8,7 @@ classdef Laser < matlab.mixin.Copyable
 		PulseDuration
 		Wavelength
 		LineWidth
+		BandWidth
 		PeakPowerCoefficient
 		SourceString
 		PhaseString
@@ -16,6 +17,7 @@ classdef Laser < matlab.mixin.Copyable
 		Pulse				OpticalPulse
 	end
 	properties (Dependent)
+		Frequency
 		Area
 		PulseEnergy
 		IntensityTL
@@ -65,6 +67,11 @@ classdef Laser < matlab.mixin.Copyable
 			obj.Pulse.TemporalField = I2E .* obj.Pulse.TemporalField;
 			obj.Wavelength = obj.Pulse.PeakWavelength;
 			obj.LineWidth = obj.Pulse.WavelengthFWHM;
+			obj.BandWidth = obj.Pulse.FrequencyFWHM;
+		end
+
+		function f = get.Frequency(obj)
+			f = c / obj.Wavelength;
 		end
 
 		function a = get.Area(obj)

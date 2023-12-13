@@ -15,11 +15,13 @@ classdef SimWindow < handle
 		DeltaOmega
 		DeltaNu
 		Times
+		Timesfs
 		Frequencies
 		Omegas
 		Wavelengths
 		RelativeOmegas
 		Lambdanm
+		LambdanmPlot
 	end
 
 	methods
@@ -45,6 +47,10 @@ classdef SimWindow < handle
 			np = obj.NumberOfPoints;
 			t_axis = obj.TemporalRange;
 			t = (-np/2:np/2-1)/np*t_axis;	% time array
+		end
+
+		function tfs = get.Timesfs(obj)
+			tfs = obj.Times*1e15;
 		end
 
 		function dt = get.DeltaTime(obj)
@@ -82,6 +88,16 @@ classdef SimWindow < handle
 		function l = get.Lambdanm(obj)
 			l = obj.Wavelengths*1e9;
 			l(or(l<obj.Limits(1), l>obj.Limits(2))) = NaN;
+		end
+
+		function lp = get.LambdanmPlot(obj)
+			x = obj.Lambdanm;
+			id = ~isnan(x);
+			lp = x(id);
+			if lp(1)>lp(end)
+				lp = fliplr(lp);
+			end
+
 		end
 
 		function cidx = get.ReferenceIndex(obj)

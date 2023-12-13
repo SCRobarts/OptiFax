@@ -12,8 +12,12 @@ classdef OpticalPulse < matlab.mixin.Copyable
 	end
 	properties (Dependent)
 		SpectralField
+		SpectralPhase
+		TemporalPhase
 		TemporalFieldTL		% Transform limited version of TemporalField
+		Energy
 		EnergySpectralDensity
+		ESD_pJ_THz
 		FrequencyFWHM
 		WavelengthFWHM
 		TemporalIntensity
@@ -29,36 +33,38 @@ classdef OpticalPulse < matlab.mixin.Copyable
 	methods
 		% Constructor
 		function obj = OpticalPulse(laser,simWin)
-			obj.Name = laser.Name;
-			obj.Medium.simulate(simWin);
-			obj.SimWin = simWin;
-			obj.Source = laser;
-			t = simWin.Times;
-			t_off = simWin.TimeOffset;
-			str = laser.SourceString;
-			wPump = 2*pi*c / laser.Wavelength;
-			if strcmp(str,"Gauss")				
-				obj.TemporalField = gaussPulse(t,laser.Wavelength,laser.LineWidth);
-				% Shift spectrum from reference to pump wavelength
-				obj.TemporalField = obj.TemporalField .* exp(1i*(wPump-simWin.ReferenceOmega)*t);
-			elseif strcmp(str,"Sech")
-				obj.TemporalField = sechPulse(t,laser.Wavelength,laser.LineWidth);
-				% Shift spectrum from reference to pump wavelength
-				obj.TemporalField = obj.TemporalField .* exp(1i*(wPump-simWin.ReferenceOmega)*t);
-			else
-				obj.TemporalField = specpulseimport(str,t,t_off,...
-									simWin.Omegas,laser.PhaseString);
+			if nargin > 0
+				obj.Name = laser.Name;
+				obj.Medium.simulate(simWin);
+				obj.SimWin = simWin;
+				obj.Source = laser;
+				t = simWin.Times;
+				t_off = simWin.TimeOffset;
+				str = laser.SourceString;
+				wPump = 2*pi*c / laser.Wavelength;
+				if strcmp(str,"Gauss")				
+					obj.TemporalField = gaussPulse(t,laser.Wavelength,laser.LineWidth);
+					% Shift spectrum from reference to pump wavelength
+					obj.TemporalField = obj.TemporalField .* exp(1i*(wPump-simWin.ReferenceOmega)*t);
+				elseif strcmp(str,"Sech")
+					obj.TemporalField = sechPulse(t,laser.Wavelength,laser.LineWidth);
+					% Shift spectrum from reference to pump wavelength
+					obj.TemporalField = obj.TemporalField .* exp(1i*(wPump-simWin.ReferenceOmega)*t);
+				else
+					obj.TemporalField = specpulseimport(str,t,t_off,...
+										simWin.Omegas,laser.PhaseString);
+				end
+				
+				if laser.PulseDuration < obj.DurationTL
+					obj.Duration = obj.DurationTL;
+				else
+					obj.Duration = laser.PulseDuration;
+				end
+				% Shift the pulse by simWin.TimeOffset
+				obj.timeShift;
+				% Apply calculated GDD to alter duration
+				obj.applyGDD(obj.GDD);
 			end
-			
-			if laser.PulseDuration < obj.DurationTL
-				obj.Duration = obj.DurationTL;
-			else
-				obj.Duration = laser.PulseDuration;
-			end
-			% Shift the pulse by simWin.TimeOffset
-			obj.timeShift;
-			% Apply calculated GDD to alter duration
-			obj.applyGDD(obj.GDD);
 		end
 		
 		function propagate(obj,opt_tbl)
@@ -108,38 +114,29 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			chirpArg = 0.5.*gdd.*(obj.SimWin.Omegas - wPeak).^2;
 			Ek = Ek .* exp(-1i.*chirpArg);
 			obj.TemporalField = ifft(ifftshift(Ek));
-		end
-
-		function add(obj,pulse)
-			EkMag = abs(obj.SpectralField) + abs(pulse.SpectralField);
-			EkPhase = unwrap(angle(obj.SpectralField));
-			Ek = EkMag .* exp(1i * EkPhase);
-			obj.k2t(Ek)
-		end
-
-		function minus(obj,pulse)
-			EkMag = abs(obj.SpectralField) - abs(pulse.SpectralField);
-			EkPhase = unwrap(angle(obj.SpectralField));
-			Ek = EkMag .* exp(1i * EkPhase);
-			obj.k2t(Ek)
+			obj.Duration = obj.DurationCheck;
 		end
 
 		function lam_max = get.PeakWavelength(obj)
-			[~,lam_index] = max(obj.EnergySpectralDensity);
+			[~,lam_index] = max(obj.EnergySpectralDensity,[],2);
 			lam_max = obj.SimWin.Wavelengths(lam_index);
 		end
 
 		function gdd = get.GDD(obj)
-			chrp = sqrt( (obj.Duration ^ 2 / obj.DurationTL^ 2) - 1);
+			chrp = sqrt( (obj.Duration .^ 2 ./ obj.DurationTL .^ 2) - 1);
 			% Gaussian would use 2*sqrt(log(2)), Sech uses 1 + sqrt(2) = 2.4142
 			% will need to update to work as a function of pulse profile
-			gdd = chrp * ((obj.DurationTL/(2*sqrt(log(2.4142))))^2);
+			gdd = chrp .* ((obj.DurationTL./(2*sqrt(log(2.4142)))).^2);
 		end
 
 		function EtTL = get.TemporalFieldTL(obj)
 			Ek = obj.SpectralField;
 			EkMag = abs(Ek);
 			EtTL = (fftshift(ifft(ifftshift(EkMag))));
+		end
+
+		function Qe = get.Energy(obj)
+			Qe = sum(obj.EnergySpectralDensity,2)*obj.SimWin.DeltaNu;
 		end
 
 		function Ik = get.EnergySpectralDensity(obj)
@@ -155,13 +152,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 		end
 
 		function P = get.Power(obj)
-			Ik = (abs(obj.SpectralField)).^2;
-			A = obj.Source.Area;
-			frep = obj.Source.RepetitionRate;
-			dt = obj.SimWin.DeltaTime;
-			np = obj.SimWin.NumberOfPoints;
-			nr = obj.Medium.Bulk.RefractiveIndex;
-			[P,~,~] = I2pow(Ik,nr,A,frep,dt,np);
+			P = obj.Energy * obj.Source.RepetitionRate;
 		end
 
 		function dNu = get.FrequencyFWHM(obj)
@@ -187,88 +178,147 @@ classdef OpticalPulse < matlab.mixin.Copyable
 		end
 
 		function tbptl = get.TBPTL(obj)
-			tbptl = obj.FrequencyFWHM * obj.DurationTL;
+			tbptl = obj.FrequencyFWHM .* obj.DurationTL;
 		end
 
 		function tbp = get.TBP(obj)
-			tbp = obj.FrequencyFWHM * obj.Duration;
+			tbp = obj.FrequencyFWHM .* obj.DurationCheck;
 		end
 
-		function kplot(obj,lims)
-			arguments
-				obj
-				lims = [500 1600]
+		function esd = get.ESD_pJ_THz(obj)
+			x = obj.SimWin.Lambdanm;
+			y = abs(obj.EnergySpectralDensity*1e24);
+			ids = ~isnan(x);
+			x = x(ids);
+			y = y(:,ids);
+			if x(1) > x(end)
+				y = fliplr(y);
 			end
-			% ids = ~isnan(obj.SimWin.Lambdanm);
-			% [pks,locs,fwhps] = findpeaks(fliplr(abs(obj.EnergySpectralDensity(ids)*1e24)),fliplr(obj.SimWin.Lambdanm(ids)),...
-			% 	"MinPeakProminence",100);
-			
-			yyaxis left
-			peaksplot(obj.SimWin.Lambdanm,abs(obj.EnergySpectralDensity*1e24),50)
-			% findpeaks(fliplr(abs(obj.EnergySpectralDensity(ids)*1e24)),fliplr(obj.SimWin.Lambdanm(ids)),...
-			% "MinPeakProminence",100,'Annotate','extents')
-			hold on
-			% text(locs,pks+30,[num2str(locs'," % 5.2f")  num2str(pks',",% 5.2f")],...
-			% 	'FontSize',7,'HorizontalAlignment','center')
-			
-			phase = unwrap(angle(obj.SpectralField));
-
-			% [IMax,~] = max(obj.EnergySpectralDensity);
-			% [IHMax,indexHMax] = findnearest(obj.EnergySpectralDensity,IMax/2,2);
-			% yyaxis left
-			% wavplot(obj.SimWin.Lambdanm,abs(obj.EnergySpectralDensity*1e24))
-			% hold on
-			% plot(obj.SimWin.Lambdanm(indexHMax),IHMax*1e24,'-+')
-			% text(obj.SimWin.Lambdanm(indexHMax(1)),IMax*1e24/2,['  FWHM = ', num2str(obj.WavelengthFWHM*1e9,3), ' nm'])
-			% 
-			xlim(lims)
-			ylabel('ESD / (pJ/THz)')
-			yyaxis right
-			ylabel('Relative Phase / rad')
-			plot(obj.SimWin.Lambdanm,phase)
-			title(obj.Name + ' Spectral in ' + obj.Medium.Bulk.Material)
-
-			legend off
-			hold off
+			esd = gather(y);
 		end
 
-		function tplot(obj)
-			arguments
-				obj
-				% lims = 2*[-obj.DurationCheck obj.DurationCheck] + obj.SimWin.TimeOffset;
-			end
-			[IMax,indexMax] = max(obj.TemporalIntensity);
-			[IHMax,indexHMax] = findnearest(obj.TemporalIntensity,IMax/2,2);
-			tmax = obj.SimWin.Times(indexMax);
-			phase = unwrap(angle(obj.TemporalField));
-			yyaxis left
-			plot(obj.SimWin.Times,obj.TemporalIntensity)
-			hold on
-			plot(obj.SimWin.Times(indexHMax),IHMax,'-+')
-			text(obj.SimWin.Times(indexHMax(end)),IMax/2,['  FWHM = ', num2str(obj.DurationCheck*1e15,3), ' fs'])
-			text(tmax,IMax*1.05,['IMax = ', num2str(IMax/1e9/1e4,3), ' GWcm^{-2}'],'HorizontalAlignment','center')
-			lims = 2*[-obj.DurationCheck obj.DurationCheck] + tmax;
-			xlim(lims)
-			ylim([0 1.1*IMax])
-			xlabel('Time, t / s')
-			ylabel('Temporal Intensity / (W/m^2)')
-			yyaxis right
-			ylabel('Relative Phase / rad')
-			plot(obj.SimWin.Times,phase)
-			title(obj.Name + ' Temporal in ' + obj.Medium.Bulk.Material)
-			hold off
+		function sp = get.SpectralPhase(obj)
+			sp = unwrap(angle(obj.SpectralField));
+			sp = gather(sp);
+		end
+
+		function tp = get.TemporalPhase(obj)
+			tp = unwrap(angle(obj.TemporalField));
+			tp = gather(tp);
 		end
 
 		function Ek = get.SpectralField(obj)
-			Ek = fftshift(fft(obj.TemporalField));
+			n = obj.SimWin.NumberOfPoints;
+			Ek = fftshift(fft(obj.TemporalField,n,2),2);
 			% Ek = fftshift(fft(fftshift(obj.TemporalField)));
 		end
 
 		function k2t(obj,Ek)
-			obj.TemporalField = ifft(ifftshift(Ek));
+			n = obj.SimWin.NumberOfPoints;
+			obj.TemporalField = ifft(ifftshift(Ek,2),n,2);
 			% obj.TemporalField = ifftshift(ifft(ifftshift(Ek)));
 			% obj.TemporalField = ifftshift(ifft(Ek));
 		end
+
+		function add(obj,pulse)
+			% EkMag = abs(obj.SpectralField) + abs(pulse.SpectralField);
+			% EkPhase = unwrap(angle(obj.SpectralField));
+			% Ek = EkMag .* exp(1i * EkPhase);
+			% obj.k2t(Ek)
+			obj.TemporalField = obj.TemporalField + pulse.TemporalField;
+		end
+
+		function minus(obj,pulse)
+			EkMag = abs(obj.SpectralField) - abs(pulse.SpectralField);
+			EkPhase = unwrap(angle(obj.SpectralField));
+			Ek = EkMag .* exp(1i * EkPhase);
+			obj.k2t(Ek)
+		end
+
+		function copyfrom(obj,pulse)
+			obj.TemporalField = pulse.TemporalField;
+			obj.Medium = pulse.Medium;
+		end
+
+		function pulse = copyto(obj)
+			pulse = copy(obj);
+			pulse.gather;
+		end
+
+		function addDims(obj,sz)
+			obj.TemporalField = repmat(obj.TemporalField,sz);
+		end
+
+		function gather(obj)
+			obj.TemporalField = gather(obj.TemporalField);
+			obj.Duration = gather(obj.DurationCheck);
+		end
+
+
+		%% Plotting
+		function [lmagPH,lphiPH,lTextH] = lplot(obj,lims)
+			arguments
+				obj
+				lims = [500 1600]
+			end
+	
+			yyaxis left
+			lmagPH = plot(obj.SimWin.LambdanmPlot,obj.ESD_pJ_THz);
+			% [lmagPH, lTextH]= peaksplot(obj.SimWin.LambdanmPlot,obj.ESD_pJ_THz,50,axh);
+			hold on
+			xlabel('Wavelength / (nm)')
+			ylabel('ESD / (pJ/THz)')
+			hold off
+
+			yyaxis right
+			lphiPH = plot(obj.SimWin.Lambdanm,obj.SpectralPhase);
+			hold on
+			xlim(lims)
+			ylabel('Relative Phase / rad')
+			title(obj.Name + ' Spectral in ' + obj.Medium.Bulk.Material)
+			legend off
+			updatepeaks(lmagPH);
+			hold off
+		end
+
+		function [tmagPH,tphiPH,tTextH] = tplot(obj,lims)
+			arguments
+				obj
+				lims = 2e15*[-obj.DurationCheck obj.DurationCheck];
+			end
+			[IMax,indexMax] = max(obj.TemporalIntensity);
+			% [IHMax,indexHMax] = findnearest(obj.TemporalIntensity,IMax/2,2);
+			tmax = obj.SimWin.Timesfs(indexMax);
+			phase = unwrap(angle(obj.TemporalField));
+			yyaxis left
+			tmagPH = plot(obj.SimWin.Timesfs,obj.TemporalIntensity);
+			hold on
+			% plot(obj.SimWin.Times(indexHMax),IHMax,'-+');
+			% text(obj.SimWin.Timesfs(indexHMax(end)),IMax/2,['  FWHM = ', num2str(obj.DurationCheck*1e15,3), ' fs'])
+			% text(tmax,IMax*1.05,['IMax = ', num2str(IMax/1e9/1e4,3), ' GWcm^{-2}'],'HorizontalAlignment','center')
+			% istr = {['IMax = ', num2str(IMax/1e9/1e4,3), ' GWcm^{-2}'],...
+			istr = {['Energy = ', num2str(obj.Energy*1e9,3), ' nJ'],...
+					['FWHM = ', num2str(obj.DurationCheck*1e15,3), ' fs']};
+			tTextH = text(0.69,0.85,istr,'Units','Normalized','FontSize',8,...
+				'EdgeColor',"k","BackgroundColor","w","Margin",1,"Clipping","on");
+
+			if lims(1) > tmax || lims(2) < tmax
+				lims = lims + tmax;
+			end
+			xlim(lims)
+			% ylim([0 1.1*IMax+1])
+			xlabel('Delay / (fs)')
+			ylabel('Temporal Intensity / (W/m^2)')
+			hold off
+
+			yyaxis right
+			tphiPH = plot(obj.SimWin.Timesfs,phase);
+			hold on
+			ylabel('Relative Phase / rad')
+			title(obj.Name + ' Temporal in ' + obj.Medium.Bulk.Material)
+			hold off
+		end
+
 	end
 
 end

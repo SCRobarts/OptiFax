@@ -19,6 +19,7 @@ load('pbCav.mat');
 % load('pbCavAiry.mat');
 % cav.Xtal.Chi2 = 0;
 cav.Xtal.GratingPeriod = 21.32e-6;
+% cav.Xtal.GratingPeriod = cav.Xtal.Length;
 
 % cav.Optics.prismPB.Bulk.Length =  0.0447;
 % return
@@ -30,18 +31,19 @@ load('GigajetTiSapph.mat');
 %% Initialise Simulation Window
 %%% Either create a simulation window like so:
 % simWin = SimWindow(lambda0_m,n_points,t_axis_s,t_off_s);
-%%% or load in an existing simulation window?:
+%%% or load in an existing simulation window:
 load('simWin.mat');
+%%% then customise simulation window properties if required:
 simWin.Limits = [300 6000];
-simWin.TemporalRange = simWin.TemporalRange / 4;
+% simWin.TemporalRange = simWin.TemporalRange / 2;
 simWin.TimeOffset = -0.5e-12;
-% simWin.NumberOfPoints = 2^16;
+% simWin.NumberOfPoints = 2^17;
 
 %% Optical Simulation Setup
 optSim = OpticalSim(laser,cav,simWin,[0.2,4],0.25e-6);
 % return
 % load('pbOPOsim.mat');
-optSim.RoundTrips = 80;
+optSim.RoundTrips = 40;
 % optSim.Hardware = "CPU";
 optSim.setup;
 
@@ -60,32 +62,61 @@ optSim.run
 fh1 = figure("Position",[10, 10, 1000, 600]);
 tiledlayout(3,2,'TileSpacing','compact')
 xlims = [700 1700];
+tlims = [-800 200];
 
-nexttile
-laser.Pulse.kplot(xlims)
-nexttile
-laser.Pulse.tplot
+% nexttile
+% laser.Pulse.kplot(xlims);
+% nexttile
+% laser.Pulse.tplot;
 
-nexttile
-optSim.Pulse.kplot(xlims)
-nexttile
-optSim.Pulse.tplot
+optSim.PumpPulse.refract(cav.Xtal);
 
+axh = nexttile;
+optSim.PumpPulse.lplot(xlims);
 nexttile
-optSim.OutputPulse.kplot(xlims)
-nexttile
-optSim.OutputPulse.tplot
+optSim.PumpPulse.tplot(tlims);
 
+axh = nexttile;
+optSim.Pulse.lplot(xlims);
+nexttile
+optSim.Pulse.tplot(tlims);
+
+axh = nexttile;
+optSim.OutputPulse.lplot(xlims);
+nexttile
+optSim.OutputPulse.tplot(tlims);
+
+optSim.PumpPulse.refract(cav.Optics.cavAir);
+return
 
 figure
-cav.Optics.xtal.xtalplot
+cav.Optics.xtal.xtalplot;
 
-% figure
-% ids = ~isnan(simWin.Lambdanm);
-% findpeaks(fliplr(abs(optSim.Pulse.EnergySpectralDensity(ids)*1e24)),fliplr(simWin.Lambdanm(ids)),...
-% 	"MinPeakProminence",100,'Annotate','extents')
 
-return
+
+%% Plot tests
+figure
+tiledlayout('flow')
+
+laxh = nexttile;
+disableDefaultInteractivity(laxh);
+laxh.Interactions = [];
+laxh.Toolbar.Visible = 'off';
+hold(laxh,"on");
+xlim(laxh,xlims);
+lsurfH = surf(optSim.SimWin.LambdanmPlot,1:optSim.RoundTrips,optSim.StoredPulses.ESD_pJ_THz);
+shading('interp');
+colormap('jet')
+
+taxh = nexttile;
+disableDefaultInteractivity(taxh);
+taxh.Interactions = [];
+taxh.Toolbar.Visible = 'off';
+hold(taxh,"on");
+xlim(taxh,tlims);
+tsurfH = surf(optSim.SimWin.Timesfs,1:optSim.RoundTrips,optSim.StoredPulses.TemporalIntensity);
+shading('interp');
+colormap('jet')
 
 %% Laser tests
 % gLaser = copy(laser);

@@ -12,7 +12,6 @@ classdef OpticalSim < matlab.mixin.Copyable
 		Source	Laser		% Potentially just a pulse?
 		System	Cavity		% Leaving cavity here for now, but should open up in future
 		SimWin	SimWindow
-		Plotter	SimPlotter
 		StepSize
 		AdaptiveError
 		RoundTrips = 1;
@@ -21,14 +20,21 @@ classdef OpticalSim < matlab.mixin.Copyable
 		Precision = 'single';
 		ProgressPlotting = 1;
 		ProgressPlots = 4;
+		StoredPulses	OpticalPulse	% Pulse object with multiple fields, storing desired pulse each trip (currently XIn)
+		TripNumber = 0;
 	end
 	properties (Transient)
 		PumpPulse	OpticalPulse	% Pulse object for intracavity pump field
-		OutputPulse	OpticalPulse	% Pulse object to store what exits the cavity each trip
+		XInPulse	OpticalPulse	% Pulse object to temp. store Xtal input
+		XOutPulse	OpticalPulse	% Pulse object to temp. store Xtal output
+		InputPulse	OpticalPulse	% Pulse object to store what enters the cavity each SIM
+		OutputPulse	OpticalPulse	% Pulse object to temp. store what exits the cavity each TRIP
 		Hardware = "CPU"
-		TripNumber = 0;
+		SimTripNumber = 0;
 		StepSizeModifiers
 		SpectralProgressShift
+		ProgressPlotter		SimPlotter
+		FinalPlotter		SimPlotter
 	end
 	properties (Dependent)
 		IkEvoData
@@ -65,13 +71,12 @@ classdef OpticalSim < matlab.mixin.Copyable
 			% Will need individual class functions to convert to gpuArray?
 			%	or just do it here for those required in .run?
 
-			% nSteps = uint32(obj.System.Optics.(obj.System.CrystalPosition).Bulk.Length./obj.StepSize);
 			if strcmp(obj.Hardware, "GPU")	% Could probably add actual GPU model info here
 				obj.Solver = @OPOmexBatch;
 			else 
 				obj.Solver = @NEE_CPU_par;	% Need to make a stand alone CPU adaptive solver
 			end
-
+			obj.TripNumber = 0;
 			obj.Source.simulate(obj.SimWin);	% Will we need to load these objects?
 			obj.System.simulate(obj.SimWin);
 
@@ -79,9 +84,16 @@ classdef OpticalSim < matlab.mixin.Copyable
 			obj.PumpPulse.Name = "Pump Pulse";
 			obj.convertArrays;	% Convert arrays to correct precision and type
 			obj.PumpPulse.applyGDD(obj.System.PumpChirp);
+			
+			obj.InputPulse = obj.PumpPulse.copyto;
+			obj.InputPulse.Name = "Simulation-In Pulse";
+			obj.XInPulse = obj.PumpPulse.copyto;
+			obj.XInPulse.Name = "Xtal-In Pulse";
+			obj.XOutPulse = obj.PumpPulse.copyto;
+			obj.XOutPulse.Name = "Xtal-Out Pulse";
 			obj.Pulse = copy(obj.PumpPulse);	% Copy the pump pulse as basis for cavity field
 			obj.Pulse.Name = "Intracavity Pulse";
-			obj.Pulse.TemporalField = 0;
+			obj.Pulse.TemporalField = obj.Pulse.TemporalField * 0;
 			refresh(obj);
 		end
 
@@ -91,12 +103,16 @@ classdef OpticalSim < matlab.mixin.Copyable
 
 			obj.System.Xtal.ppole(obj);
 			obj.SpectralProgressShift = repmat(fft(fftshift(obj.PumpPulse.TemporalField)).',1,obj.ProgressPlots);
+			obj.FinalPlotter = SimPlotter(obj,obj.TripNumber + (1:obj.RoundTrips),"Round Trip Number");
 			if obj.ProgressPlotting
 				ydat = linspace(0,obj.System.Xtal.Length*1e3,obj.ProgressPlots);
-				obj.Plotter = SimPlotter(obj,ydat);
+				ylab = "Distance (mm)";
+				obj.ProgressPlotter = SimPlotter(obj,ydat,ylab);
 			end
 			obj.StepSizeModifiers = obj.convArr(zeros(obj.RoundTrips,obj.System.Xtal.NSteps));
 			obj.PumpPulse.refract(airOpt);
+			obj.StoredPulses = obj.Pulse.copyto;
+			obj.StoredPulses.addDims([obj.RoundTrips,1]);
 		end
 
 		function run(obj)
@@ -117,21 +133,21 @@ classdef OpticalSim < matlab.mixin.Copyable
 			hBshift = obj.convArr(hBshift);
 			airOpt = obj.Pulse.Medium;
 			dt = obj.SimWin.DeltaTime;
-			obj.TripNumber = 0;
+			obj.SimTripNumber = 0;
 
+			obj.InputPulse.copyfrom(obj.PumpPulse);
+			obj.InputPulse.add(obj.Pulse);
 			obj.OutputPulse = copy(obj.Pulse);
 			obj.OutputPulse.Name = "Combined Transmitted Pulse";
 
-			while obj.TripNumber < obj.RoundTrips
-				obj.TripNumber = obj.TripNumber + 1;
-				
-				obj.pump;
+			while obj.SimTripNumber < obj.RoundTrips
 
-				obj.Pulse.refract(xtal);
+				obj.nexttrip
+				
 				EtShift = fftshift(obj.Pulse.TemporalField).';
 				obj.SpectralProgressShift(:,1) = fft(EtShift);
 
-				[EtShift,obj.SpectralProgressShift(:,2:obj.ProgressPlots),obj.StepSizeModifiers(obj.TripNumber,:)] =...
+				[EtShift,obj.SpectralProgressShift(:,2:obj.ProgressPlots),obj.StepSizeModifiers(obj.SimTripNumber,:)] =...
 										obj.Solver(EtShift,...
 													 xtal.TStepShift,...
 													 G33,...
@@ -145,29 +161,38 @@ classdef OpticalSim < matlab.mixin.Copyable
 													 obj.AdaptiveError(1),...
 													 sel,...
 													 obj.SpectralProgressShift(:,2:obj.ProgressPlots),...
-													 obj.StepSizeModifiers(obj.TripNumber,:)...
+													 obj.StepSizeModifiers(obj.SimTripNumber,:)...
 													 );
 
-
-				obj.Plotter.updateplots(obj);
-
 				obj.Pulse.TemporalField = fftshift(EtShift.');
+				obj.StoredPulses.TemporalField(obj.SimTripNumber,:) = gather(obj.Pulse.TemporalField);
+				obj.XOutPulse.copyfrom(obj.Pulse);
+				obj.ProgressPlotter.updateplots;
+
 				obj.Pulse.refract(airOpt);
 				obj.OutputPulse.TemporalField = obj.Pulse.TemporalField;
 			
 				obj.Pulse.propagate(obj.System.Optics);
 				obj.Pulse.refract(airOpt);
 				obj.OutputPulse.minus(obj.Pulse);
-				obj.Pulse.applyGD(obj.Delay);
-
-				% obj.pump;
-				
+				obj.Pulse.applyGD(obj.Delay);	
 			end
+
+			obj.FinalPlotter.updateYData((obj.TripNumber-obj.RoundTrips) + (1:obj.RoundTrips));
+			obj.FinalPlotter.roundtripplots;
+
 		end
 		
 		function pump(obj)
-			obj.Pulse.TemporalField = obj.Pulse.TemporalField...
-									+ obj.PumpPulse.TemporalField;
+			obj.Pulse.add(obj.PumpPulse);
+			obj.Pulse.refract(obj.System.Xtal);
+		end
+
+		function nexttrip(obj)
+			obj.SimTripNumber = obj.SimTripNumber + 1;
+			obj.TripNumber = obj.TripNumber + 1;
+			obj.pump;
+			obj.XInPulse.copyfrom(obj.Pulse);
 		end
 
 		function convertArrays(obj)
