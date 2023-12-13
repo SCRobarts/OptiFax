@@ -146,6 +146,13 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			EtTL = (fftshift(ifft(ifftshift(EkMag))));
 		end
 
+		function It = get.TemporalIntensity(obj)
+			nr = obj.Medium.Bulk.RefractiveIndex; 
+			% nr = 1;
+			Esq2I = 1./(2./nr./eps0./c);
+			It = Esq2I .* (abs(obj.TemporalField)).^2;
+		end
+
 		function Qe = get.Energy(obj)
 			Qe = sum(obj.EnergySpectralDensity,2)*obj.SimWin.DeltaNu;
 		end
@@ -172,13 +179,6 @@ classdef OpticalPulse < matlab.mixin.Copyable
 
 		function dLambda = get.WavelengthFWHM(obj)
 			dLambda = findfwhm(obj.SimWin.Wavelengths,obj.EnergySpectralDensity);
-		end
-
-		function It = get.TemporalIntensity(obj)
-			% nr = obj.Medium.Bulk.RefractiveIndex; 
-			nr = 1;
-			Esq2I = 1./(2./nr./eps0./c);
-			It = Esq2I .* (abs(obj.TemporalField)).^2;
 		end
 
 		function dtTL = get.DurationTL(obj)
