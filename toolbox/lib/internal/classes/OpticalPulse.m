@@ -130,12 +130,13 @@ classdef OpticalPulse < matlab.mixin.Copyable
 		end
 
 		function gf = get.GFit(obj)
-			sigmaField = std(obj.SimWin.Times,obj.TemporalIntensity.^0.5);
-			fwhmField = findfwhm(obj.SimWin.Times,obj.TemporalIntensity.^0.5);
 			sigmaIntensity = std(obj.SimWin.Times,obj.TemporalIntensity);
-			fwhmIntensity = obj.DurationCheck;
-			ratioField =  fwhmField ./ sigmaField ;
-			ratioIntensity = fwhmIntensity ./ sigmaIntensity;
+
+			% sigmaField = std(obj.SimWin.Times,obj.TemporalIntensity.^0.5);
+			% fwhmField = findfwhm(obj.SimWin.Times,obj.TemporalIntensity.^0.5);
+			% fwhmIntensity = obj.DurationCheck;
+			% ratioField =  fwhmField ./ sigmaField ;
+			% ratioIntensity = fwhmIntensity ./ sigmaIntensity;
 			% gf = ratioField ./ ratioIntensity;
 			gf = obj.DurationCheck ./ sigmaIntensity ./ (2*sqrt(2*log(2)));
 		end
