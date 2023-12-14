@@ -28,6 +28,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 		GDD				% GroupDelayDispersion (s^2)
 		PeakWavelength	% Max intensity wavelength (m)
 		Power
+		GFit			% An attempt to quantify how Gaussian a pulse is?
 	end
 
 	methods
@@ -128,6 +129,17 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			obj.Duration = obj.DurationCheck;
 		end
 
+		function gf = get.GFit(obj)
+			sigmaField = std(obj.SimWin.Times,obj.TemporalIntensity.^0.5);
+			fwhmField = findfwhm(obj.SimWin.Times,obj.TemporalIntensity.^0.5);
+			sigmaIntensity = std(obj.SimWin.Times,obj.TemporalIntensity);
+			fwhmIntensity = obj.DurationCheck;
+			ratioField =  fwhmField ./ sigmaField ;
+			ratioIntensity = fwhmIntensity ./ sigmaIntensity;
+			% gf = ratioField ./ ratioIntensity;
+			gf = obj.DurationCheck ./ sigmaIntensity ./ (2*sqrt(2*log(2)));
+		end
+
 		function lam_max = get.PeakWavelength(obj)
 			[~,lam_index] = max(obj.EnergySpectralDensity,[],2);
 			lam_max = obj.SimWin.Wavelengths(lam_index);
@@ -149,7 +161,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 		function It = get.TemporalIntensity(obj)
 			nr = obj.Medium.Bulk.RefractiveIndex; 
 			% nr = 1;
-			Esq2I = 1./(2./nr./eps0./c);
+			Esq2I = nr.*c.*eps0 / 2;
 			It = Esq2I .* (abs(obj.TemporalField)).^2;
 		end
 
