@@ -167,8 +167,10 @@ classdef OpticalSim < matlab.mixin.Copyable
 				obj.Pulse.TemporalField = fftshift(EtShift.');
 				obj.StoredPulses.TemporalField(obj.SimTripNumber,:) = gather(obj.Pulse.TemporalField);
 				obj.XOutPulse.copyfrom(obj.Pulse);
-				obj.ProgressPlotter.updateplots;
-
+				if obj.ProgressPlotting
+					obj.ProgressPlotter.updateplots;
+				end
+				
 				obj.Pulse.refract(airOpt);
 				obj.OutputPulse.TemporalField = obj.Pulse.TemporalField;
 			
@@ -207,7 +209,6 @@ classdef OpticalSim < matlab.mixin.Copyable
 
 		function Ik = get.IkEvoData(obj)
 			Eks = ifftshift(obj.SpectralProgressShift.',2);
-			% Ik = abs(Eks);
 			Ik = abs(Eks(:,obj.SimWin.IsNumIndex));
 			Ik = gather(Ik);
 		end
@@ -215,6 +216,7 @@ classdef OpticalSim < matlab.mixin.Copyable
 		function It = get.ItEvoData(obj)
 			Ets = (ifft(obj.SpectralProgressShift.',[],2));
 			It = abs(fftshift(Ets,2));
+			It = It(:,1:obj.SimWin.Granularity:end);
 			It = gather(It);
 		end
 

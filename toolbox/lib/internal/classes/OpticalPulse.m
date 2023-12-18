@@ -72,19 +72,18 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			if ~istable(opt_tbl)
 				opt_tbl = table(opt_tbl);
 			end
+			Ek = obj.SpectralField;
 			for ii = 1:width(opt_tbl)
-				% optAir = obj.Medium;
 				opt = opt_tbl.(ii);
-				Ek = obj.refract(opt);
-				% Ek = obj.SpectralField;
+				% Ek = obj.refract(opt);
 				if ii ~= opt.Parent.CrystalPosition
 					bOp = exp(-1i*opt.Dispersion);
 				end
 				TOp = opt.Transmission .^ 0.5;
 				Ek = TOp .* bOp .* Ek;
-				% obj.refract(optAir);
-			    obj.k2t(Ek);
+				% obj.k2t(Ek);
 			end
+			obj.k2t(Ek);
 		end
 
 		function Ek = refract(obj,optic2)

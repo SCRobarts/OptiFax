@@ -14,8 +14,10 @@ classdef SimWindow < handle
 		DeltaTime
 		DeltaOmega
 		DeltaNu
+		Granularity		% Colour plot sample spacing
 		Times
 		Timesfs
+		TimesfsPlot		% Timesfs sampled according to Granularity
 		Frequencies
 		Omegas
 		Wavelengths
@@ -54,6 +56,11 @@ classdef SimWindow < handle
 			tfs = obj.Times*1e15;
 		end
 
+		function tfsp = get.TimesfsPlot(obj)
+			cgrain = obj.Granularity;
+			tfsp = obj.Timesfs(1:cgrain:end);
+		end
+
 		function dt = get.DeltaTime(obj)
 			dt = obj.Times(2) - obj.Times(1);
 		end
@@ -64,6 +71,11 @@ classdef SimWindow < handle
 		
 		function dNu = get.DeltaNu(obj)
 			dNu = obj.Frequencies(2) - obj.Frequencies(1);
+		end
+
+		function cgrain = get.Granularity(obj)
+			n_points = obj.NumberOfPoints;
+			cgrain = ceil(n_points/(2^15));
 		end
 
 		function f = get.Frequencies(obj)

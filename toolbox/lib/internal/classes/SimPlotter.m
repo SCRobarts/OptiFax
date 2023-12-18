@@ -88,7 +88,7 @@ classdef SimPlotter < matlab.mixin.Copyable
 			obj.TemporalEvoAxes = obj.createEvoAxes;
 			xlabel(obj.TemporalEvoAxes,obj.TimeLabel)
 			xlim(obj.TemporalEvoAxes,obj.TimeLimits)
-			obj.TemporalEvoPlot = obj.cplot(obj.TemporalEvoAxes, obj.Parent.SimWin.Timesfs);
+			obj.TemporalEvoPlot = obj.cplot(obj.TemporalEvoAxes, obj.Parent.SimWin.TimesfsPlot);
 			
 			obj.SpectralAxes = obj.createInOutAxes(obj.OutTiles,"l");
 			[obj.SpectralMagPlot, obj.SpectralPhiPlot] = obj.Parent.XOutPulse.lplot(obj.SpecLimits);
@@ -186,14 +186,16 @@ classdef SimPlotter < matlab.mixin.Copyable
 		end
 
 		function roundtripplots(obj)
-			obj.scalefigs;
 			optSim = obj.Parent;
+			if optSim.ProgressPlotting
+				obj.scalefigs;
+			end
 			trip = optSim.SimTripNumber;
 			roundstr = ['Evolution over ', int2str(trip), ' round trips'];
 			obj.ProgressFigure.Name = roundstr;
 			obj.EvoTiles.Title.String = roundstr;
 			obj.SpectralEvoPlot.ZData = optSim.StoredPulses.ESD_pJ_THz;
-			obj.TemporalEvoPlot.ZData = optSim.StoredPulses.TemporalIntensity;
+			obj.TemporalEvoPlot.ZData = optSim.StoredPulses.TemporalIntensity(:,1:optSim.SimWin.Granularity:end);
 
 			outPulse = optSim.OutputPulse;
 			obj.ioplots(1,outPulse);
