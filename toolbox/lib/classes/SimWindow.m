@@ -22,6 +22,7 @@ classdef SimWindow < handle
 		RelativeOmegas
 		Lambdanm
 		LambdanmPlot
+		IsNumIndex		% Index to address the non-NAN elements of lambda
 	end
 
 	methods
@@ -90,14 +91,14 @@ classdef SimWindow < handle
 			l(or(l<obj.Limits(1), l>obj.Limits(2))) = NaN;
 		end
 
+		function ini = get.IsNumIndex(obj)
+			x = obj.Lambdanm;
+			ini = ~isnan(x);
+		end
+
 		function lp = get.LambdanmPlot(obj)
 			x = obj.Lambdanm;
-			id = ~isnan(x);
-			lp = x(id);
-			if lp(1)>lp(end)
-				lp = fliplr(lp);
-			end
-
+			lp = x(obj.IsNumIndex);
 		end
 
 		function cidx = get.ReferenceIndex(obj)

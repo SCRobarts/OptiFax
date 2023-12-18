@@ -207,7 +207,8 @@ classdef OpticalSim < matlab.mixin.Copyable
 
 		function Ik = get.IkEvoData(obj)
 			Eks = ifftshift(obj.SpectralProgressShift.',2);
-			Ik = abs(Eks);
+			% Ik = abs(Eks);
+			Ik = abs(Eks(:,obj.SimWin.IsNumIndex));
 			Ik = gather(Ik);
 		end
 

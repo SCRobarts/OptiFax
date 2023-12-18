@@ -83,7 +83,7 @@ classdef SimPlotter < matlab.mixin.Copyable
 			obj.SpectralEvoAxes = obj.createEvoAxes;
 			xlabel(obj.SpectralEvoAxes,obj.SpecLabel)
 			xlim(obj.SpectralEvoAxes, obj.SpecLimits);
-			obj.SpectralEvoPlot = obj.cplot(obj.SpectralEvoAxes, obj.Parent.SimWin.Lambdanm);
+			obj.SpectralEvoPlot = obj.cplot(obj.SpectralEvoAxes, obj.Parent.SimWin.LambdanmPlot);
 			
 			obj.TemporalEvoAxes = obj.createEvoAxes;
 			xlabel(obj.TemporalEvoAxes,obj.TimeLabel)
@@ -153,7 +153,7 @@ classdef SimPlotter < matlab.mixin.Copyable
 			if ~obj.ProgressFigure.Visible
 				obj.ProgressFigure.Visible = "on";
 			end
-			drawnow
+			drawnow('limitrate');
 		end
 
 		function updateYData(obj,ydat)
@@ -192,21 +192,13 @@ classdef SimPlotter < matlab.mixin.Copyable
 			roundstr = ['Evolution over ', int2str(trip), ' round trips'];
 			obj.ProgressFigure.Name = roundstr;
 			obj.EvoTiles.Title.String = roundstr;
-			obj.SpectralEvoPlot.ZData = optSim.StoredPulses.EnergySpectralDensity;
+			obj.SpectralEvoPlot.ZData = optSim.StoredPulses.ESD_pJ_THz;
 			obj.TemporalEvoPlot.ZData = optSim.StoredPulses.TemporalIntensity;
 
 			outPulse = optSim.OutputPulse;
-			% outspecstr = outPulse.Name + ' Spectral in ' + outPulse.Medium.Bulk.Material;
-			% outtempstr = outPulse.Name + ' Temporal in ' + outPulse.Medium.Bulk.Material;
-			% obj.SpectralAxes(1).Title.String = outspecstr;
-			% obj.TemporalAxes(1).Title.String = outtempstr;
 			obj.ioplots(1,outPulse);
 
 			inPulse = optSim.InputPulse;
-			% inspecstr = inPulse.Name + ' Spectral in ' + inPulse.Medium.Bulk.Material;
-			% intempstr = inPulse.Name + ' Temporal in ' + inPulse.Medium.Bulk.Material;
-			% obj.SpectralAxes(2).Title.String = inspecstr;
-			% obj.TemporalAxes(2).Title.String = intempstr;
 			obj.ioplots(2,inPulse);
 			
 			if ~obj.ProgressFigure.Visible

@@ -211,14 +211,9 @@ classdef OpticalPulse < matlab.mixin.Copyable
 		end
 
 		function esd = get.ESD_pJ_THz(obj)
-			x = obj.SimWin.Lambdanm;
 			y = abs(obj.EnergySpectralDensity*1e24);
-			ids = ~isnan(x);
-			x = x(ids);
+			ids = obj.SimWin.IsNumIndex;
 			y = y(:,ids);
-			if x(1) > x(end)
-				y = fliplr(y);
-			end
 			esd = gather(y);
 		end
 

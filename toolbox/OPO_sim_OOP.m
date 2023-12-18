@@ -37,7 +37,7 @@ load('simWin.mat');
 simWin.Limits = [300 6000];
 % simWin.TemporalRange = simWin.TemporalRange / 2;
 simWin.TimeOffset = -0.5e-12;
-% simWin.NumberOfPoints = 2^17;
+simWin.NumberOfPoints = 2^20;
 
 %% Optical Simulation Setup
 optSim = OpticalSim(laser,cav,simWin,[0.2,4],0.25e-6);
