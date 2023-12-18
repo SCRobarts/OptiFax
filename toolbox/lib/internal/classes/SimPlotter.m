@@ -153,7 +153,7 @@ classdef SimPlotter < matlab.mixin.Copyable
 			if ~obj.ProgressFigure.Visible
 				obj.ProgressFigure.Visible = "on";
 			end
-			drawnow('limitrate');
+			drawnow('limitrate','nocallbacks');
 		end
 
 		function updateYData(obj,ydat)

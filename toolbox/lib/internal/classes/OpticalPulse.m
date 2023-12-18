@@ -228,13 +228,22 @@ classdef OpticalPulse < matlab.mixin.Copyable
 
 		function Ek = get.SpectralField(obj)
 			n = obj.SimWin.NumberOfPoints;
+			n = 2*n;
 			Ek = fftshift(fft(obj.TemporalField,n,2),2);
+			if n > obj.SimWin.NumberOfPoints
+				Ek = Ek(1:2:end);
+			end
 			% Ek = fftshift(fft(fftshift(obj.TemporalField)));
 		end
 
 		function k2t(obj,Ek)
 			n = obj.SimWin.NumberOfPoints;
-			obj.TemporalField = ifft(ifftshift(Ek,2),n,2);
+			n = 2*n;
+			Et = ifft(ifftshift(Ek,2),n,2);
+			if n > obj.SimWin.NumberOfPoints
+				Et = 2*Et(1:2:end);
+			end
+			obj.TemporalField = Et;
 			% obj.TemporalField = ifftshift(ifft(ifftshift(Ek)));
 			% obj.TemporalField = ifftshift(ifft(Ek));
 		end
@@ -336,6 +345,15 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			ylabel('Relative Phase / rad')
 			title(obj.Name + ' Temporal in ' + obj.Medium.Bulk.Material)
 			hold off
+		end
+
+		function plot(obj)
+			figure
+			tiledlayout(2,1)
+			nexttile
+			obj.lplot;
+			nexttile
+			obj.tplot;
 		end
 
 	end
