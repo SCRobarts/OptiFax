@@ -231,7 +231,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			n = 2*n;
 			Ek = fftshift(fft(obj.TemporalField,n,2),2);
 			if n > obj.SimWin.NumberOfPoints
-				Ek = Ek(1:2:end);
+				Ek = Ek(:,1:2:end);
 			end
 			% Ek = fftshift(fft(fftshift(obj.TemporalField)));
 		end
@@ -241,7 +241,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			n = 2*n;
 			Et = ifft(ifftshift(Ek,2),n,2);
 			if n > obj.SimWin.NumberOfPoints
-				Et = 2*Et(1:2:end);
+				Et = 2*Et(:,1:2:end);
 			end
 			obj.TemporalField = Et;
 			% obj.TemporalField = ifftshift(ifft(ifftshift(Ek)));

@@ -48,10 +48,10 @@ optSim.RoundTrips = 40;
 % optSim.ProgressPlotting = 0;
 optSim.setup;
 
-optSim.PumpPulse.plot
-optSim.PumpPulse.refract(cav.Xtal);
-optSim.PumpPulse.plot
-return
+% optSim.PumpPulse.plot
+% optSim.PumpPulse.refract(cav.Xtal);
+% optSim.PumpPulse.plot
+% return
 %% Run Sim
 optSim.run
 
