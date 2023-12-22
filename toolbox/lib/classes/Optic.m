@@ -64,13 +64,10 @@ classdef Optic < matlab.mixin.Copyable
 
 		function obj = simulate(obj,simWin)
 			obj.SimWin = simWin;
-			% obj.S1.simulate(simWin);
 			obj.S1.Parent = obj;
 			obj.Transmission = obj.S1.Transmission;
 			obj.Dispersion = obj.S1.Dispersion;
 			if obj.Regime == "T"
-				% obj.Material.simulate(simWin);
-				% obj.S2.simulate(simWin);
 				obj.Bulk.Parent = obj;
 				obj.Bulk.simulate;
 				obj.S2.Parent = obj;
