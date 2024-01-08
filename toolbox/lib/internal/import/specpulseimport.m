@@ -20,7 +20,7 @@ else
 	pulsedat = struct2table(pulsedat);
 end
 
-w = 2*pi*c ./ (pulsedat.(1).');	% Convert wavelength to ang. freq. and transpose to row 
+w = 2e9*pi*c ./ (pulsedat.(1).');	% Convert wavelength to ang. freq. and transpose to row 
 E_ft = pulsedat.(2).';
 
 if width(pulsedat) > 2

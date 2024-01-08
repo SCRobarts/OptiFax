@@ -43,7 +43,7 @@ simWin.NumberOfPoints = 2^19;
 optSim = OpticalSim(laser,cav,simWin,[0.2,4],0.25e-6);
 % return
 % load('pbOPOsim.mat');
-optSim.RoundTrips = 40;
+optSim.RoundTrips = 400;
 % optSim.Hardware = "CPU";
 % optSim.ProgressPlotting = 0;
 optSim.setup;
