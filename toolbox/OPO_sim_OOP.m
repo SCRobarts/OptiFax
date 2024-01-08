@@ -34,16 +34,16 @@ load('GigajetTiSapph.mat');
 %%% or load in an existing simulation window:
 load('simWin.mat');
 %%% then customise simulation window properties if required:
-simWin.Limits = [250 6500];
-% simWin.TemporalRange = simWin.TemporalRange / 2;
+% simWin.Limits = [350 5500];
+simWin.TemporalRange = simWin.TemporalRange / 6;
 simWin.TimeOffset = -0.25e-12;
-simWin.NumberOfPoints = 2^19;
+simWin.NumberOfPoints = 2^20;
 
 %% Optical Simulation Setup
 optSim = OpticalSim(laser,cav,simWin,[0.2,4],0.25e-6);
 % return
 % load('pbOPOsim.mat');
-optSim.RoundTrips = 400;
+optSim.RoundTrips = 40;
 % optSim.Hardware = "CPU";
 % optSim.ProgressPlotting = 0;
 optSim.setup;

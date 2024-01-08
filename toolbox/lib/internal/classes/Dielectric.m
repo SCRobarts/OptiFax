@@ -38,9 +38,11 @@ classdef Dielectric < matlab.mixin.Copyable
 			mat = obj.Material;
 			switch mat
 				case "N-BK7"
-					file_str = "wpd_BK7_0_4000_1cm.csv";
+					% file_str = "wpd_BK7_0_4000_1cm.csv";
+					file_str = "BK7_Transmission_1cm.txt";
 				case {"PPLN","LN_e","LN_o"}	
-					file_str = "PPLN_T_1mm_unc_full";
+					% file_str = "PPLN_T_1mm_unc_full";
+					file_str = "LN_Transmission_1cm.txt";
 				case "air"
 					file_str = "Water_Vapour_Transmission";
 				case "H-ZLaF68C"
@@ -68,7 +70,8 @@ classdef Dielectric < matlab.mixin.Copyable
 				case "N-BK7"
 					file_l = 0.01;
 				case {"PPLN","LN_e","LN_o"}	
-					file_l = 0.001;
+					% file_l = 0.001;
+					file_l = 0.01;
 				case "air"
 					file_l = 1;
 				otherwise
