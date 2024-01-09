@@ -14,7 +14,8 @@ switch material
 	case "LN_o"
 		n = n_mgoppln_gayer(lam,2,T_celsius);
 	otherwise
-		selldat = readtable('Sellmeier_Coefficients.xlsx','ReadRowNames',true);
+		% selldat = readtable('Sellmeier_Coefficients.xlsx','ReadRowNames',true);
+		selldat = readtable('Materials.csv','ReadRowNames',true);
 		M = selldat{material,8};
 	
 		if M == "Schott"
