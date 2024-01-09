@@ -7,8 +7,6 @@ arguments
 	T_celsius = 20;
 end
 switch material
-	case "air"
-		n = ones(size(lam));
 	case {"PPLN","LN_e"}
 		n = n_mgoppln_gayer(lam,1,T_celsius);
 	case "LN_o"
