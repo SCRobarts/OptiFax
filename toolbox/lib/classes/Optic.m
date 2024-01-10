@@ -14,6 +14,8 @@ classdef Optic < matlab.mixin.Copyable
 	properties (Transient)
 		SimWin		SimWindow
 		Transmission
+		Reflection
+		Absorption
 		Dispersion
 	end
 	properties (Dependent)
@@ -69,17 +71,20 @@ classdef Optic < matlab.mixin.Copyable
 				obj.Bulk.Parent = obj;
 				obj.Bulk.simulate;
 			obj.Transmission = obj.S1.Transmission;
+			obj.Reflection = obj.S1.Reflection;		% Counting only the first surface reflection as other reflections form separate "pulses"
+			obj.Absorption = obj.Bulk.Absorption;
 			obj.Dispersion = obj.S1.Dispersion;
-			if obj.Regime == "T"
+
 				obj.Transmission = obj.Transmission...
 								.* obj.Bulk.Transmission...
 								.* obj.S2.Transmission;
 
+			if obj.Regime == "T"
 				obj.Dispersion = obj.Dispersion...
 							   + obj.Bulk.Dispersion...
 							   + obj.S2.Dispersion;
 			else
-				obj.Transmission = 1 - obj.Transmission;
+				% obj.Transmission = 1 - obj.Transmission;
 			end
 		end
 
@@ -130,9 +135,14 @@ classdef Optic < matlab.mixin.Copyable
 			tl = tiledlayout(fh,2,2);
 
 			nexttile
-			wavplot(obj.SimWin.Lambdanm,obj.Transmission)
+			if strcmp(obj.Regime,"T")
+				wavplot(obj.SimWin.Lambdanm,obj.Transmission)
+				ylabel('Power Transmission')
+			else
+				wavplot(obj.SimWin.Lambdanm,obj.Reflection)
+				ylabel('Power Reflection')
+			end
 			xlim(lims)
-			ylabel('Power Transmission')
 
 			nexttile
 			wavplot(obj.SimWin.Lambdanm,obj.Dispersion)
