@@ -90,7 +90,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			obj.k2t(Ek);
 		end
 
-		function pulseOC = split(obj,optic)
+		function pulseOC = outputcouple(obj,optic)
 			pulseOC = copy(obj);
 			if strcmp(optic.Regime,"T")
 					pulseOC.reflect(optic);
