@@ -71,7 +71,6 @@ classdef Optic < matlab.mixin.Copyable
 			obj.Transmission = obj.S1.Transmission;
 			obj.Dispersion = obj.S1.Dispersion;
 			if obj.Regime == "T"
-
 				obj.Transmission = obj.Transmission...
 								.* obj.Bulk.Transmission...
 								.* obj.S2.Transmission;

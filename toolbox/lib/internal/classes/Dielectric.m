@@ -14,6 +14,7 @@ classdef Dielectric < matlab.mixin.Copyable
 	properties (Dependent)
 		MaterialTFile
 		Transmission
+		Absorption
 		Phi
 		Dispersion
 		PathLength
@@ -88,6 +89,10 @@ classdef Dielectric < matlab.mixin.Copyable
 			% end
 			T = transmission(obj.MaterialTFile,lam,1,nr,frnum,lims(1),lims(2));
 			T = T .^ (obj.PathLength/file_l);
+		end
+
+		function A = get.Absorption(obj)
+			A = 1 - obj.Transmission;
 		end
 
 		function PL = get.PathLength(obj)

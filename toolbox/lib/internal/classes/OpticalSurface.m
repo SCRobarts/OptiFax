@@ -12,6 +12,7 @@ classdef OpticalSurface < matlab.mixin.Copyable
 	end
 	properties (Dependent)
 		Transmission
+		Reflection
 		Dispersion
 	end
 
@@ -51,6 +52,10 @@ classdef OpticalSurface < matlab.mixin.Copyable
 			else
 				T = transmission(obj.Coating,lam);
 			end
+		end
+
+		function R = get.Reflection(obj)
+			R = 1 - obj.Transmission;
 		end
 
 		function phi_rel = get.Dispersion(obj)
