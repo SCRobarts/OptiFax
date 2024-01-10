@@ -28,6 +28,9 @@ classdef OpticalSurface < matlab.mixin.Copyable
 				parent handle = [];
 			end
 			obj.Coating = coatingStr;
+			if class(material) == "Dielectric"
+				material = material.Material;
+			end
 			obj.Material = material;
 			obj.IncidentAngle = theta;
 			obj.Order = order;

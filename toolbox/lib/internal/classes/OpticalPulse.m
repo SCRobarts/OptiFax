@@ -76,13 +76,36 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			for ii = 1:width(opt_tbl)
 				opt = opt_tbl.(ii);
 				% Ek = obj.refract(opt);
-				if ii ~= opt.Parent.CrystalPosition
+				if class(opt) ~= "Optic" || ii ~= opt.Parent.CrystalPosition
 					bOp = exp(-1i*opt.Dispersion);
 				end
 				TOp = opt.Transmission .^ 0.5;
 				Ek = TOp .* bOp .* Ek;
 				% obj.k2t(Ek);
 			end
+			obj.k2t(Ek);
+		end
+
+		function pulseOC = split(obj,optic)
+			pulseOC = copy(obj);
+			if class(optic) == "Optic" 
+				if strcmp(optic.Regime,"T")
+					pulseOC.reflect(optic.S1);
+					obj.propagate(optic.S1);
+				else
+					pulseOC.propagate()
+				end
+			else
+				pulseOC.reflect(optic);
+				obj.propagate(optic);
+			end
+		end
+
+		function reflect(obj,optic)
+			RI = 1 - optic.Transmission;
+			RE = RI .^ 0.5;
+			Ek = obj.SpectralField;
+			Ek = Ek .* RE;
 			obj.k2t(Ek);
 		end
 
@@ -268,7 +291,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			obj.Medium = pulse.Medium;
 		end
 
-		function pulse = copyto(obj)
+		function pulse = writeto(obj)
 			pulse = copy(obj);
 			pulse.gather;
 		end

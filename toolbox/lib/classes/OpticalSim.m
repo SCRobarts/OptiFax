@@ -83,13 +83,14 @@ classdef OpticalSim < matlab.mixin.Copyable
 			obj.PumpPulse = copy(obj.Source.Pulse);	% Copy the source pulse to create modifiable pump
 			obj.PumpPulse.Name = "Pump Pulse";
 			obj.convertArrays;	% Convert arrays to correct precision and type
+			
 			obj.PumpPulse.applyGDD(obj.System.PumpChirp);
 			
-			obj.InputPulse = obj.PumpPulse.copyto;
+			obj.InputPulse = obj.PumpPulse.writeto;
 			obj.InputPulse.Name = "Simulation-In Pulse";
-			obj.XInPulse = obj.PumpPulse.copyto;
+			obj.XInPulse = obj.PumpPulse.writeto;
 			obj.XInPulse.Name = "Xtal-In Pulse";
-			obj.XOutPulse = obj.PumpPulse.copyto;
+			obj.XOutPulse = obj.PumpPulse.writeto;
 			obj.XOutPulse.Name = "Xtal-Out Pulse";
 			obj.Pulse = copy(obj.PumpPulse);	% Copy the pump pulse as basis for cavity field
 			obj.Pulse.Name = "Intracavity Pulse";
@@ -111,7 +112,7 @@ classdef OpticalSim < matlab.mixin.Copyable
 			end
 			obj.StepSizeModifiers = obj.convArr(zeros(obj.RoundTrips,obj.System.Xtal.NSteps));
 			obj.PumpPulse.refract(airOpt);
-			obj.StoredPulses = obj.Pulse.copyto;
+			obj.StoredPulses = obj.Pulse.writeto;
 			obj.StoredPulses.addDims([obj.RoundTrips,1]);
 		end
 
@@ -175,7 +176,7 @@ classdef OpticalSim < matlab.mixin.Copyable
 				obj.OutputPulse.TemporalField = obj.Pulse.TemporalField;
 			
 				obj.Pulse.propagate(obj.System.Optics);
-				obj.Pulse.refract(airOpt);
+				% obj.Pulse.refract(airOpt);
 				obj.OutputPulse.minus(obj.Pulse);
 				obj.Pulse.applyGD(obj.Delay);	
 			end
@@ -183,6 +184,16 @@ classdef OpticalSim < matlab.mixin.Copyable
 			obj.FinalPlotter.updateYData((obj.TripNumber-obj.RoundTrips) + (1:obj.RoundTrips));
 			obj.FinalPlotter.roundtripplots;
 
+		end
+
+		function detect(obj)
+			OCopt = obj.System.Optics.(obj.System.OCPosition);
+			if strcmp(OCopt.Regime,"T")
+				obj.OutputPulse.copyfrom(obj.Pulse);	% Temp store 
+				obj.Pulse.propagate(OCopt.S1)
+			else
+				"R"
+			end
 		end
 		
 		function pump(obj)

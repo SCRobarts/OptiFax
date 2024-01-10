@@ -31,8 +31,8 @@ classdef Optic < matlab.mixin.Copyable
 			arguments
 				regimeStr string	= "T"; 
 				s1					= 'None';
-				material			= 'N/A';
-				length_m			= 0;
+				material			= "FS";
+				length_m			= 0.001;
 				theta				= 0;
 				s2					= s1;
 				celsius				= 20;
@@ -44,12 +44,12 @@ classdef Optic < matlab.mixin.Copyable
 				if class(s1) ~= "OpticalSurface"
 					s1 = OpticalSurface(s1,material,theta,1,obj);
 				end
-				if regimeStr == "R"
-					obj.Regime = regimeStr;
-					obj.S1 = s1;
-				elseif regimeStr == "T"
-					obj.Regime = regimeStr;
-					obj.S1 = s1;
+				obj.Regime = regimeStr;
+				obj.S1 = s1;
+				% if regimeStr == "R"
+				% 
+				% elseif regimeStr == "T"
+
 					if class(material) ~= "Dielectric"
 						material = Dielectric(material,length_m,celsius,obj);	
 					end
@@ -58,19 +58,20 @@ classdef Optic < matlab.mixin.Copyable
 					end
 					obj.Bulk = material;
 					obj.S2 = s2;
-				end
+			% 	end
 			end
 		end
 
 		function obj = simulate(obj,simWin)
 			obj.SimWin = simWin;
 			obj.S1.Parent = obj;
+			obj.S2.Parent = obj;
+				obj.Bulk.Parent = obj;
+				obj.Bulk.simulate;
 			obj.Transmission = obj.S1.Transmission;
 			obj.Dispersion = obj.S1.Dispersion;
 			if obj.Regime == "T"
-				obj.Bulk.Parent = obj;
-				obj.Bulk.simulate;
-				obj.S2.Parent = obj;
+
 				obj.Transmission = obj.Transmission...
 								.* obj.Bulk.Transmission...
 								.* obj.S2.Transmission;
