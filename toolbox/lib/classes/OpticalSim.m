@@ -189,6 +189,7 @@ classdef OpticalSim < matlab.mixin.Copyable
 		function detect(obj)
 			OCopt = obj.System.Optics.(obj.System.OCPosition);
 			pulseOC = obj.Pulse.outputcouple(OCopt);
+			obj.OutputPulse.copyfrom(pulseOC);
 		end
 		
 		function pump(obj)
