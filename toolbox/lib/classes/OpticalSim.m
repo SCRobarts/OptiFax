@@ -8,6 +8,7 @@ classdef OpticalSim < matlab.mixin.Copyable
 	%	Sebastian C. Robarts 2023 - sebrobarts@gmail.com
 	
 	properties
+		DetectorPosition		% Which cavity optic to collect OC data from
 		Pulse	OpticalPulse	% The pulse object for the cavity field, transient?
 		Source	Laser		% Potentially just a pulse?
 		System	Cavity		% Leaving cavity here for now, but should open up in future
@@ -79,6 +80,7 @@ classdef OpticalSim < matlab.mixin.Copyable
 			obj.TripNumber = 0;
 			obj.Source.simulate(obj.SimWin);	% Will we need to load these objects?
 			obj.System.simulate(obj.SimWin);
+			obj.DetectorPosition = obj.System.OCPosition;
 
 			obj.PumpPulse = copy(obj.Source.Pulse);	% Copy the source pulse to create modifiable pump
 			obj.PumpPulse.Name = "Pump Pulse";
@@ -173,19 +175,16 @@ classdef OpticalSim < matlab.mixin.Copyable
 				end
 				
 				obj.Pulse.refract(airOpt);
-				% obj.OutputPulse.TemporalField = obj.Pulse.TemporalField;
-			
-				% obj.Pulse.propagate(obj.System.Optics);
-				if obj.System.OCPosition > 1
-					obj.Pulse.propagate(obj.System.Optics(:,1:obj.System.OCPosition-1));
+				if obj.DetectorPosition > 1
+					obj.Pulse.propagate(obj.System.Optics(:,1:obj.DetectorPosition-1));
 				end
 				% obj.Pulse.refract(airOpt);
-				% obj.OutputPulse.minus(obj.Pulse);	
 				obj.detect;
 				obj.Pulse.applyGD(obj.Delay);
-				if obj.System.OCPosition < width(obj.System.Optics)
-					obj.Pulse.propagate(obj.System.Optics(:,obj.System.OCPosition+1:end));
+				if obj.DetectorPosition < width(obj.System.Optics)
+					obj.Pulse.propagate(obj.System.Optics(:,obj.DetectorPosition+1:end));
 				end
+
 			end
 
 			obj.FinalPlotter.updateYData((obj.TripNumber-obj.RoundTrips) + (1:obj.RoundTrips));
@@ -194,7 +193,7 @@ classdef OpticalSim < matlab.mixin.Copyable
 		end
 
 		function detect(obj)
-			OCopt = obj.System.Optics.(obj.System.OCPosition);
+			OCopt = obj.System.Optics.(obj.DetectorPosition);
 			pulseOC = obj.Pulse.outputcouple(OCopt);
 			obj.OutputPulse.copyfrom(pulseOC);
 		end
