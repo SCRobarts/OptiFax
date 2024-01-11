@@ -37,5 +37,8 @@ if ~isempty(pks)
 	textGroupH.Children = flip(textGroupH.Children);
 	ymax = textGroupH.Children(maxPkid).Extent(2) + textGroupH.Children(maxPkid).Extent(4);
 	axh.YAxis(1).Limits = [0 1.1*ymax];
+else
+	ymax = max(y);
+	axh.YAxis(1).Limits = [0 1.1*ymax];
 end
 end
