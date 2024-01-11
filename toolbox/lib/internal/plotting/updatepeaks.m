@@ -18,7 +18,7 @@ if x(1) > x(end)
 end
 
 [pks,locs,fwhps,proms] = findpeaks(y,x,"MinPeakDistance",minDist,"MinPeakProminence",minProm);
-[~,maxPkid] = max(pks);
+[~,maxPkID] = max(pks);
 
 h = findobj(axh,'Type','hggroup');
 if ishandle(h)
@@ -35,7 +35,7 @@ if ~isempty(pks)
 								 	'Rotation',90);
 	
 	textGroupH.Children = flip(textGroupH.Children);
-	ymax = textGroupH.Children(maxPkid).Extent(2) + textGroupH.Children(maxPkid).Extent(4);
+	ymax = textGroupH.Children(maxPkID).Extent(2) + textGroupH.Children(maxPkID).Extent(4);
 	axh.YAxis(1).Limits = [0 1.1*ymax];
 else
 	ymax = max(y);
