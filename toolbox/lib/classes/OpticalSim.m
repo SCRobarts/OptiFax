@@ -139,7 +139,7 @@ classdef OpticalSim < matlab.mixin.Copyable
 			obj.InputPulse.copyfrom(obj.PumpPulse);
 			obj.InputPulse.add(obj.Pulse);
 			obj.OutputPulse = copy(obj.Pulse);
-			obj.OutputPulse.Name = "Combined Transmitted Pulse";
+			obj.OutputPulse.Name = "Detected Pulse";
 
 			while obj.SimTripNumber < obj.RoundTrips
 
@@ -173,12 +173,19 @@ classdef OpticalSim < matlab.mixin.Copyable
 				end
 				
 				obj.Pulse.refract(airOpt);
-				obj.OutputPulse.TemporalField = obj.Pulse.TemporalField;
+				% obj.OutputPulse.TemporalField = obj.Pulse.TemporalField;
 			
-				obj.Pulse.propagate(obj.System.Optics);
+				% obj.Pulse.propagate(obj.System.Optics);
+				if obj.System.OCPosition > 1
+					obj.Pulse.propagate(obj.System.Optics(:,1:obj.System.OCPosition-1));
+				end
 				% obj.Pulse.refract(airOpt);
-				obj.OutputPulse.minus(obj.Pulse);
-				obj.Pulse.applyGD(obj.Delay);	
+				% obj.OutputPulse.minus(obj.Pulse);	
+				obj.detect;
+				obj.Pulse.applyGD(obj.Delay);
+				if obj.System.OCPosition < width(obj.System.Optics)
+					obj.Pulse.propagate(obj.System.Optics(:,obj.System.OCPosition+1:end));
+				end
 			end
 
 			obj.FinalPlotter.updateYData((obj.TripNumber-obj.RoundTrips) + (1:obj.RoundTrips));
