@@ -75,14 +75,45 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			Ek = obj.SpectralField;
 			for ii = 1:width(opt_tbl)
 				opt = opt_tbl.(ii);
+				% Temp removed due to high overhead of FFTs and no effect on calculated outcome:
 				% Ek = obj.refract(opt);
-				if ii ~= opt.Parent.CrystalPosition
+				if class(opt) ~= "NonlinearCrystal"
 					bOp = exp(-1i*opt.Dispersion);
 				end
-				TOp = opt.Transmission .^ 0.5;
-				Ek = TOp .* bOp .* Ek;
-				% obj.k2t(Ek);
+				if strcmp(opt.Regime,"T")
+					MagOp = opt.Transmission .^ 0.5;
+				else
+					MagOp = opt.Reflection .^ 0.5;
+				end
+				Ek = MagOp .* bOp .* Ek;
 			end
+			obj.k2t(Ek);
+		end
+
+		function pulseOC = outputcouple(obj,optic)
+			pulseOC = copy(obj);
+			if strcmp(optic.Regime,"T")
+				obj.propagate(optic);
+				pulseOC.reflect(optic);
+			else
+				obj.propagate(optic);
+				pulseOC.transmit(optic);
+			end
+		end
+
+		function transmit(obj,optic)
+			TE = optic.Transmission .^ 0.5;
+			bOp = exp(-1i*optic.Dispersion);
+			Ek = obj.SpectralField;
+			Ek = TE .* bOp .* Ek;
+			obj.k2t(Ek);
+		end
+
+		function reflect(obj,optic)
+			RE = optic.Reflection .^ 0.5;
+			bOp = exp(-1i*optic.Dispersion);
+			Ek = obj.SpectralField;
+			Ek = RE .* bOp .* Ek;
 			obj.k2t(Ek);
 		end
 
@@ -268,7 +299,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			obj.Medium = pulse.Medium;
 		end
 
-		function pulse = copyto(obj)
+		function pulse = writeto(obj)
 			pulse = copy(obj);
 			pulse.gather;
 		end

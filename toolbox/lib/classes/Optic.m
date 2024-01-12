@@ -5,6 +5,7 @@ classdef Optic < matlab.mixin.Copyable
 	%
 	%	Sebastian C. Robarts 2023 - sebrobarts@gmail.com
 	properties
+		Name		string
 		Regime		string
 		S1			OpticalSurface
 		Bulk		Dielectric
@@ -14,6 +15,8 @@ classdef Optic < matlab.mixin.Copyable
 	properties (Transient)
 		SimWin		SimWindow
 		Transmission
+		Reflection
+		Absorption
 		Dispersion
 	end
 	properties (Dependent)
@@ -31,8 +34,8 @@ classdef Optic < matlab.mixin.Copyable
 			arguments
 				regimeStr string	= "T"; 
 				s1					= 'None';
-				material			= 'N/A';
-				length_m			= 0;
+				material			= "FS";
+				length_m			= 0.001;
 				theta				= 0;
 				s2					= s1;
 				celsius				= 20;
@@ -44,12 +47,12 @@ classdef Optic < matlab.mixin.Copyable
 				if class(s1) ~= "OpticalSurface"
 					s1 = OpticalSurface(s1,material,theta,1,obj);
 				end
-				if regimeStr == "R"
-					obj.Regime = regimeStr;
-					obj.S1 = s1;
-				elseif regimeStr == "T"
-					obj.Regime = regimeStr;
-					obj.S1 = s1;
+				obj.Regime = regimeStr;
+				obj.S1 = s1;
+				% if regimeStr == "R"
+				% 
+				% elseif regimeStr == "T"
+
 					if class(material) ~= "Dielectric"
 						material = Dielectric(material,length_m,celsius,obj);	
 					end
@@ -58,28 +61,31 @@ classdef Optic < matlab.mixin.Copyable
 					end
 					obj.Bulk = material;
 					obj.S2 = s2;
-				end
+			% 	end
 			end
 		end
 
 		function obj = simulate(obj,simWin)
 			obj.SimWin = simWin;
 			obj.S1.Parent = obj;
-			obj.Transmission = obj.S1.Transmission;
-			obj.Dispersion = obj.S1.Dispersion;
-			if obj.Regime == "T"
+			obj.S2.Parent = obj;
 				obj.Bulk.Parent = obj;
 				obj.Bulk.simulate;
-				obj.S2.Parent = obj;
+			obj.Transmission = obj.S1.Transmission;
+			obj.Reflection = obj.S1.Reflection;		% Counting only the first surface reflection as other reflections form separate "pulses"
+			obj.Absorption = obj.Bulk.Absorption;
+			obj.Dispersion = obj.S1.Dispersion;
+
 				obj.Transmission = obj.Transmission...
 								.* obj.Bulk.Transmission...
 								.* obj.S2.Transmission;
 
+			if obj.Regime == "T"
 				obj.Dispersion = obj.Dispersion...
 							   + obj.Bulk.Dispersion...
 							   + obj.S2.Dispersion;
 			else
-				obj.Transmission = 1 - obj.Transmission;
+				% obj.Transmission = 1 - obj.Transmission;
 			end
 		end
 
@@ -130,9 +136,14 @@ classdef Optic < matlab.mixin.Copyable
 			tl = tiledlayout(fh,2,2);
 
 			nexttile
-			wavplot(obj.SimWin.Lambdanm,obj.Transmission)
+			if strcmp(obj.Regime,"T")
+				wavplot(obj.SimWin.Lambdanm,obj.Transmission)
+				ylabel('Power Transmission')
+			else
+				wavplot(obj.SimWin.Lambdanm,obj.Reflection)
+				ylabel('Power Reflection')
+			end
 			xlim(lims)
-			ylabel('Power Transmission')
 
 			nexttile
 			wavplot(obj.SimWin.Lambdanm,obj.Dispersion)
@@ -150,6 +161,15 @@ classdef Optic < matlab.mixin.Copyable
 			wavplot(obj.SimWin.Lambdanm,obj.GDD*1e30)
 			xlim(lims)
 			ylabel('GDD (fs^2)')
+		end
+
+		function store(obj,name)
+			obj.Name = name;
+			currentfolder = pwd;
+			cd(OptiFaxRoot);
+			cd("objects" + filesep + "optics");
+			save(name,"obj","-mat");
+			cd(currentfolder);
 		end
 
 	end

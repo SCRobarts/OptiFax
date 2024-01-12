@@ -45,12 +45,14 @@ classdef Cavity < handle
 				opt = obj.PreCavityOptics.(ii);
 				opt.Parent = obj;
 				opt.simulate(obj.SimWin);
+				opt.Name = obj.PreCavityOptics.Properties.VariableNames(ii);
 				obj.PumpDispersion = obj.PumpDispersion + opt.Dispersion;
 			end
 			for ii = 1:width(obj.Optics)
 				opt = obj.Optics.(ii);
 				opt.Parent = obj;
 				opt.simulate(obj.SimWin);
+				opt.Name = obj.Optics.Properties.VariableNames(ii);
 				obj.Transmission = obj.Transmission .* opt.Transmission;
 				obj.Dispersion = obj.Dispersion + opt.Dispersion;
 				obj.GroupDelay = obj.GroupDelay + opt.GroupDelay;
