@@ -35,6 +35,7 @@ if ~isempty(pks)
 								 	'Rotation',90);
 	
 	textGroupH.Children = flip(textGroupH.Children);
+	axh.YAxis(1).Limits = [0 1];
 	ymax = textGroupH.Children(maxPkID).Extent(2) + textGroupH.Children(maxPkID).Extent(4);
 	while ymax > axh.YAxis(1).Limits
 		axh.YAxis(1).Limits = [0 1.1*ymax];
