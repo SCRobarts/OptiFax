@@ -5,6 +5,7 @@ classdef Optic < matlab.mixin.Copyable
 	%
 	%	Sebastian C. Robarts 2023 - sebrobarts@gmail.com
 	properties
+		Name		string
 		Regime		string
 		S1			OpticalSurface
 		Bulk		Dielectric
@@ -160,6 +161,15 @@ classdef Optic < matlab.mixin.Copyable
 			wavplot(obj.SimWin.Lambdanm,obj.GDD*1e30)
 			xlim(lims)
 			ylabel('GDD (fs^2)')
+		end
+
+		function store(obj,name)
+			obj.Name = name;
+			currentfolder = pwd;
+			cd(OptiFaxRoot);
+			cd("objects" + filesep + "optics");
+			save(name,"obj","-mat");
+			cd(currentfolder);
 		end
 
 	end

@@ -141,7 +141,7 @@ classdef OpticalSim < matlab.mixin.Copyable
 			obj.InputPulse.copyfrom(obj.PumpPulse);
 			obj.InputPulse.add(obj.Pulse);
 			obj.OutputPulse = copy(obj.Pulse);
-			obj.OutputPulse.Name = "Detected Pulse";
+			obj.OutputPulse.Name = ["Detected Pulse (" + obj.System.Optics.(obj.DetectorPosition).Name + ")"];
 
 			while obj.SimTripNumber < obj.RoundTrips
 
