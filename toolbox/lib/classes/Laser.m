@@ -104,7 +104,7 @@ classdef Laser < matlab.mixin.Copyable
 			currentfolder = pwd;
 			cd(OptiFaxRoot(devFlag));
 			cd("toolbox" + filesep + "objects" + filesep + "lasers");
-			save(name,"obj","-mat");
+			save(name + ".mat","obj","-mat");
 			cd(currentfolder);
 		end
 	end
