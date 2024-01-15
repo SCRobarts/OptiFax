@@ -13,11 +13,11 @@ power = 2.1;
 % Currently without an experimental spectrum, so modelling as Sech ^ 2
 % spectralString = "Chromacity1040_11mm_Ret_Data.txt";
 spectralString = "Sech";
-dtau = 33e-15;
+dtau = 31.5e-15;
 % Data sheet quotes >23nm Spectral FWHM
 dlam = 23e-9;
 
-laser = Laser(lambdaC,diameter,fRep,power,spectralString,dtau);
+laser = Laser(lambdaC,diameter,fRep,power,spectralString,dtau,dlam);
 
 laser.store(name,1)
 
@@ -26,6 +26,6 @@ load("simWin.mat")
 laser.simulate(simWin);
 tiledlayout flow
 nexttile
-laser.Pulse.lplot;
-nexttile
 laser.Pulse.tplot;
+nexttile
+lPH = laser.Pulse.lplot;
