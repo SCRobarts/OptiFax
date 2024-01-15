@@ -36,18 +36,18 @@ classdef Laser < matlab.mixin.Copyable
 
 	methods
 		% Constructor
-		function obj = Laser(lamda_central,diameter,f_rep,power,src_str,dtau,dlam,phase_str)
+		function obj = Laser(lambda_central,diameter,f_rep,power,src_str,dtau,dlam,phase_str)
 			arguments
-				lamda_central		% Central wavelength (m)
+				lambda_central		% Central wavelength (m)
 				diameter
 				f_rep
 				power
 				src_str
 				dtau = 100e-15;
-				dlam = c / (0.315 / dtau);
+				dlam = (4 * c * 0.315 * dtau * (lambda_central^2)) / ((2*c*dtau)^2 - (lambda_central*0.315)^2) ;
 				phase_str = NaN;
 			end
-			obj.Wavelength = lamda_central;
+			obj.Wavelength = lambda_central;
 			obj.Waist = diameter/2;
 			obj.RepetitionRate = f_rep;
 			obj.AveragePower = power;
