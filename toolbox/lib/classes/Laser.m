@@ -94,17 +94,17 @@ classdef Laser < matlab.mixin.Copyable
 			I0 = peakP/obj.Area;
 		end
 
-		function store(obj,name,devFlag)
+		function store(laser,name,devFlag)
 			arguments
-				obj
+				laser
 				name
 				devFlag = 0;
 			end
-			obj.Name = name;
+			laser.Name = name;
 			currentfolder = pwd;
 			cd(OptiFaxRoot(devFlag));
 			cd("toolbox" + filesep + "objects" + filesep + "lasers");
-			save(name + ".mat","obj","-mat");
+			save(name + ".mat","laser","-mat");
 			cd(currentfolder);
 		end
 	end

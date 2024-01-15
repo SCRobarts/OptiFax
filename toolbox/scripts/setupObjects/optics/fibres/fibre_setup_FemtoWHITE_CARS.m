@@ -16,3 +16,8 @@ length_m = 0.12;
 FemtoWHITE_CARS = OpticalFibre(s1,material,length_m);
 
 FemtoWHITE_CARS.store(name,1);
+
+load simWin.mat
+
+% Need to add the material to the reference file
+% FemtoWHITE_CARS.simulate(simWin);
