@@ -163,12 +163,17 @@ classdef Optic < matlab.mixin.Copyable
 			ylabel('GDD (fs^2)')
 		end
 
-		function store(obj,name)
+		function store(obj,name,devFlag)
+			arguments
+				obj
+				name
+				devFlag = 0;
+			end
 			obj.Name = name;
 			currentfolder = pwd;
-			cd(OptiFaxRoot);
-			cd("objects" + filesep + "optics");
-			save(name,"obj","-mat");
+			cd(OptiFaxRoot(devFlag));
+			cd("toolbox" + filesep + "objects" + filesep + "optics");
+			save(name + ".mat","obj","-mat");
 			cd(currentfolder);
 		end
 

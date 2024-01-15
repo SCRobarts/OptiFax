@@ -19,7 +19,7 @@ classdef OpticalFibre < Optic
 			%OPTICALFIBRE Construct an instance of this class
 			% Calls the Optic constructor and then automatically
 			% assigns Chi2 based on material.
-			obj@Optic(varargin{:});
+			obj@Optic("T",varargin{:});
 			if strcmp(obj.Bulk.Material,"SiO2")
 				obj.RamanFraction = 0.18;
 			end
