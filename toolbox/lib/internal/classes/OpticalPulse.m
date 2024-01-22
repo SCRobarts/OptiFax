@@ -28,6 +28,8 @@ classdef OpticalPulse < matlab.mixin.Copyable
 		GDD				% GroupDelayDispersion (s^2)
 		PeakWavelength	% Max intensity wavelength (m)
 		Power
+		PeakPowerCoefficient
+		PeakPower
 		GFit			% An attempt to quantify how Gaussian a pulse is?
 	end
 
@@ -214,6 +216,14 @@ classdef OpticalPulse < matlab.mixin.Copyable
 
 		function P = get.Power(obj)
 			P = obj.Energy * obj.Source.RepetitionRate;
+		end
+
+		function PPC = get.PeakPowerCoefficient(obj)
+		PPC = max(obj.TemporalIntensity)/((sum(obj.TemporalIntensity)*obj.SimWin.DeltaTime/obj.DurationCheck));
+		end
+
+		function PP = get.PeakPower(obj)
+			PP = obj.Energy * obj.PeakPowerCoefficient / obj.DurationCheck;
 		end
 
 		function dNu = get.FrequencyFWHM(obj)

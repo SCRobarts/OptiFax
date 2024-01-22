@@ -4,11 +4,11 @@ function gnlsefibsim(laser,simWin,fibre)
 tdisp = 1e12;
 lambdanm = simWin.Lambdanm;
 taxis = simWin.TemporalRange;
-P0 = laser.AveragePower/laser.RepetitionRate/laser.PulseDuration;
 
 laser.simulate(simWin);
 fibre.simulate(simWin);
 
+P0 = laser.Pulse.PeakPower;
 AT = sqrt(laser.Pulse.TemporalIntensity .* laser.Area);
 
 t = simWin.Times;
@@ -45,18 +45,27 @@ colormap jet; shading interp;
 xlabel('Delay / ps'); ylabel('Distance / m');
 
 figure(7),subplot(311),plot(t*tdisp,abs(AT(end,:)).^2)
+		hold on
+		plot(t*tdisp,abs(AT(1,:)).^2)
         xlabel('Time (ps)')
         ylabel('Power (W)')
         title(['z = ' num2str(L) 'm'])
         axis([-taxis*tdisp/2 taxis*tdisp/2 0 P0*1.2])
+		hold off
 
 figure(7),subplot(312),plot((W/(2*pi))*1e-12,lIW(end,:))
-xlabel('frequency (THz)'); ylabel('Spectrum (a.u.)')
-set(gca,'xlim',[230 500])
-set(gca,'ylim',[mlIW-30.0, mlIW])
+		hold on
+		plot((W/(2*pi))*1e-12,lIW(1,:))
+		xlabel('frequency (THz)'); ylabel('Spectrum (a.u.)')
+		set(gca,'xlim',[230 500])
+		set(gca,'ylim',[mlIW-30.0, mlIW])
+		hold off
 
 figure(7),subplot(313),plot(lambdanm,abs(AW(end,:)).^2)
-xlabel('\lambda (nm)'); ylabel('Spectrum (a.u.)')
-set(gca,'xlim',[350,1600])
+		hold on
+		plot(lambdanm,abs(AW(1,:)).^2)
+		xlabel('\lambda (nm)'); ylabel('Spectrum (a.u.)')
+		set(gca,'xlim',[350,1600])
+		hold off
 
 end

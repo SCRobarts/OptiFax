@@ -61,8 +61,8 @@ classdef Laser < matlab.mixin.Copyable
 			obj.Pulse = OpticalPulse(obj,simWin);
 			obj.PeakPowerCoefficient = 1/((sum(abs(obj.Pulse.TemporalField).^2)*...
 										obj.Pulse.SimWin.DeltaTime/obj.Pulse.DurationTL));
-			% Free space field magnitude scaling [W/m^2] -> [V/m]
 			nr = obj.Pulse.Medium.Bulk.RefractiveIndex;
+			% Free space field magnitude scaling [W/m^2] -> [V/m]
 			I2E = sqrt(obj.IntensityTL .* 2./nr./eps0./c);
 			obj.Pulse.TemporalField = I2E .* obj.Pulse.TemporalField;
 			obj.Wavelength = obj.Pulse.PeakWavelength;
