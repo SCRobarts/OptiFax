@@ -10,14 +10,16 @@ name = "FemtoWHITE_CARS";
 % For now, apply idealised anti-reflection coatings to both surfaces
 s1 = "AR";
 % s2 = s1;
-material = "SiO2";
-length_m = 0.12;
+material = "FS";
+length_m = 0.035;
 
-FemtoWHITE_CARS = OpticalFibre(s1,material,length_m);
+fwCARS = OpticalFibre(s1,material,length_m);
 
-FemtoWHITE_CARS.store(name,1);
+fwCARS.store(name,1);
 
 load simWin.mat
 
 % Need to add the material to the reference file
-% FemtoWHITE_CARS.simulate(simWin);
+fwCARS.simulate(simWin);
+fwCARS.plot
+

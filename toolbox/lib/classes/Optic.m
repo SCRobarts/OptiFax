@@ -134,6 +134,7 @@ classdef Optic < matlab.mixin.Copyable
 
 			fh = figure;
 			tl = tiledlayout(fh,2,2);
+			title(tl,obj.Name,"Interpreter","none");
 
 			nexttile
 			if strcmp(obj.Regime,"T")
