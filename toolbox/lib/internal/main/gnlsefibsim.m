@@ -1,5 +1,5 @@
 %% gnlsefibsim
-function gnlsefibsim(laser,simWin,fibre)
+function [Z, AT, AW, W, B] = gnlsefibsim(laser,simWin,fibre)
 
 tdisp = 1e12;
 lambdanm = simWin.Lambdanm;
@@ -9,7 +9,11 @@ laser.simulate(simWin);
 fibre.simulate(simWin);
 
 P0 = laser.Pulse.PeakPower;
-AT = sqrt(laser.Pulse.TemporalIntensity .* laser.Area);
+nr = laser.Pulse.Medium.Bulk.RefractiveIndex; 
+Esq2I = nr.*c.*eps0 / 2;
+IT = Esq2I .* ((laser.Pulse.TemporalField)).^2;
+AT = sqrt(IT .*  laser.Area);
+% AT = sqrt(laser.Pulse.TemporalIntensity .* laser.Area);
 
 t = simWin.Times;
 w0 = simWin.ReferenceOmega;
@@ -24,6 +28,9 @@ nplots = 201;
 
 [Z, AT, AW, W, B] = gnlsefib(t, AT, w0, gamma0, betas, ...
                              loss, fR, hR, L, nplots);
+
+laser.Pulse.TemporalIntensity = (AT(end,:)).^2 ./ laser.Area;
+
 % === plot output
 figure();
 

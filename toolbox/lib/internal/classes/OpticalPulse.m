@@ -198,6 +198,15 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			It = Esq2I .* (abs(obj.TemporalField)).^2;
 		end
 
+		function set.TemporalIntensity(obj,It)
+			nr = obj.Medium.Bulk.RefractiveIndex; 
+			% nr = 1;
+			Esq2I = nr.*c.*eps0 / 2;
+			% Et = (It ./ Esq2I) .^0.5;
+			Et = sqrt(It ./ Esq2I);
+			obj.TemporalField = Et;
+		end
+
 		function Qe = get.Energy(obj)
 			Qe = sum(obj.EnergySpectralDensity,2)*obj.SimWin.DeltaNu;
 		end
