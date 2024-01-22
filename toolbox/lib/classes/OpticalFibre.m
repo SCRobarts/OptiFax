@@ -8,10 +8,12 @@ classdef OpticalFibre < Optic
 	properties
 		RamanFraction
 		ResponseTimes
+		BetasFile
 		Gamma0			% Nonlinearity, [W/m]
 	end
 	properties (Dependent)
 		Response
+		Betas
 	end
 
 	methods
@@ -35,6 +37,29 @@ classdef OpticalFibre < Optic
 			T2 = obj.ResponseTimes(2);
 			hR = (T1^2+T2^2)/(T1*T2^2)*exp(-t./T2).*sin(t./T1);
 			hR(t<0) = 0;
+		end
+
+		function betas = get.Betas(obj)
+			load(obj.BetasFile);
+			maxorder = 11;
+			betas = beta2;
+			for ii = 3:maxorder
+				eval(['betas = [betas, beta' num2str(ii) '];']);
+			end
+		end
+
+		function store(fibre,name,devFlag)
+			arguments
+				fibre
+				name
+				devFlag = 0;
+			end
+			fibre.Name = name;
+			currentfolder = pwd;
+			cd(OptiFaxRoot(devFlag));
+			cd("toolbox" + filesep + "objects" + filesep + "optics");
+			save(name + ".mat","fibre","-mat");
+			cd(currentfolder);
 		end
 	end
 end

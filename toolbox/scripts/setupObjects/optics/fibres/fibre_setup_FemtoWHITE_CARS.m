@@ -13,9 +13,13 @@ s1 = "AR";
 % s2 = s1;
 material = "FS";
 length_m = 0.035;
+gamma0 = 0.130;
 
 % Construct an instance of the OpticalFibre class
 fwCARS = OpticalFibre(s1,material,length_m);
+% Implement fibre specific properties
+fwCARS.Gamma0 = gamma0;
+fwCARS.BetasFile = "Femtowhite800CARSjpgbetas.mat";
 % Save the object (second argument is for saving in dev location)
 fwCARS.store(name,1);
 

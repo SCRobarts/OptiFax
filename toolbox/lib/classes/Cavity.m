@@ -34,6 +34,9 @@ classdef Cavity < handle
 				ocPos = 4;
 				preCavOptics = Optic.empty;
 			end
+			if ~istable(optics)
+				optics = table(optics);
+			end
 			obj.Optics = optics;
 			obj.OCPosition = ocPos;
 			obj.PreCavityOptics = preCavOptics;
