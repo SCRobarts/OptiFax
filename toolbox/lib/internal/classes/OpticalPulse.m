@@ -157,7 +157,8 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			wPeak = 2*pi*c./obj.PeakWavelength;
 			chirpArg = 0.5.*gdd.*(obj.SimWin.Omegas - wPeak).^2;
 			Ek = Ek .* exp(-1i.*chirpArg);
-			obj.TemporalField = ifft(ifftshift(Ek));
+			% obj.TemporalField = ifft(ifftshift(Ek));
+			obj.k2t(Ek);
 			obj.Duration = obj.DurationCheck;
 		end
 
@@ -198,13 +199,15 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			It = Esq2I .* (abs(obj.TemporalField)).^2;
 		end
 
-		function set.TemporalIntensity(obj,It)
+		function set.TemporalIntensity(obj,rootPmag)
 			nr = obj.Medium.Bulk.RefractiveIndex; 
 			% nr = 1;
 			Esq2I = nr.*c.*eps0 / 2;
-			% Et = (It ./ Esq2I) .^0.5;
-			Et = sqrt(It ./ Esq2I);
-			obj.TemporalField = Et;
+			EtMag = abs(rootPmag) ./ sqrt(Esq2I .* obj.Source.Area);
+			EtPhi = unwrap(angle((rootPmag)));
+			% Et = EtMag .* exp(1i*EtPhi);
+			obj.TemporalField = EtMag;
+			obj.TemporalPhase = EtPhi;
 		end
 
 		function Qe = get.Energy(obj)
@@ -275,6 +278,12 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			tp = unwrap(angle(obj.TemporalField));
 			tp = gather(tp);
 		end
+		
+		function set.TemporalPhase(obj,phi)
+			EtMag = abs(obj.TemporalField);
+			Et = EtMag.*exp(-1i*phi);
+			obj.TemporalField = Et;
+		end
 
 		function Ek = get.SpectralField(obj)
 			n = obj.SimWin.NumberOfPoints;
@@ -283,7 +292,6 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			if n > obj.SimWin.NumberOfPoints
 				Ek = Ek(:,1:2:end);
 			end
-			% Ek = fftshift(fft(fftshift(obj.TemporalField)));
 		end
 
 		function k2t(obj,Ek)
@@ -294,8 +302,6 @@ classdef OpticalPulse < matlab.mixin.Copyable
 				Et = 2*Et(:,1:2:end);
 			end
 			obj.TemporalField = Et;
-			% obj.TemporalField = ifftshift(ifft(ifftshift(Ek)));
-			% obj.TemporalField = ifftshift(ifft(Ek));
 		end
 
 		function add(obj,pulse)
