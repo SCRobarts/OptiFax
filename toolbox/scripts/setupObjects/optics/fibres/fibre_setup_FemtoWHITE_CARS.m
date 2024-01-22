@@ -6,6 +6,7 @@
 clear;
 close all;
 
+% Name of the object / save file
 name = "FemtoWHITE_CARS";
 % For now, apply idealised anti-reflection coatings to both surfaces
 s1 = "AR";
@@ -13,13 +14,15 @@ s1 = "AR";
 material = "FS";
 length_m = 0.035;
 
+% Construct an instance of the OpticalFibre class
 fwCARS = OpticalFibre(s1,material,length_m);
-
+% Save the object (second argument is for saving in dev location)
 fwCARS.store(name,1);
 
+% Load a simulation window to test the object
 load simWin.mat
 
-% Need to add the material to the reference file
+% Test and plot
 fwCARS.simulate(simWin);
-fwCARS.plot
+fwCARS.plot;
 

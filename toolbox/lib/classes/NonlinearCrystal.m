@@ -28,7 +28,8 @@ classdef NonlinearCrystal < Optic
 			%NONLINEARCRYSTAL Construct an instance of this class
 			% Calls the Optic constructor and then automatically
 			% assigns Chi2 based on material.
-
+			
+			% Allow for recasting an existing optic as a nonlinear crystal
 			if class(varargin{1})=="Optic"||class(varargin{1})=="NonlinearCrystal" 
 				opt = varargin{1};
 				optArgs{1} = opt.Regime;

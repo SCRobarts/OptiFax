@@ -8,10 +8,10 @@ classdef OpticalFibre < Optic
 	properties
 		RamanFraction
 		ResponseTimes
-		Chi
+		Gamma0			% Nonlinearity, [W/m]
 	end
 	properties (Dependent)
-		Polarisation
+		Response
 	end
 
 	methods
@@ -20,15 +20,21 @@ classdef OpticalFibre < Optic
 			% Calls the Optic constructor and then automatically
 			% assigns Chi2 based on material.
 			obj@Optic("T",varargin{:});
-			if strcmp(obj.Bulk.Material,"SiO2")
+			if strcmp(obj.Bulk.Material,"SiO2") || strcmp(obj.Bulk.Material,"FS")
 				obj.RamanFraction = 0.18;
+				obj.ResponseTimes(1) = 12.2e-15; % Inverse average phonon frequency
+				obj.ResponseTimes(2) = 32.0e-15; % Characteristic phonon dampening time
 			end
 		end
 
-		% function outputArg = method1(obj,inputArg)
-		% 	%METHOD1 Summary of this method goes here
-		% 	%   Detailed explanation goes here
-		% 	outputArg = obj.Chi2 + inputArg;
-		% end
+		function hR = get.Response(obj)
+			%METHOD1 Summary of this method goes here
+			%   Detailed explanation goes here
+			t = obj.SimWin.Times;
+			T1 = obj.ResponseTimes(1);
+			T2 = obj.ResponseTimes(2);
+			hR = (T1^2+T2^2)/(T1*T2^2)*exp(-t./T2).*sin(t./T1);
+			hR(t<0) = 0;
+		end
 	end
 end
