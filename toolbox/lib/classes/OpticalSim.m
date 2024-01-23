@@ -108,8 +108,10 @@ classdef OpticalSim < matlab.mixin.Copyable
 
 			obj.System.Xtal.ppole(obj);
 			obj.SpectralProgressShift = repmat(fft(fftshift(obj.PumpPulse.TemporalField)).',1,obj.ProgressPlots);
-			obj.FinalPlotter = SimPlotter(obj,obj.TripNumber + (1:obj.RoundTrips),"Round Trip Number");
-			if obj.ProgressPlotting
+			if obj.RoundTrips > 1
+				obj.FinalPlotter = SimPlotter(obj,obj.TripNumber + (1:obj.RoundTrips),"Round Trip Number");
+			end
+			if obj.ProgressPlotting || obj.RoundTrips == 1
 				ydat = linspace(0,obj.System.Xtal.Length*1e3,obj.ProgressPlots);
 				ylab = "Distance (mm)";
 				obj.ProgressPlotter = SimPlotter(obj,ydat,ylab);
@@ -189,8 +191,11 @@ classdef OpticalSim < matlab.mixin.Copyable
 				obj.Pulse.applyGD(obj.Delay);
 
 			end
-			obj.FinalPlotter.updateYData((obj.TripNumber-obj.RoundTrips) + (1:obj.RoundTrips));
-			obj.FinalPlotter.roundtripplots;
+			
+			if obj.RoundTrips > 1
+				obj.FinalPlotter.updateYData((obj.TripNumber-obj.RoundTrips) + (1:obj.RoundTrips));
+				obj.FinalPlotter.roundtripplots;
+			end
 
 		end
 

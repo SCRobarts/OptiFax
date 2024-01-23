@@ -80,6 +80,20 @@ classdef NonlinearCrystal < Optic
 			xlabel('Poled Period %')
 			ylabel('Counts')
 		end
+
+		function store(crystal,name,devFlag)
+			arguments
+				crystal
+				name
+				devFlag = 0;
+			end
+			crystal.Name = name;
+			currentfolder = pwd;
+			cd(OptiFaxRoot(devFlag));
+			cd("toolbox" + filesep + "objects" + filesep + "optics" + filesep + "crystals");
+			save(name + ".mat","crystal","-mat");
+			cd(currentfolder);
+		end
 	end
 
 end

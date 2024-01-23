@@ -57,7 +57,7 @@ classdef OpticalFibre < Optic
 			fibre.Name = name;
 			currentfolder = pwd;
 			cd(OptiFaxRoot(devFlag));
-			cd("toolbox" + filesep + "objects" + filesep + "optics");
+			cd("toolbox" + filesep + "objects" + filesep + "optics" + filesep + "fibres");
 			save(name + ".mat","fibre","-mat");
 			cd(currentfolder);
 		end
