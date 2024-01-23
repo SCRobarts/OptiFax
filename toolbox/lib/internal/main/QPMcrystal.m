@@ -9,11 +9,16 @@ end
 
 	% rng('default');
 	z = linspace(0,L_m,n_steps);
-	nDomains = floor(2 * L_m / grating_m);
-	% domain_widths = random('Normal',grating_m./2,uncertainty_m./2,[1,nDomains-1]);
-	domain_widths = random('Normal',(grating_m*(1-(2*dutyOff)))./2,uncertainty_m./2,[1,nDomains]);
-	% domain_widths(1:2:end-1) = domain_widths(1:2:end-1) * (1 + (2*duty_off));
-	domain_widths(2:2:end-1)	= grating_m - movmean(domain_widths(1:2:end),2,"Endpoints","discard");
+
+	if isa(grating_m, 'function_handle')
+		domain_widths = grating_m(z);
+	else
+		nDomains = floor(2 * L_m / grating_m);
+		% domain_widths = random('Normal',grating_m./2,uncertainty_m./2,[1,nDomains-1]);
+		domain_widths = random('Normal',(grating_m*(1-(2*dutyOff)))./2,uncertainty_m./2,[1,nDomains]);
+		% domain_widths(1:2:end-1) = domain_widths(1:2:end-1) * (1 + (2*duty_off));
+		domain_widths(2:2:end-1)	= grating_m - movmean(domain_widths(1:2:end),2,"Endpoints","discard");
+	end
 	zWalls = cumsum(domain_widths);
 	% q = sin(2*pi*z./grating_m);
 	if zWalls(end) < L_m
