@@ -7,7 +7,7 @@ close all;
 
 name = "Taccor800";
 lambdaC = 800e-9;
-diameter = 5e-6;
+diameter = 10e-6;
 fRep = 1e9;
 power = 2.1;
 % Currently without an experimental spectrum, so modelling as Sech ^ 2
