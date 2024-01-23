@@ -81,6 +81,8 @@ classdef OpticalPulse < matlab.mixin.Copyable
 				% Ek = obj.refract(opt);
 				if class(opt) ~= "NonlinearCrystal"
 					bOp = exp(-1i*opt.Dispersion);
+				else
+					bOp = 1;
 				end
 				if strcmp(opt.Regime,"T")
 					MagOp = opt.Transmission .^ 0.5;

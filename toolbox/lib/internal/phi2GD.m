@@ -1,6 +1,6 @@
 function [GD,GDD] = phi2GD(phi,dw)
 	
-	if phi ~= 0
+	if length(phi) > 1
 		n = length(phi);
 	
 		phi_r = phi - phi(n/2);
