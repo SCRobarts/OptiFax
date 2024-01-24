@@ -23,13 +23,13 @@ ind2 = [nPoints, 1:nPoints-1];
 figure(32)
 tiledlayout horizontal
 nexttile
-% tplot = plot(fftshift(t),ifftshift(abs(Et)));
-tplot = plot(t,ifftshift(abs(Et)));
+kplot = plot(lam,fftshift(abs(fft(ifftshift(Et)))));
+xlim([300e-9 1200e-9])
 yls = ylim;
 ylim(yls)
 nexttile
-kplot = plot(lam,fftshift(abs(fft(ifftshift(Et)))));
-xlim([700e-9 1600e-9])
+% tplot = plot(fftshift(t),ifftshift(abs(Et)));
+tplot = plot(t,ifftshift(abs(Et)));
 yls = ylim;
 ylim(yls)
 
@@ -83,7 +83,7 @@ for chunk = 1:nChunks
 		tplot.YData = ifftshift(abs(Et));
 		kplot.YData = fftshift(abs(fft(ifftshift(Et))));
 		drawnow
-		pause(0.001)
+		pause(0.0001)
 		t_elapsed = toc;
 	end
 	ApFT(:,chunk) = fft(Et).';
