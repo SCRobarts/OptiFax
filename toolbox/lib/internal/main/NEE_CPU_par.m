@@ -90,6 +90,7 @@ for chunk = 1:nChunks
 end
 Et = Et.';
 
+%% Subfunctions
 	function nl = nlfn(A,t,w0,bdwz)
 		expon = exp(1i.*(w0.*t-bdwz));
 		nl = (A.^2 .* expon) + (2.*conj(expon.*abs(A).^2));

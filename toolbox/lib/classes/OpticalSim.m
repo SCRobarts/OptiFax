@@ -75,7 +75,7 @@ classdef OpticalSim < matlab.mixin.Copyable
 			if strcmp(obj.Hardware, "GPU")	% Could probably add actual GPU model info here
 				obj.Solver = @OPOmexBatch;
 			else 
-				obj.Solver = @NEE_CPU_par;	% Need to make a stand alone CPU adaptive solver
+				obj.Solver = @NEE_CPU;	% Need to make a stand alone CPU adaptive solver
 			end
 			obj.TripNumber = 0;
 			obj.Source.simulate(obj.SimWin);	% Will we need to load these objects?

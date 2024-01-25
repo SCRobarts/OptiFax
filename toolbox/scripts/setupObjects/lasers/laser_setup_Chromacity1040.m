@@ -12,18 +12,21 @@ diameter = 28e-6;
 fRep = 49.163e6;
 power = 2.3;
 % spectralString = "pump_spectrum_12mm_reading.txt";
-spectralString = "Chromacity1040_11mm_Ret_Data.txt";
+% spectralString = "Chromacity1040_11mm_Ret_Data.txt";
+spectralString = "Sech";
 dtau = 165e-15;
 
 laser = Laser(lambdaC,diameter,fRep,power,spectralString,dtau);
 
-laser.store(name)
+laser.store(name,1)
 
 load("simWin.mat")
 
 laser.simulate(simWin);
-tiledlayout flow
-nexttile
-laser.Pulse.kplot
-nexttile
-laser.Pulse.tplot
+% tiledlayout flow
+% nexttile
+% laser.Pulse.kplot
+% nexttile
+% laser.Pulse.tplot
+
+laser.Pulse.plot
