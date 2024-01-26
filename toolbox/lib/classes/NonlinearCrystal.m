@@ -6,10 +6,10 @@ classdef NonlinearCrystal < Waveguide
 	%	Sebastian C. Robarts 2023 - sebrobarts@gmail.com
 
 	properties
-		Chi2
 		GratingPeriod
 		Uncertainty
 		DutyCycleOffset
+		StepSize = 1e-7;
 	end
 	properties (Transient)
 		Polarisation
@@ -30,7 +30,8 @@ classdef NonlinearCrystal < Waveguide
 			% assigns Chi2 based on material.
 			
 			% Allow for recasting an existing optic as a nonlinear crystal
-			if class(varargin{1})=="Optic"||class(varargin{1})=="NonlinearCrystal" 
+			% if class(varargin{1})=="Optic"||class(varargin{1})=="NonlinearCrystal" 
+			if isa(varargin{1},"Optic")
 				opt = varargin{1};
 				optArgs{1} = opt.Regime;
 				optArgs{2} = opt.S1;
@@ -49,6 +50,21 @@ classdef NonlinearCrystal < Waveguide
 			obj.GratingPeriod = grating_m;
 			obj.Uncertainty = uncertainty_m;
 			obj.DutyCycleOffset = dutyOff;
+		end
+
+		function simulate(obj,simWin)
+			simulate@Waveguide(obj,simWin);
+			L_m = obj.Bulk.Length;
+			obj.NSteps = floor(L_m / obj.StepSize);
+			
+			xtal = QPMcrystal(obj.NSteps,L_m,obj.GratingPeriod,...
+										 obj.Uncertainty,...
+										 obj.DutyCycleOffset);
+
+			obj.Polarisation = xtal.P * obj.Chi2;
+			obj.DomainWidths = xtal.domains;
+			obj.DomainWallPositions = xtal.walls;
+			obj.Periods = xtal.periods;
 		end
 
 		function ppole(obj,optSim)

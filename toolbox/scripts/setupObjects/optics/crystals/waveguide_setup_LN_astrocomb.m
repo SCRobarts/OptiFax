@@ -23,8 +23,6 @@ dutyOff = 0;
 xtalArgs = {grating_m, uncertainty_m, dutyOff};
 
 %% General Optic arguments
-% First argument defines the regime as transmissive ("T") or reflective ("R")
-regime = "T";
 % If only one surface is specified, it's assumed that the same coating
 % exists on each surface.
 % coating_str = 'ppln_ar_combined.csv';
@@ -35,6 +33,8 @@ L = 5e-3;
 % PPLN currently requires a workaround to add the temperature at the end of
 % the argument list, hence having to manually give the default values for
 % theta_in = 0 and second surface coating = first surface coating.
-CPLN = NonlinearCrystal(xtalArgs{:},regime,coating_str,"PPLN",L,theta_in,coating_str,temp_C);
-% PPLN.simulate(lamWin);
+% CPLN = NonlinearCrystal(xtalArgs{:},coating_str,"PPLN",L,theta_in,coating_str,temp_C);
+CPLN = NonlinearCrystal(xtalArgs{:},coating_str,"PPLN",L);
+CPLN.Bulk.Temperature = temp_C;
+CPLN.simulate(lamWin);
 CPLN.store(name,1);

@@ -10,6 +10,9 @@ classdef Waveguide < Optic
 		RamanFraction
 		ResponseTimes
 	end
+	properties (Abstract)
+		StepSize
+	end
 	properties (Dependent)
 		RamanResponse
 	end

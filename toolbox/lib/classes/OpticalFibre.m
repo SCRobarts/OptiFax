@@ -8,6 +8,7 @@ classdef OpticalFibre < Waveguide
 	properties
 		BetasFile
 		Gamma0			% Nonlinearity, [W/m]
+		StepSize = 1e-5;
 	end
 	properties (Dependent)
 		Betas
