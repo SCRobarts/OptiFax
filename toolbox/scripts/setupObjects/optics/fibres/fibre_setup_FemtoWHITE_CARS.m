@@ -21,7 +21,7 @@ fwCARS = OpticalFibre(s1,material,length_m);
 fwCARS.Gamma0 = gamma0;
 fwCARS.BetasFile = "Femtowhite800CARSjpgbetas.mat";
 % Save the object (second argument is for saving in dev location)
-fwCARS.store(name,1);
+% fwCARS.store(name,1);
 
 % Load a simulation window to test the object
 load simWin.mat

@@ -21,7 +21,7 @@ classdef OpticalSim < matlab.mixin.Copyable
 		Precision = 'single';
 		ProgressPlotting = 1;
 		ProgressPlots = 4;
-		StoredPulses	OpticalPulse	% Pulse object with multiple fields, storing desired pulse each trip (currently XIn)
+		StoredPulses	OpticalPulse	% Pulse object with multiple fields, storing desired pulse each trip (currently XOut)
 		TripNumber = 0;
 	end
 	properties (Transient)
@@ -48,7 +48,7 @@ classdef OpticalSim < matlab.mixin.Copyable
 				src
 				cav
 				simWin
-				errorBounds = [2.5e-3,5e-2];	% default error 0.05-1%
+				errorBounds = [2.5e-3,5e-2];	% default error 0.0025-0.05%
 				stepSize = 1e-7;		% default starting step size of 0.1 micron
 			end
 			%OPTICALSIM Construct an instance of this class
@@ -125,6 +125,8 @@ classdef OpticalSim < matlab.mixin.Copyable
 		function run(obj)
 		% Will want to be based off the solver, since that should already be hardware dependent
 		% Should probably convert to correct precision and array type in the setup
+		%	This is very messy. Should consider model/solver class(es) as
+		%	will need to generalise this for different waveguides.
 			
 			xtal = obj.System.Xtal;
 			sel = (round(xtal.NSteps/(obj.ProgressPlots - 1)));

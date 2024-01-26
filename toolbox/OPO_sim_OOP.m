@@ -37,13 +37,13 @@ load('simWin.mat');
 % simWin.Limits = [300 5500];
 % simWin.TemporalRange = simWin.TemporalRange * 2;
 % simWin.TimeOffset = -1.5e-12;
-simWin.NumberOfPoints = 2^13;
+simWin.NumberOfPoints = 2^15;
 
 %% Optical Simulation Setup
 optSim = OpticalSim(laser,cav,simWin,[0.2,4],0.25e-6);
 % return
 % load('pbOPOsim.mat');
-optSim.RoundTrips = 4;
+optSim.RoundTrips = 40;
 % optSim.Hardware = "CPU";
 % optSim.ProgressPlotting = 0;
 % optSim.DetectorPosition = 3;

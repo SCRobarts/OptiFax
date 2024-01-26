@@ -1,4 +1,4 @@
-classdef NonlinearCrystal < Optic
+classdef NonlinearCrystal < Waveguide
 	%NONLINEARCRYSTAL A non-centrosymmetric crystal gain medium
 	%   Inherits the Optic class and extends it to allow crystal
 	%   specific methods, like the bulk of the OPO simulation.
@@ -41,7 +41,7 @@ classdef NonlinearCrystal < Optic
 				optArgs = varargin;
 			end
 			% Superclass constructor call, which can't be conditional
-			obj@Optic(optArgs{:});
+			obj@Waveguide(optArgs{:});
 
 			if strcmp(obj.Bulk.Material,"PPLN")
 				obj.Chi2 = 2*27e-12;
