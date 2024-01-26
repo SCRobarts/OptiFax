@@ -19,7 +19,7 @@ classdef Waveguide < Optic
 
 	methods
 		function obj = Waveguide(varargin)
-			%UNTITLED Construct an instance of this class
+			%WAVEGUIDE Construct an instance of this class
 			%   Detailed explanation goes here
 			obj@Optic("T",varargin{:});
 		end

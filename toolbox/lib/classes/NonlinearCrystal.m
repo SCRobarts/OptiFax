@@ -33,11 +33,11 @@ classdef NonlinearCrystal < Waveguide
 			% if class(varargin{1})=="Optic"||class(varargin{1})=="NonlinearCrystal" 
 			if isa(varargin{1},"Optic")
 				opt = varargin{1};
-				optArgs{1} = opt.Regime;
-				optArgs{2} = opt.S1;
-				optArgs{3} = opt.Bulk;
-				[optArgs{4:5}] = deal({});
-				optArgs{6} = opt.S2;
+				% optArgs{1} = opt.Regime;
+				optArgs{1} = opt.S1;
+				optArgs{2} = opt.Bulk;
+				[optArgs{3:4}] = deal({});
+				optArgs{5} = opt.S2;
 			else
 				optArgs = varargin;
 			end
