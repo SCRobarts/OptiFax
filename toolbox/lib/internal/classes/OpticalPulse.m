@@ -1,7 +1,7 @@
 classdef OpticalPulse < matlab.mixin.Copyable
 	%	Sebastian C. Robarts 2023 - sebrobarts@gmail.com
 	properties
-		Name
+		Name = "Pulse";
 		TemporalField		% E(t) / (V/m) complex array
 		Source		Laser
 		Duration
@@ -37,7 +37,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 		% Constructor
 		function obj = OpticalPulse(laser,simWin)
 			if nargin > 0
-				obj.Name = laser.Name;
+				obj.Name = laser.Name + ' ' + obj.Name;
 				obj.Medium.simulate(simWin);
 				obj.SimWin = simWin;
 				obj.Source = laser;

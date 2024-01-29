@@ -1,7 +1,7 @@
 classdef Laser < matlab.mixin.Copyable
 	%	Sebastian C. Robarts 2023 - sebrobarts@gmail.com
 	properties
-		Name
+		Name = "Laser";
 		Waist		% 1/e Intensity radius (m)
 		RepetitionRate
 		AveragePower

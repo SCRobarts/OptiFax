@@ -19,13 +19,14 @@ dlam = 23e-9;
 
 laser = Laser(lambdaC,diameter,fRep,power,spectralString,dtau,dlam);
 
-laser.store(name,1)
+% laser.store(name,1)
 
 load("simWin.mat")
 
 laser.simulate(simWin);
-tiledlayout flow
-nexttile
-laser.Pulse.tplot;
-nexttile
-lPH = laser.Pulse.lplot;
+laser.Pulse.plot;
+% tiledlayout flow
+% nexttile
+% laser.Pulse.tplot;
+% nexttile
+% lPH = laser.Pulse.lplot;
