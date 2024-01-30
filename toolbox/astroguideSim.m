@@ -14,26 +14,14 @@ laser.AveragePower = 0.2;
 lambda_ref = laser.Wavelength;
 npts = 2^13;
 tAxis = 8e-12;
-tOff = 0;
+tOff = -0.75e-12;
 % simWin = SimWindow(lambda_ref,npts,tAxis,tOff);
 % simWin.SpectralLimits = [210 6500];
 wavelims = [210 6500];
 simWin = SimWindow(lambda_ref,npts,wavelims,tOff,"wavelims");
 
-
 laser.simulate(simWin);
 laser.Pulse.plot;
-
-% nr = laser.Pulse.Medium.Bulk.RefractiveIndex; 
-% Esq2I = nr.*c.*eps0 / 2;
-% IT = Esq2I .* ((laser.Pulse.TemporalField)).^2;
-% 
-% % AT = sqrt(laser.Pulse.TemporalIntensity .* laser.Area);
-% AT = sqrt(IT .*  laser.Area);
-% laser.Pulse.TemporalIntensity = (AT.^2) ./ laser.Area;
-% 
-% laser.Pulse.plot;
-% return
 
 %% Generate fibre supercontinuum
 load("FemtoWHITE_CARS.mat");
@@ -41,12 +29,9 @@ load("FemtoWHITE_CARS.mat");
 
 %% Initialise Optical Cavity
 % chirp = 2000*1e-30;
-% load('pbCav.mat');
 load("ChirpedWaveguideLN.mat")
-crystal.Length = 1e-3;
+% crystal.Length = 1e-3;
 cav = Cavity(crystal,0);
-% [Z, AT, AW, W, B] = gnlsefibsim(laser,simWin,fibre);
-
 
 sc = laser.Pulse.writeto;
 sc.plot;
@@ -58,7 +43,7 @@ laser.AveragePower = 1;
 delay = -250e-15;
 % errorBounds = [1e-5,1e-3];	% Percentage error tolerance
 % minStep = 0.05e-6;		% Minimum step size
-errorBounds = [1e-2,1e-0];	% Percentage error tolerance
+errorBounds = [1e-1,1e-0];	% Percentage error tolerance
 minStep = 0.25e-6;		% Minimum step size
 
 optSim = OpticalSim(laser,cav,simWin,errorBounds,minStep);
@@ -68,8 +53,8 @@ optSim.ProgressPlots = 30;
 
 optSim.setup;
 optSim.Pulse.copyfrom(sc);
-optSim.Pulse.applyGD(6*delay)
-optSim.PumpPulse.applyGD(7*delay);
+% optSim.Pulse.applyGD(4*delay)
+optSim.PumpPulse.applyGD(delay);
 optSim.run;
 
 lIW = 10*log10(abs(optSim.Pulse.SpectralField).^2);	% log scale spectral intensity

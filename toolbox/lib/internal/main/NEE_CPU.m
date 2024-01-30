@@ -81,12 +81,11 @@ for chunk = 1:nChunks
 			if k < nSteps && (k + stepmod) > nSteps
 				stepmod = double(nSteps - k);
 			end
+			tlh.Title.String = "z = " + num2str(h*k*1e3,'%.4f') + " mm"; % need to format the length of the number
 			k = k + stepmod;
 		end
 		tplot.YData = ifftshift(abs(Et));
 		kplot.YData = fftshift(abs(fft(ifftshift(Et))));
-		stepmod
-		tlh.Title.String = "z = " + num2str(h*k*1e3) + " mm";
 		drawnow
 		pause(0.0001)
 		t_elapsed = toc;
