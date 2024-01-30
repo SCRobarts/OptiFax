@@ -12,10 +12,10 @@ name = "FemtoWHITE_CARS";
 % s1 = "AR";
 s1 = 0.4;
 s2 = "AR";
-% Set the bulk material to fused silica (we'll be using custom beta coeffs anyway)
+% Set the bulk material to fused silica for absorption profile
 material = "FS";
 length_m = 0.035;
-gamma0 = 0.130;
+gamma0 = 0.130;	% [W/m]
 
 % Construct an instance of the OpticalFibre class
 fwCARS = OpticalFibre(s1,material,length_m,0,s2);
@@ -26,7 +26,8 @@ fwCARS.BetasFile = "Femtowhite800CARSjpgbetas.mat";
 % fwCARS.store(name,1);
 
 % Load a simulation window to test the object
-load simWin.mat
+% load simWin.mat
+simWin = SimWindow(800e-9,2^13,[250 6500],0,"wavelims");
 
 % Test and plot
 fwCARS.simulate(simWin);

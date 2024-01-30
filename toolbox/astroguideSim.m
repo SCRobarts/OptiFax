@@ -8,15 +8,18 @@ clear
 
 %% Initialise Laser / Input Pulse
 load("Taccor800.mat");
-laser.AveragePower = 0.3; 
+laser.AveragePower = 0.2; 
 
 %% Initialise Simulation Window
 lambda_ref = laser.Wavelength;
-npts = 2^18;
-tAxis = 12e-12;
+npts = 2^13;
+tAxis = 8e-12;
 tOff = 0;
-simWin = SimWindow(lambda_ref,npts,tAxis,tOff);
-simWin.Limits = [210 6500];
+% simWin = SimWindow(lambda_ref,npts,tAxis,tOff);
+% simWin.SpectralLimits = [210 6500];
+wavelims = [210 6500];
+simWin = SimWindow(lambda_ref,npts,wavelims,tOff,"wavelims");
+
 
 laser.simulate(simWin);
 laser.Pulse.plot;

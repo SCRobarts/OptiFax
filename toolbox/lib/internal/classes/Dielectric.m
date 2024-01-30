@@ -67,7 +67,7 @@ classdef Dielectric < matlab.mixin.Copyable
 		end
 
 		function T = get.Transmission(obj)
-			lims = obj.Parent.SimWin.Limits * 1e-9;
+			lims = obj.Parent.SimWin.SpectralLimits * 1e-9;
 			lam = obj.Parent.SimWin.Wavelengths;
 			mat = obj.Material;
 			dat = readtable('Materials.csv','ReadRowNames',true);
