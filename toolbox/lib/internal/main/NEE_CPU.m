@@ -1,4 +1,6 @@
-function [Et,ApFT,stepMods] = NEE_CPU_par(Et,xT_h,G33,w0,bdiffw0,h,nSteps,dt,hBarg,maxErr,minErr,sel,ApFT,stepMods)
+function [Et,ApFT,stepMods] = NEE_CPU(Et,xT_h,G33,w0,bdiffw0,h,nSteps,dt,hBarg,maxErr,minErr,sel,ApFT,stepMods)
+	% Initial very rough CPU serial adaptive implementation as proof of concept
+	% also to enable simple plotting at every single step for watching pulse evolution 
 	%
 	%	Sebastian C. Robarts 2023 - sebrobarts@gmail.com
 
@@ -21,7 +23,8 @@ ind1 = [2:nPoints, 1];
 ind2 = [nPoints, 1:nPoints-1];
 
 figure(32)
-tiledlayout horizontal
+tlh = tiledlayout('horizontal');
+title(tlh,"z = 0 mm")
 nexttile
 kplot = plot(lam,fftshift(abs(fft(ifftshift(Et)))));
 xlim([300e-9 1200e-9])
@@ -76,12 +79,14 @@ for chunk = 1:nChunks
 			end
 		
 			if k < nSteps && (k + stepmod) > nSteps
-				stepmod = nSteps - k;
+				stepmod = double(nSteps - k);
 			end
 			k = k + stepmod;
 		end
 		tplot.YData = ifftshift(abs(Et));
 		kplot.YData = fftshift(abs(fft(ifftshift(Et))));
+		stepmod
+		tlh.Title.String = "z = " + num2str(h*k*1e3) + " mm";
 		drawnow
 		pause(0.0001)
 		t_elapsed = toc;

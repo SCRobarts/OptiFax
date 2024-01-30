@@ -43,7 +43,7 @@ load("FemtoWHITE_CARS.mat");
 % chirp = 2000*1e-30;
 % load('pbCav.mat');
 load("ChirpedWaveguideLN.mat")
-% crystal.Length = 1e-3;
+crystal.Length = 1e-3;
 cav = Cavity(crystal,0);
 % [Z, AT, AW, W, B] = gnlsefibsim(laser,simWin,fibre);
 
@@ -56,14 +56,14 @@ laser.AveragePower = 1;
 % return
 %% Optical Simulation Setup
 delay = -250e-15;
-errorBounds = [1e-5,1e-3];	% Percentage error tolerance
-minStep = 0.05e-6;		% Minimum step size
-% errorBounds = [1e-2,1e-0];	% Percentage error tolerance
-% minStep = 0.25e-6;		% Minimum step size
+% errorBounds = [1e-5,1e-3];	% Percentage error tolerance
+% minStep = 0.05e-6;		% Minimum step size
+errorBounds = [1e-2,1e-0];	% Percentage error tolerance
+minStep = 0.25e-6;		% Minimum step size
 
 optSim = OpticalSim(laser,cav,simWin,errorBounds,minStep);
 optSim.RoundTrips = 1;
-optSim.ProgressPlots = 300;
+optSim.ProgressPlots = 30;
 % optSim.Hardware = "CPU";
 
 optSim.setup;
