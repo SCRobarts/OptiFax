@@ -8,7 +8,11 @@ clear
 
 %% Initialise Laser / Input Pulse
 load("Taccor800.mat");
-laser.AveragePower = 0.2; 
+laser.AveragePower = 1;
+% chirp = 2000*1e-30;
+fibreSC = copy(laser);
+fibreSC.Name = "FibreContinuumSource";
+fibreSC.AveragePower = 0.2; 
 
 %% Initialise Simulation Window
 lambda_ref = laser.Wavelength;
@@ -20,26 +24,21 @@ tOff = -0.75e-12;
 wavelims = [210 6500];
 simWin = SimWindow(lambda_ref,npts,wavelims,tOff,"wavelims");
 
-laser.simulate(simWin);
-laser.Pulse.plot;
-
 %% Generate fibre supercontinuum
 load("FemtoWHITE_CARS.mat");
-[~] = gnlsefibsim(laser,simWin,fibre);
+[~] = gnlsefibsim(fibreSC,simWin,fibre);
+fibreSC.Pulse.plot;
 
+% return
 %% Initialise Optical Cavity
-% chirp = 2000*1e-30;
 load("ChirpedWaveguideLN.mat")
 % crystal.Length = 1e-3;
 cav = Cavity(crystal,0);
 
-sc = laser.Pulse.writeto;
-sc.plot;
-load("Taccor800.mat")
-laser.AveragePower = 1;
 
 % return
 %% Optical Simulation Setup
+laser.Waist = crystal.ModeFieldDiameter./2;
 delay = -250e-15;
 % errorBounds = [1e-5,1e-3];	% Percentage error tolerance
 % minStep = 0.05e-6;		% Minimum step size
@@ -52,7 +51,7 @@ optSim.ProgressPlots = 30;
 % optSim.Hardware = "CPU";
 
 optSim.setup;
-optSim.Pulse.copyfrom(sc);
+optSim.Pulse.copyfrom(fibreSC.Pulse);
 % optSim.Pulse.applyGD(4*delay)
 optSim.PumpPulse.applyGD(delay);
 optSim.run;

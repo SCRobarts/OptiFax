@@ -6,6 +6,7 @@
 clear;
 close all;
 
+% Core Optics Properties:
 % Name of the object / save file
 name = "FemtoWHITE_CARS";
 % For now, apply idealised anti-reflection coatings to both surfaces
@@ -15,18 +16,24 @@ s2 = "AR";
 % Set the bulk material to fused silica for absorption profile
 material = "FS";
 length_m = 0.035;
+
+% Waveguide properties:
 gamma0 = 0.130;	% [W/m]
+mfd = 1.3e-6;	% ModeFieldDiamer [m]
 
 % Construct an instance of the OpticalFibre class
-fwCARS = OpticalFibre(s1,material,length_m,0,s2);
-% Implement fibre specific properties
+fwCARS = OpticalFibre(mfd,s1,material,length_m,0,s2);
+% Fibre specific properties:
 fwCARS.Gamma0 = gamma0;
 fwCARS.BetasFile = "Femtowhite800CARSjpgbetas.mat";
+
+% Testing:
 % Save the object (second argument is for saving in dev location)
-% fwCARS.store(name,1);
+fwCARS.store(name,1);
 
 % Load a simulation window to test the object
 % load simWin.mat
+% Or generate a new simulation window
 simWin = SimWindow(800e-9,2^13,[250 6500],0,"wavelims");
 
 % Test and plot

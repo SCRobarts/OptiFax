@@ -5,7 +5,10 @@ tdisp = 1e12;
 lambdanm = simWin.Lambdanm;
 taxis = simWin.TemporalRange;
 
+laser.Waist = fibre.ModeFieldDiameter./2;
 laser.simulate(simWin);
+laser.Pulse.plot;
+drawnow
 fibre.simulate(simWin);
 
 P0 = laser.Pulse.PeakPower;

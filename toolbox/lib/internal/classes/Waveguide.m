@@ -8,7 +8,8 @@ classdef Waveguide < Optic
 		Chi2
 		Chi3
 		RamanFraction
-		ResponseTimes
+		ResponseTimes	% [Inverse average phonon frequency, Characteristic phonon dampening time] [s]
+		ModeFieldDiameter	% Waveguide confinement [m]
 	end
 	properties (Abstract)
 		StepSize

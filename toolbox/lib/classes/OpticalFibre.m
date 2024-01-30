@@ -15,11 +15,12 @@ classdef OpticalFibre < Waveguide
 	end
 
 	methods
-		function obj = OpticalFibre(varargin)
+		function obj = OpticalFibre(mfd,varargin)
 			%OPTICALFIBRE Construct an instance of this class
 			% Calls the Optic constructor and then automatically
 			% assigns Chi2 based on material.
 			obj@Waveguide(varargin{:});
+			obj.ModeFieldDiameter = mfd;
 			if strcmp(obj.Bulk.Material,"SiO2") || strcmp(obj.Bulk.Material,"FS")
 				obj.RamanFraction = 0.18;
 				obj.ResponseTimes(1) = 12.2e-15; % Inverse average phonon frequency
