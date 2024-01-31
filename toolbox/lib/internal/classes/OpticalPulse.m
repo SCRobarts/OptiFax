@@ -5,12 +5,14 @@ classdef OpticalPulse < matlab.mixin.Copyable
 		TemporalField		% E(t) / (V/m) complex array
 		Source		Laser
 		Duration
+		Radius		% 1/e Intensity radius (m)
 	end
 	properties (Transient)
 		SimWin		SimWindow
 		Medium = Optic("T","AR","air");
 	end
 	properties (Dependent)
+		Area
 		SpectralField
 		SpectralPhase
 		TemporalPhase
@@ -21,6 +23,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 		FrequencyFWHM
 		WavelengthFWHM
 		TemporalIntensity
+		TemporalRootPower
 		DurationTL		% Transform limited current pulse duration (I fwhm)
 		DurationCheck	% Current pulse duration (I fwhm)
 		TBPTL			% TimeBandwidthProduct Transform Limited
@@ -41,6 +44,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 				obj.Medium.simulate(simWin);
 				obj.SimWin = simWin;
 				obj.Source = laser;
+				obj.Radius = laser.Waist;
 				t = simWin.Times;
 				t_off = simWin.TimeOffset;
 				str = laser.SourceString;
@@ -196,19 +200,23 @@ classdef OpticalPulse < matlab.mixin.Copyable
 		end
 
 		function It = get.TemporalIntensity(obj)
-			nr = obj.Medium.Bulk.RefractiveIndex; 
+			nr = obj.Medium.Bulk.RefractiveIndex(obj.SimWin.ReferenceIndex); 
 			% nr = 1;
-			Esq2I = nr.*c.*eps0 / 2;
+			Esq2I = abs(nr).*c.*eps0 / 2;
 			It = Esq2I .* (abs(obj.TemporalField)).^2;
 		end
 
-		function set.TemporalIntensity(obj,rootPmag)
+		function tRootP = get.TemporalRootPower(obj)
+			rootPmag = sqrt(obj.TemporalIntensity .* obj.Area);
+			tRootP = rootPmag .* exp(-1i.*obj.TemporalPhase);
+		end
+
+		function set.TemporalRootPower(obj,tRootP)
 			nr = obj.Medium.Bulk.RefractiveIndex; 
 			% nr = 1;
 			Esq2I = nr.*c.*eps0 / 2;
-			EtMag = abs(rootPmag) ./ sqrt(Esq2I .* obj.Source.Area);
-			EtPhi = unwrap(angle((rootPmag)));
-			% Et = EtMag .* exp(1i*EtPhi);
+			EtMag = abs(tRootP) ./ sqrt(Esq2I .* obj.Area);
+			EtPhi = unwrap(angle((tRootP)));
 			obj.TemporalField = EtMag;
 			obj.TemporalPhase = EtPhi;
 		end
@@ -219,7 +227,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 
 		function Ik = get.EnergySpectralDensity(obj)
 			Ik = (abs(obj.SpectralField)).^2;
-			A = obj.Source.Area;
+			A = obj.Area;
 			frep = obj.Source.RepetitionRate;
 			dt = obj.SimWin.DeltaTime;
 			np = obj.SimWin.NumberOfPoints;
@@ -284,7 +292,8 @@ classdef OpticalPulse < matlab.mixin.Copyable
 		
 		function set.TemporalPhase(obj,phi)
 			EtMag = abs(obj.TemporalField);
-			Et = EtMag.*exp(-1i*phi);
+			% Et = EtMag.*exp(-1i*phi);
+			Et = EtMag.*exp(1i*phi);
 			obj.TemporalField = Et;
 		end
 
@@ -295,6 +304,31 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			if n > obj.SimWin.NumberOfPoints
 				Ek = Ek(:,1:2:end);
 			end
+		end
+
+		function a = get.Area(obj)
+			a = pi * (obj.Radius ^ 2);
+		end
+
+		function set.Radius(obj,r)
+			x = obj.Radius./r;
+			obj.Radius = r;
+			obj.tscale(x);
+		end
+
+		function set.Medium(obj,mat)
+			obj.Medium = mat;
+			if isa(mat,"Waveguide")
+				obj.Radius = mat.ModeFieldDiameter./2;
+			end
+		end
+
+		function tscale(obj,x)
+			EtMag = abs(obj.TemporalField);
+			EtMag = EtMag.*x;
+			phi = obj.TemporalPhase;
+			obj.TemporalField = EtMag;
+			obj.TemporalPhase = phi;
 		end
 
 		function k2t(obj,Ek)
@@ -312,7 +346,10 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			% EkPhase = unwrap(angle(obj.SpectralField));
 			% Ek = EkMag .* exp(1i * EkPhase);
 			% obj.k2t(Ek)
-			obj.TemporalField = obj.TemporalField + pulse.TemporalField;
+
+			% obj.TemporalField = obj.TemporalField + pulse.TemporalField;
+
+			obj.TemporalRootPower = obj.TemporalRootPower + pulse.TemporalRootPower;
 		end
 
 		function minus(obj,pulse)
@@ -323,6 +360,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 		end
 
 		function copyfrom(obj,pulse)
+			obj.Radius = pulse.Radius;
 			obj.TemporalField = pulse.TemporalField;
 			obj.Medium = pulse.Medium;
 		end

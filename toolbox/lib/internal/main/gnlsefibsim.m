@@ -5,8 +5,8 @@ tdisp = 1e12;
 lambdanm = simWin.Lambdanm;
 taxis = simWin.TemporalRange;
 
-laser.Waist = fibre.ModeFieldDiameter./2;
 laser.simulate(simWin);
+laser.Pulse.Radius = fibre.ModeFieldDiameter./2;
 laser.Pulse.plot;
 drawnow
 fibre.simulate(simWin);
@@ -17,7 +17,7 @@ Esq2I = nr.*c.*eps0 / 2;
 ITmag = Esq2I .* (abs(laser.Pulse.TemporalField)).^2;
 ITphi = laser.Pulse.TemporalPhase;
 
-ITmag = ITmag .* laser.Area;
+ITmag = ITmag .* laser.Pulse.Area;
 IT = ITmag .* exp(1i*ITphi);
 
 AT = sqrt(IT);
@@ -37,7 +37,7 @@ nplots = 21;
 [Z, AT, AW, W, B] = gnlsefib(t, AT, w0, gamma0, betas, ...
                              loss, fR, hR, L, nplots);
 
-laser.Pulse.TemporalIntensity = (AT(end,:));
+laser.Pulse.TemporalRootPower = (AT(end,:));
 
 % === plot output
 figure();
@@ -59,13 +59,13 @@ clim([mlIT-40.0, mlIT]);  xlim([-5,5]);
 colormap jet; shading interp;
 xlabel('Delay / ps'); ylabel('Distance / m');
 
-figure(7),subplot(311),plot(t*tdisp,abs(AT(end,:)).^2 ./ laser.Area)
+figure(7),subplot(311),plot(t*tdisp,abs(AT(end,:)).^2 ./ laser.Pulse.Area)
 		hold on
-		plot(t*tdisp,abs(AT(1,:)).^2 ./ laser.Area)
+		plot(t*tdisp,abs(AT(1,:)).^2 ./ laser.Pulse.Area)
         xlabel('Time (ps)')
         ylabel('Power (W)')
         title(['z = ' num2str(L) 'm'])
-        axis([-taxis*tdisp/2 taxis*tdisp/2 0 P0*1.2/laser.Area])
+        axis([-taxis*tdisp/2 taxis*tdisp/2 0 P0*1.2/laser.Pulse.Area])
 		hold off
 
 figure(7),subplot(312),plot((W/(2*pi))*1e-12,lIW(end,:))

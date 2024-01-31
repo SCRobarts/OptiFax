@@ -12,17 +12,18 @@ laser.AveragePower = 1;
 % chirp = 2000*1e-30;
 fibreSC = copy(laser);
 fibreSC.Name = "FibreContinuumSource";
-fibreSC.AveragePower = 0.2; 
+fibreSC.AveragePower = 0.3; 
 
 %% Initialise Simulation Window
 lambda_ref = laser.Wavelength;
-npts = 2^13;
-tAxis = 8e-12;
-tOff = -0.75e-12;
-% simWin = SimWindow(lambda_ref,npts,tAxis,tOff);
-% simWin.SpectralLimits = [210 6500];
+npts = 2^16;
+tAxis = 12e-12;
 wavelims = [210 6500];
-simWin = SimWindow(lambda_ref,npts,wavelims,tOff,"wavelims");
+tOff = -1.25e-12;
+
+simWin = SimWindow(lambda_ref,npts,tAxis,tOff);
+simWin.SpectralLimits = wavelims;
+% simWin = SimWindow(lambda_ref,npts,wavelims,tOff,"wavelims");
 
 %% Generate fibre supercontinuum
 load("FemtoWHITE_CARS.mat");
@@ -32,22 +33,23 @@ fibreSC.Pulse.plot;
 % return
 %% Initialise Optical Cavity
 load("ChirpedWaveguideLN.mat")
-% crystal.Length = 1e-3;
+% crystal.Length = 0.1e-3;
 cav = Cavity(crystal,0);
 
 
 % return
 %% Optical Simulation Setup
-laser.Waist = crystal.ModeFieldDiameter./2;
+% laser.Waist = crystal.ModeFieldDiameter./2;
+% fibreSC.Pulse.Radius = crystal.ModeFieldDiameter./2;
 delay = -250e-15;
-% errorBounds = [1e-5,1e-3];	% Percentage error tolerance
-% minStep = 0.05e-6;		% Minimum step size
-errorBounds = [1e-1,1e-0];	% Percentage error tolerance
-minStep = 0.25e-6;		% Minimum step size
+errorBounds = [1e-3,1e-1];	% Percentage error tolerance
+minStep = 0.05e-6;		% Minimum step size
+% errorBounds = [1e-1,1e-0];	% Percentage error tolerance
+% minStep = 0.25e-6;		% Minimum step size
 
 optSim = OpticalSim(laser,cav,simWin,errorBounds,minStep);
 optSim.RoundTrips = 1;
-optSim.ProgressPlots = 30;
+optSim.ProgressPlots = 300;
 % optSim.Hardware = "CPU";
 
 optSim.setup;

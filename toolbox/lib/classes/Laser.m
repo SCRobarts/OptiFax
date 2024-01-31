@@ -2,7 +2,7 @@ classdef Laser < matlab.mixin.Copyable
 	%	Sebastian C. Robarts 2023 - sebrobarts@gmail.com
 	properties
 		Name = "Laser";
-		Waist		% 1/e Intensity radius (m)
+		Waist		% Minimum 1/e Intensity radius (m)
 		RepetitionRate
 		AveragePower
 		PulseDuration
@@ -18,7 +18,7 @@ classdef Laser < matlab.mixin.Copyable
 	end
 	properties (Dependent)
 		Frequency
-		Area
+		WaistArea
 		PulseEnergy
 		IntensityTL
 		Intensity
@@ -74,7 +74,7 @@ classdef Laser < matlab.mixin.Copyable
 			f = c / obj.Wavelength;
 		end
 
-		function a = get.Area(obj)
+		function a = get.WaistArea(obj)
 			a = pi * (obj.Waist ^ 2);
 		end
 
@@ -85,13 +85,13 @@ classdef Laser < matlab.mixin.Copyable
 		function I0TL = get.IntensityTL(obj)
 			peakPTL = obj.PulseEnergy / obj.Pulse.DurationTL;
 			peakPTL = peakPTL * obj.PeakPowerCoefficient;
-			I0TL = peakPTL/obj.Area;
+			I0TL = peakPTL/obj.Pulse.Area;
 		end
 
 		function I0 = get.Intensity(obj)
 			peakP = obj.PulseEnergy / obj.PulseDuration;
 			peakP = peakP * obj.PeakPowerCoefficient;
-			I0 = peakP/obj.Area;
+			I0 = peakP/obj.Pulse.Area;
 		end
 
 		function store(laser,name,devFlag)
