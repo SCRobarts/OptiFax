@@ -212,9 +212,9 @@ classdef OpticalPulse < matlab.mixin.Copyable
 		end
 
 		function set.TemporalRootPower(obj,tRootP)
-			nr = obj.Medium.Bulk.RefractiveIndex; 
+			nr = obj.Medium.Bulk.RefractiveIndex(obj.SimWin.ReferenceIndex);
 			% nr = 1;
-			Esq2I = nr.*c.*eps0 / 2;
+			Esq2I = abs(nr).*c.*eps0 / 2;
 			EtMag = abs(tRootP) ./ sqrt(Esq2I .* obj.Area);
 			EtPhi = unwrap(angle((tRootP)));
 			obj.TemporalField = EtMag;
@@ -389,7 +389,6 @@ classdef OpticalPulse < matlab.mixin.Copyable
 	
 			yyaxis left
 			lmagPH = plot(obj.SimWin.LambdanmPlot,obj.ESD_pJ_THz);
-			% [lmagPH, lTextH]= peaksplot(obj.SimWin.LambdanmPlot,obj.ESD_pJ_THz,50,axh);
 			hold on
 			xlabel('Wavelength / (nm)')
 			ylabel('ESD / (pJ/THz)')
@@ -404,12 +403,14 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			legend off
 			updatepeaks(lmagPH);
 			hold off
+
+			yyaxis left
 		end
 
 		function [tmagPH,tphiPH,tTextH] = tplot(obj,lims)
 			arguments
 				obj
-				lims = 2e15*[-obj.DurationCheck obj.DurationCheck];
+				lims = 4e15*[-obj.DurationCheck obj.DurationCheck];
 			end
 			[IMax,indexMax] = max(obj.TemporalIntensity);
 			% [IHMax,indexHMax] = findnearest(obj.TemporalIntensity,IMax/2,2);
@@ -442,13 +443,19 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			ylabel('Relative Phase / rad')
 			title(obj.Name + ' Temporal in ' + obj.Medium.Bulk.Material)
 			hold off
+
+			yyaxis left
 		end
 
-		function plot(obj)
+		function plot(obj,lamLims)
+			arguments
+				obj
+				lamLims = [500 1600];
+			end
 			figure
 			tiledlayout(2,1)
 			nexttile
-			obj.lplot;
+			obj.lplot(lamLims);
 			nexttile
 			obj.tplot;
 		end

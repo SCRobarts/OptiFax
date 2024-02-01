@@ -9,7 +9,6 @@ clear
 %% Initialise Laser / Input Pulse
 load("Taccor800.mat");
 laser.AveragePower = 1;
-% chirp = 2000*1e-30;
 fibreSC = copy(laser);
 fibreSC.Name = "FibreContinuumSource";
 fibreSC.AveragePower = 0.3; 
@@ -35,13 +34,13 @@ fibreSC.Pulse.plot;
 load("ChirpedWaveguideLN.mat")
 % crystal.Length = 0.1e-3;
 cav = Cavity(crystal,0);
-
+chirp = 1000*1e-30;
 
 % return
 %% Optical Simulation Setup
 % laser.Waist = crystal.ModeFieldDiameter./2;
 % fibreSC.Pulse.Radius = crystal.ModeFieldDiameter./2;
-delay = -250e-15;
+delay = -150e-15;
 errorBounds = [1e-3,1e-1];	% Percentage error tolerance
 minStep = 0.05e-6;		% Minimum step size
 % errorBounds = [1e-1,1e-0];	% Percentage error tolerance
@@ -49,13 +48,14 @@ minStep = 0.05e-6;		% Minimum step size
 
 optSim = OpticalSim(laser,cav,simWin,errorBounds,minStep);
 optSim.RoundTrips = 1;
-optSim.ProgressPlots = 300;
+optSim.ProgressPlots = 1200;
 % optSim.Hardware = "CPU";
 
 optSim.setup;
 optSim.Pulse.copyfrom(fibreSC.Pulse);
 % optSim.Pulse.applyGD(4*delay)
 optSim.PumpPulse.applyGD(delay);
+optSim.PumpPulse.applyGDD(chirp);
 optSim.run;
 
 lIW = 10*log10(abs(optSim.Pulse.SpectralField).^2);	% log scale spectral intensity

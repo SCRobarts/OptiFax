@@ -36,10 +36,10 @@ classdef Laser < matlab.mixin.Copyable
 
 	methods
 		% Constructor
-		function obj = Laser(lambda_central,diameter,f_rep,power,src_str,dtau,dlam,phase_str)
+		function obj = Laser(lambda_central,waistR,f_rep,power,src_str,dtau,dlam,phase_str)
 			arguments
 				lambda_central		% Central wavelength (m)
-				diameter
+				waistR
 				f_rep
 				power
 				src_str
@@ -48,7 +48,7 @@ classdef Laser < matlab.mixin.Copyable
 				phase_str = NaN;
 			end
 			obj.Wavelength = lambda_central;
-			obj.Waist = diameter/2;
+			obj.Waist = waistR;
 			obj.RepetitionRate = f_rep;
 			obj.AveragePower = power;
 			obj.PulseDuration = dtau;
