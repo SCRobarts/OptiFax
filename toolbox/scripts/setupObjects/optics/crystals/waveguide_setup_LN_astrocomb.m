@@ -37,8 +37,6 @@ CPLN.Bulk.Temperature = temp_C;
 points = 2^13;
 lam0 = 800e-9;
 lamWin = SimWindow(lam0,points);
-lnm = lamWin.Wavelengths .* 1e9;
-lnm(lnm<0) = NaN;
 
 CPLN.simulate(lamWin);
 CPLN.store(name,1);
