@@ -208,7 +208,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 
 		function tRootP = get.TemporalRootPower(obj)
 			rootPmag = sqrt(obj.TemporalIntensity .* obj.Area);
-			tRootP = rootPmag .* exp(-1i.*obj.TemporalPhase);
+			tRootP = rootPmag .* exp(1i.*obj.TemporalPhase);
 		end
 
 		function set.TemporalRootPower(obj,tRootP)

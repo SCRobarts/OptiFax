@@ -26,7 +26,6 @@ cav.Xtal.GratingPeriod = 21.32e-6;
 % return
 
 %% Initialise Laser / Input Pulse
-% % GigajetTiSapph = Laser(lambda_c,diameter,frep,pump_power,pump_str);
 load('GigajetTiSapph.mat');
 
 %% Initialise Simulation Window
@@ -57,13 +56,6 @@ optSim.setup;
 %% Run Sim
 optSim.run
 
-% optSim.Pulse.propagate(cav.Optics);
-% optair = optSim.Pulse.Medium;
-% for ii = 1:optSim.RoundTrips
-% 	optSim.Pulse.refract(cav.Xtal);
-% 	optSim.Pulse.refract(optair);
-% 	optSim.Pulse.applyGD(-8e-14);
-% end
 
 %% Test Plots
 fh1 = figure("Position",[10, 10, 1000, 600]);
