@@ -15,8 +15,9 @@ rng('default');
 
 
 %% Initialise Optical Cavity
-load('pbCav.mat');
+% load('pbCav.mat');
 % load('pbCavAiry.mat');
+load PB_Prism_OPO_333MHz.mat
 % cav.Xtal.Chi2 = 0;
 cav.Xtal.GratingPeriod = 21.32e-6;
 % cav.Xtal.GratingPeriod = cav.Xtal.Length;

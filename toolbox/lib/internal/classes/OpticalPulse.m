@@ -319,7 +319,9 @@ classdef OpticalPulse < matlab.mixin.Copyable
 		function set.Medium(obj,mat)
 			obj.Medium = mat;
 			if isa(mat,"Waveguide")
-				obj.Radius = mat.ModeFieldDiameter./2;
+				if mat.ModeFieldDiameter
+					obj.Radius = mat.ModeFieldDiameter./2;
+				end
 			end
 		end
 

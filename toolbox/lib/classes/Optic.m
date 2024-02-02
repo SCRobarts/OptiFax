@@ -95,10 +95,9 @@ classdef Optic < matlab.mixin.Copyable
 		end
 
 		function GD_rel = get.RelativeGD(obj)
-			GD = obj.GroupDelay;
-			% GD_rel = GD - min(GD(obj.SimWin.Lambdanm>0));
-			% GD_rel = GD - (GD(obj.SimWin.Lambdanm == obj.SimWin.ReferenceWave*1e9));
-			GD_rel = GD - GD(obj.SimWin.ReferenceIndex);
+			% GD = obj.GroupDelay;
+			% GD_rel = GD - GD(obj.SimWin.ReferenceIndex);
+			GD_rel = phi2GD(obj.Dispersion,obj.SimWin.DeltaOmega);
 		end
 
 		function GDD = get.GDD(obj)
@@ -145,6 +144,7 @@ classdef Optic < matlab.mixin.Copyable
 				ylabel('Power Reflection')
 			end
 			xlim(lims)
+			ylim([0 1])
 
 			nexttile
 			wavplot(obj.SimWin.Lambdanm,obj.Dispersion)
@@ -152,11 +152,11 @@ classdef Optic < matlab.mixin.Copyable
 			ylabel('Dispersion, \Phi (rad)')
 
 			nexttile
-			% wavplot(obj.SimWin.Lambdanm,obj.RelativeGD*1e15)
-			wavplot(obj.SimWin.Lambdanm,obj.GroupDelay*1e15)
+			wavplot(obj.SimWin.Lambdanm,obj.RelativeGD*1e15)
+			% wavplot(obj.SimWin.Lambdanm,obj.GroupDelay*1e15)
 			xlim(lims)
-			% ylabel('Relative GD (fs)')
-			ylabel('Group Delay (fs)')
+			ylabel('Relative GD (fs)')
+			% ylabel('Group Delay (fs)')
 
 			nexttile
 			wavplot(obj.SimWin.Lambdanm,obj.GDD*1e30)

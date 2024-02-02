@@ -56,6 +56,7 @@ optSim.Pulse.copyfrom(fibreSC.Pulse);
 % optSim.Pulse.applyGD(4*delay)
 optSim.PumpPulse.applyGD(delay);
 optSim.PumpPulse.applyGDD(chirp);
+
 optSim.run;
 
 lIW = 10*log10(abs(optSim.Pulse.SpectralField).^2);	% log scale spectral intensity

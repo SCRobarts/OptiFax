@@ -49,14 +49,18 @@ classdef Cavity < handle
 				opt = obj.PreCavityOptics.(ii);
 				opt.Parent = obj;
 				opt.simulate(obj.SimWin);
-				opt.Name = obj.PreCavityOptics.Properties.VariableNames(ii);
+				if isempty(opt.Name)
+					opt.Name = obj.PreCavityOptics.Properties.VariableNames(ii);
+				end
 				obj.PumpDispersion = obj.PumpDispersion + opt.Dispersion;
 			end
 			for ii = 1:width(obj.Optics)
 				opt = obj.Optics.(ii);
 				opt.Parent = obj;
 				opt.simulate(obj.SimWin);
-				opt.Name = obj.Optics.Properties.VariableNames(ii);
+				if isempty(opt.Name)
+					opt.Name = obj.Optics.Properties.VariableNames(ii);
+				end
 				obj.Transmission = obj.Transmission .* opt.Transmission;
 				obj.Dispersion = obj.Dispersion + opt.Dispersion;
 				obj.GroupDelay = obj.GroupDelay + opt.GroupDelay;
@@ -130,7 +134,7 @@ classdef Cavity < handle
 			cav.Name = name;
 			currentfolder = pwd;
 			cd(OptiFaxRoot(devFlag));
-			cd("toolbox" + filesep + "objects" + filesep + "optics" + filesep + "cavities");
+			cd("toolbox" + filesep + "objects" + filesep + "cavities");
 			save(name + ".mat","cav","-mat");
 			cd(currentfolder);
 		end
