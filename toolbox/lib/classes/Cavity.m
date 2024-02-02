@@ -4,6 +4,7 @@ classdef Cavity < handle
 	%
 	%	Sebastian C. Robarts 2023 - sebrobarts@gmail.com
 	properties
+		Name
 		PreCavityOptics
 		Optics 
 		OCPosition
@@ -88,6 +89,7 @@ classdef Cavity < handle
 		end
 
 		function plot(obj,lims)
+		
 			arguments
 				obj
 				lims = [350 5500]
@@ -117,6 +119,20 @@ classdef Cavity < handle
 			wavplot(obj.SimWin.Lambdanm,obj.GDD*1e30)
 			xlim(lims)
 			ylabel('GDD (fs^2)')
+		end
+
+		function store(cav,name,devFlag)
+			arguments
+				cav
+				name
+				devFlag = 0;
+			end
+			cav.Name = name;
+			currentfolder = pwd;
+			cd(OptiFaxRoot(devFlag));
+			cd("toolbox" + filesep + "objects" + filesep + "optics" + filesep + "cavities");
+			save(name + ".mat","cav","-mat");
+			cd(currentfolder);
 		end
 
 		%% Legacy methods for use with old, non-OOP implementation 
