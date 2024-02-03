@@ -15,7 +15,7 @@ if isstring(n2)
 	n2 = sellmeier(l_sim*1E6,n2);
 end
 
-
+theta_i = deg2rad(theta_i);
 nr      = n1./n2;    % Ratio of refractive indices
 theta_t = asin(nr.*(sin(theta_i))); 
 

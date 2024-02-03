@@ -15,8 +15,9 @@ rng('default');
 
 
 %% Initialise Optical Cavity
-load('pbCav.mat');
+% load('pbCav.mat');
 % load('pbCavAiry.mat');
+load PB_Prism_OPO_333MHz.mat
 % cav.Xtal.Chi2 = 0;
 cav.Xtal.GratingPeriod = 21.32e-6;
 % cav.Xtal.GratingPeriod = cav.Xtal.Length;
@@ -25,7 +26,6 @@ cav.Xtal.GratingPeriod = 21.32e-6;
 % return
 
 %% Initialise Laser / Input Pulse
-% % GigajetTiSapph = Laser(lambda_c,diameter,frep,pump_power,pump_str);
 load('GigajetTiSapph.mat');
 
 %% Initialise Simulation Window
@@ -37,13 +37,13 @@ load('simWin.mat');
 % simWin.Limits = [300 5500];
 % simWin.TemporalRange = simWin.TemporalRange * 2;
 % simWin.TimeOffset = -1.5e-12;
-simWin.NumberOfPoints = 2^13;
+simWin.NumberOfPoints = 2^15;
 
 %% Optical Simulation Setup
 optSim = OpticalSim(laser,cav,simWin,[0.2,4],0.25e-6);
 % return
 % load('pbOPOsim.mat');
-optSim.RoundTrips = 4;
+optSim.RoundTrips = 40;
 % optSim.Hardware = "CPU";
 % optSim.ProgressPlotting = 0;
 % optSim.DetectorPosition = 3;
@@ -56,13 +56,6 @@ optSim.setup;
 %% Run Sim
 optSim.run
 
-% optSim.Pulse.propagate(cav.Optics);
-% optair = optSim.Pulse.Medium;
-% for ii = 1:optSim.RoundTrips
-% 	optSim.Pulse.refract(cav.Xtal);
-% 	optSim.Pulse.refract(optair);
-% 	optSim.Pulse.applyGD(-8e-14);
-% end
 
 %% Test Plots
 fh1 = figure("Position",[10, 10, 1000, 600]);

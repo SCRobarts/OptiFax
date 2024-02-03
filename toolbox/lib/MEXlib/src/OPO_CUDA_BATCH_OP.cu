@@ -402,6 +402,10 @@ __global__ void copyKernel (float2 * Eft,
 	k = 0.0;
 	stepprev = 4.0;
 	Nchunks = Nsteps / sel;
+	if (Nchunks*sel < Nsteps)
+	{
+		Nchunks = Nchunks + 1;
+	}
 	// Constants defining cut off for temporal aliasing reduction
 	gi1 = 6.0*(Npoints/16);
 	gi2 = 10.0*(Npoints/16);
@@ -423,7 +427,7 @@ __global__ void copyKernel (float2 * Eft,
 		hmod = stepmod * h;
 
 		//for (k = 0; k < sel; k = k+stepmod)
-		for (k = k; k < (chunk + 1) * sel; k = k+stepmod)
+		for (k = k; k < (chunk + 1) * sel && k < Nsteps; k = k+stepmod)
 		{	
 		/*	
 		*/

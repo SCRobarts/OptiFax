@@ -1,7 +1,7 @@
 %% cuda_compile
 
 % cd('D:\Seb Robarts\OneDrive - Heriot-Watt University\Heriot Watt\Summer 2021\MATLABThings')
-cd('C:\Users\Seb Robarts\Dropbox (Heriot-Watt University Team)\RES_EPS_McCracken_Lab\Seb\OptiFax\MEXlib\src')
+cd('C:\Users\Seb Robarts\Dropbox (Heriot-Watt University Team)\RES_EPS_McCracken_Lab\Seb\OptiFax\toolbox\lib\MEXlib\src')
 
 mexcuda '-LC:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.2\lib\x64' ...
 	-lcufft -dynamic -O ...

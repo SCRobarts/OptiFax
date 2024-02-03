@@ -1,8 +1,8 @@
 classdef Laser < matlab.mixin.Copyable
 	%	Sebastian C. Robarts 2023 - sebrobarts@gmail.com
 	properties
-		Name
-		Waist		% 1/e Intensity radius (m)
+		Name = "Laser";
+		Waist		% Minimum 1/e Intensity radius (m)
 		RepetitionRate
 		AveragePower
 		PulseDuration
@@ -18,7 +18,7 @@ classdef Laser < matlab.mixin.Copyable
 	end
 	properties (Dependent)
 		Frequency
-		Area
+		WaistArea
 		PulseEnergy
 		IntensityTL
 		Intensity
@@ -36,19 +36,19 @@ classdef Laser < matlab.mixin.Copyable
 
 	methods
 		% Constructor
-		function obj = Laser(lamda_central,diameter,f_rep,power,src_str,dtau,dlam,phase_str)
+		function obj = Laser(lambda_central,waistR,f_rep,power,src_str,dtau,dlam,phase_str)
 			arguments
-				lamda_central		% Central wavelength (m)
-				diameter
+				lambda_central		% Central wavelength (m)
+				waistR
 				f_rep
 				power
 				src_str
 				dtau = 100e-15;
-				dlam = c / (0.315 / dtau);
+				dlam = (4 * c * 0.315 * dtau * (lambda_central^2)) / ((2*c*dtau)^2 - (lambda_central*0.315)^2) ;
 				phase_str = NaN;
 			end
-			obj.Wavelength = lamda_central;
-			obj.Waist = diameter/2;
+			obj.Wavelength = lambda_central;
+			obj.Waist = waistR;
 			obj.RepetitionRate = f_rep;
 			obj.AveragePower = power;
 			obj.PulseDuration = dtau;
@@ -61,8 +61,8 @@ classdef Laser < matlab.mixin.Copyable
 			obj.Pulse = OpticalPulse(obj,simWin);
 			obj.PeakPowerCoefficient = 1/((sum(abs(obj.Pulse.TemporalField).^2)*...
 										obj.Pulse.SimWin.DeltaTime/obj.Pulse.DurationTL));
-			% Free space field magnitude scaling [W/m^2] -> [V/m]
 			nr = obj.Pulse.Medium.Bulk.RefractiveIndex;
+			% Free space field magnitude scaling [W/m^2] -> [V/m]
 			I2E = sqrt(obj.IntensityTL .* 2./nr./eps0./c);
 			obj.Pulse.TemporalField = I2E .* obj.Pulse.TemporalField;
 			obj.Wavelength = obj.Pulse.PeakWavelength;
@@ -74,7 +74,7 @@ classdef Laser < matlab.mixin.Copyable
 			f = c / obj.Wavelength;
 		end
 
-		function a = get.Area(obj)
+		function a = get.WaistArea(obj)
 			a = pi * (obj.Waist ^ 2);
 		end
 
@@ -85,21 +85,26 @@ classdef Laser < matlab.mixin.Copyable
 		function I0TL = get.IntensityTL(obj)
 			peakPTL = obj.PulseEnergy / obj.Pulse.DurationTL;
 			peakPTL = peakPTL * obj.PeakPowerCoefficient;
-			I0TL = peakPTL/obj.Area;
+			I0TL = peakPTL/obj.Pulse.Area;
 		end
 
 		function I0 = get.Intensity(obj)
 			peakP = obj.PulseEnergy / obj.PulseDuration;
 			peakP = peakP * obj.PeakPowerCoefficient;
-			I0 = peakP/obj.Area;
+			I0 = peakP/obj.Pulse.Area;
 		end
 
-		function store(obj,name)
-			obj.Name = name;
+		function store(laser,name,devFlag)
+			arguments
+				laser
+				name
+				devFlag = 0;
+			end
+			laser.Name = name;
 			currentfolder = pwd;
-			cd(OptiFaxRoot);
-			cd("objects" + filesep + "lasers");
-			save(name,"obj","-mat");
+			cd(OptiFaxRoot(devFlag));
+			cd("toolbox" + filesep + "objects" + filesep + "lasers");
+			save(name + ".mat","laser","-mat");
 			cd(currentfolder);
 		end
 	end

@@ -21,7 +21,7 @@ classdef OpticalSim < matlab.mixin.Copyable
 		Precision = 'single';
 		ProgressPlotting = 1;
 		ProgressPlots = 4;
-		StoredPulses	OpticalPulse	% Pulse object with multiple fields, storing desired pulse each trip (currently XIn)
+		StoredPulses	OpticalPulse	% Pulse object with multiple fields, storing desired pulse each trip (currently XOut)
 		TripNumber = 0;
 	end
 	properties (Transient)
@@ -48,7 +48,7 @@ classdef OpticalSim < matlab.mixin.Copyable
 				src
 				cav
 				simWin
-				errorBounds = [2.5e-3,5e-2];	% default error 0.05-1%
+				errorBounds = [2.5e-3,5e-2];	% default error 0.0025-0.05%
 				stepSize = 1e-7;		% default starting step size of 0.1 micron
 			end
 			%OPTICALSIM Construct an instance of this class
@@ -75,7 +75,7 @@ classdef OpticalSim < matlab.mixin.Copyable
 			if strcmp(obj.Hardware, "GPU")	% Could probably add actual GPU model info here
 				obj.Solver = @OPOmexBatch;
 			else 
-				obj.Solver = @NEE_CPU_par;	% Need to make a stand alone CPU adaptive solver
+				obj.Solver = @NEE_CPU;	% Need to make a stand alone CPU adaptive solver
 			end
 			obj.TripNumber = 0;
 			obj.Source.simulate(obj.SimWin);	% Will we need to load these objects?
@@ -108,8 +108,10 @@ classdef OpticalSim < matlab.mixin.Copyable
 
 			obj.System.Xtal.ppole(obj);
 			obj.SpectralProgressShift = repmat(fft(fftshift(obj.PumpPulse.TemporalField)).',1,obj.ProgressPlots);
-			obj.FinalPlotter = SimPlotter(obj,obj.TripNumber + (1:obj.RoundTrips),"Round Trip Number");
-			if obj.ProgressPlotting
+			if obj.RoundTrips > 1
+				obj.FinalPlotter = SimPlotter(obj,obj.TripNumber + (1:obj.RoundTrips),"Round Trip Number");
+			end
+			if obj.ProgressPlotting || obj.RoundTrips == 1
 				ydat = linspace(0,obj.System.Xtal.Length*1e3,obj.ProgressPlots);
 				ylab = "Distance (mm)";
 				obj.ProgressPlotter = SimPlotter(obj,ydat,ylab);
@@ -123,6 +125,8 @@ classdef OpticalSim < matlab.mixin.Copyable
 		function run(obj)
 		% Will want to be based off the solver, since that should already be hardware dependent
 		% Should probably convert to correct precision and array type in the setup
+		%	This is very messy. Should consider model/solver class(es) as
+		%	will need to generalise this for different waveguides.
 			
 			xtal = obj.System.Xtal;
 			sel = (round(xtal.NSteps/(obj.ProgressPlots - 1)));
@@ -143,7 +147,9 @@ classdef OpticalSim < matlab.mixin.Copyable
 			obj.InputPulse.copyfrom(obj.PumpPulse);
 			obj.InputPulse.add(obj.Pulse);
 			obj.OutputPulse = copy(obj.Pulse);
-			obj.OutputPulse.Name = "Detected Pulse (" + obj.System.Optics.(obj.DetectorPosition).Name + ")";
+			if obj.DetectorPosition
+				obj.OutputPulse.Name = "Detected Pulse (" + obj.System.Optics.(obj.DetectorPosition).Name + ")";
+			end
 
 			while obj.SimTripNumber < obj.RoundTrips
 
@@ -153,21 +159,21 @@ classdef OpticalSim < matlab.mixin.Copyable
 				obj.SpectralProgressShift(:,1) = fft(EtShift);
 
 				[EtShift,obj.SpectralProgressShift(:,2:obj.ProgressPlots),obj.StepSizeModifiers(obj.SimTripNumber,:)] =...
-										obj.Solver(EtShift,...
-													 xtal.TStepShift,...
-													 G33,...
-													 w0,...
-													 bdiffw0,...
-													 h,...
-													 uint32(xtal.NSteps),...
-													 dt,...
-													 hBshift,...
-													 obj.AdaptiveError(2),...
-													 obj.AdaptiveError(1),...
-													 sel,...
-													 obj.SpectralProgressShift(:,2:obj.ProgressPlots),...
-													 obj.StepSizeModifiers(obj.SimTripNumber,:)...
-													 );
+										obj.Solver(	EtShift,...
+													xtal.TStepShift,...
+													G33,...
+													w0,...
+													bdiffw0,...
+													h,...
+													uint32(xtal.NSteps),...
+													dt,...
+													hBshift,...
+													obj.AdaptiveError(2),...
+													obj.AdaptiveError(1),...
+													sel,...
+													obj.SpectralProgressShift(:,2:obj.ProgressPlots),...
+													obj.StepSizeModifiers(obj.SimTripNumber,:)...
+													);
 
 				obj.Pulse.TemporalField = fftshift(EtShift.');
 				obj.StoredPulses.TemporalField(obj.SimTripNumber,:) = gather(obj.Pulse.TemporalField);
@@ -189,14 +195,21 @@ classdef OpticalSim < matlab.mixin.Copyable
 				obj.Pulse.applyGD(obj.Delay);
 
 			end
-			obj.FinalPlotter.updateYData((obj.TripNumber-obj.RoundTrips) + (1:obj.RoundTrips));
-			obj.FinalPlotter.roundtripplots;
+			
+			if obj.RoundTrips > 1
+				obj.FinalPlotter.updateYData((obj.TripNumber-obj.RoundTrips) + (1:obj.RoundTrips));
+				obj.FinalPlotter.roundtripplots;
+			end
 
 		end
 
 		function detect(obj)
-			OCopt = obj.System.Optics.(obj.DetectorPosition);
-			pulseOC = obj.Pulse.outputcouple(OCopt);
+			if obj.DetectorPosition
+				OCopt = obj.System.Optics.(obj.DetectorPosition);
+				pulseOC = obj.Pulse.outputcouple(OCopt);
+			else
+				pulseOC = obj.Pulse;
+			end
 			obj.OutputPulse.copyfrom(pulseOC);
 		end
 		

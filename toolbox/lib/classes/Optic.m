@@ -10,7 +10,7 @@ classdef Optic < matlab.mixin.Copyable
 		S1			OpticalSurface
 		Bulk		Dielectric
 		S2			OpticalSurface
-		Parent		Cavity
+		Parent		% Cavity
 	end
 	properties (Transient)
 		SimWin		SimWindow
@@ -39,7 +39,8 @@ classdef Optic < matlab.mixin.Copyable
 				theta				= 0;
 				s2					= s1;
 				celsius				= 20;
-				parent handle		= Cavity.empty;
+				% parent handle		= Cavity.empty;
+				parent handle = [];
 			end
 			if nargin > 0
 				obj.Parent = parent;
@@ -65,7 +66,7 @@ classdef Optic < matlab.mixin.Copyable
 			end
 		end
 
-		function obj = simulate(obj,simWin)
+		function simulate(obj,simWin)
 			obj.SimWin = simWin;
 			obj.S1.Parent = obj;
 			obj.S2.Parent = obj;
@@ -95,10 +96,9 @@ classdef Optic < matlab.mixin.Copyable
 		end
 
 		function GD_rel = get.RelativeGD(obj)
-			GD = obj.GroupDelay;
-			% GD_rel = GD - min(GD(obj.SimWin.Lambdanm>0));
-			% GD_rel = GD - (GD(obj.SimWin.Lambdanm == obj.SimWin.ReferenceWave*1e9));
-			GD_rel = GD - GD(obj.SimWin.ReferenceIndex);
+			% GD = obj.GroupDelay;
+			% GD_rel = GD - GD(obj.SimWin.ReferenceIndex);
+			GD_rel = phi2GD(obj.Dispersion,obj.SimWin.DeltaOmega);
 		end
 
 		function GDD = get.GDD(obj)
@@ -134,6 +134,7 @@ classdef Optic < matlab.mixin.Copyable
 
 			fh = figure;
 			tl = tiledlayout(fh,2,2);
+			title(tl,obj.Name,"Interpreter","none");
 
 			nexttile
 			if strcmp(obj.Regime,"T")
@@ -144,6 +145,7 @@ classdef Optic < matlab.mixin.Copyable
 				ylabel('Power Reflection')
 			end
 			xlim(lims)
+			ylim([0 1])
 
 			nexttile
 			wavplot(obj.SimWin.Lambdanm,obj.Dispersion)
@@ -151,11 +153,11 @@ classdef Optic < matlab.mixin.Copyable
 			ylabel('Dispersion, \Phi (rad)')
 
 			nexttile
-			% wavplot(obj.SimWin.Lambdanm,obj.RelativeGD*1e15)
-			wavplot(obj.SimWin.Lambdanm,obj.GroupDelay*1e15)
+			wavplot(obj.SimWin.Lambdanm,obj.RelativeGD*1e15)
+			% wavplot(obj.SimWin.Lambdanm,obj.GroupDelay*1e15)
 			xlim(lims)
-			% ylabel('Relative GD (fs)')
-			ylabel('Group Delay (fs)')
+			ylabel('Relative GD (fs)')
+			% ylabel('Group Delay (fs)')
 
 			nexttile
 			wavplot(obj.SimWin.Lambdanm,obj.GDD*1e30)
@@ -163,12 +165,17 @@ classdef Optic < matlab.mixin.Copyable
 			ylabel('GDD (fs^2)')
 		end
 
-		function store(obj,name)
+		function store(obj,name,devFlag)
+			arguments
+				obj
+				name
+				devFlag = 0;
+			end
 			obj.Name = name;
 			currentfolder = pwd;
-			cd(OptiFaxRoot);
-			cd("objects" + filesep + "optics");
-			save(name,"obj","-mat");
+			cd(OptiFaxRoot(devFlag));
+			cd("toolbox" + filesep + "objects" + filesep + "optics");
+			save(name + ".mat","obj","-mat");
 			cd(currentfolder);
 		end
 

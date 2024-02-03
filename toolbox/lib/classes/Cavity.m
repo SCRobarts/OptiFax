@@ -4,6 +4,7 @@ classdef Cavity < handle
 	%
 	%	Sebastian C. Robarts 2023 - sebrobarts@gmail.com
 	properties
+		Name
 		PreCavityOptics
 		Optics 
 		OCPosition
@@ -34,6 +35,9 @@ classdef Cavity < handle
 				ocPos = 4;
 				preCavOptics = Optic.empty;
 			end
+			if ~istable(optics)
+				optics = table(optics);
+			end
 			obj.Optics = optics;
 			obj.OCPosition = ocPos;
 			obj.PreCavityOptics = preCavOptics;
@@ -45,14 +49,18 @@ classdef Cavity < handle
 				opt = obj.PreCavityOptics.(ii);
 				opt.Parent = obj;
 				opt.simulate(obj.SimWin);
-				opt.Name = obj.PreCavityOptics.Properties.VariableNames(ii);
+				if isempty(opt.Name)
+					opt.Name = obj.PreCavityOptics.Properties.VariableNames(ii);
+				end
 				obj.PumpDispersion = obj.PumpDispersion + opt.Dispersion;
 			end
 			for ii = 1:width(obj.Optics)
 				opt = obj.Optics.(ii);
 				opt.Parent = obj;
 				opt.simulate(obj.SimWin);
-				opt.Name = obj.Optics.Properties.VariableNames(ii);
+				if isempty(opt.Name)
+					opt.Name = obj.Optics.Properties.VariableNames(ii);
+				end
 				obj.Transmission = obj.Transmission .* opt.Transmission;
 				obj.Dispersion = obj.Dispersion + opt.Dispersion;
 				obj.GroupDelay = obj.GroupDelay + opt.GroupDelay;
@@ -85,6 +93,7 @@ classdef Cavity < handle
 		end
 
 		function plot(obj,lims)
+		
 			arguments
 				obj
 				lims = [350 5500]
@@ -92,7 +101,8 @@ classdef Cavity < handle
 
 			fh = figure;
 			tl = tiledlayout(fh,2,2);
-
+			title(tl,obj.Name,"Interpreter","none");
+			
 			nexttile
 			wavplot(obj.SimWin.Lambdanm,obj.Transmission)
 			xlim(lims)
@@ -114,6 +124,20 @@ classdef Cavity < handle
 			wavplot(obj.SimWin.Lambdanm,obj.GDD*1e30)
 			xlim(lims)
 			ylabel('GDD (fs^2)')
+		end
+
+		function store(cav,name,devFlag)
+			arguments
+				cav
+				name
+				devFlag = 0;
+			end
+			cav.Name = name;
+			currentfolder = pwd;
+			cd(OptiFaxRoot(devFlag));
+			cd("toolbox" + filesep + "objects" + filesep + "cavities");
+			save(name + ".mat","cav","-mat");
+			cd(currentfolder);
 		end
 
 		%% Legacy methods for use with old, non-OOP implementation 
