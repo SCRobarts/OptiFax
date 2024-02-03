@@ -119,7 +119,7 @@ classdef NonlinearCrystal < Waveguide
 			crystal.Name = name;
 			currentfolder = pwd;
 			cd(OptiFaxRoot(devFlag));
-			cd("toolbox" + filesep + "objects" + filesep + "optics" + filesep + "crystals");
+			cd("objects" + filesep + "optics" + filesep + "crystals");
 			save(name + ".mat","crystal","-mat");
 			cd(currentfolder);
 		end

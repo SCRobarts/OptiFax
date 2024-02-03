@@ -135,7 +135,7 @@ classdef Cavity < handle
 			cav.Name = name;
 			currentfolder = pwd;
 			cd(OptiFaxRoot(devFlag));
-			cd("toolbox" + filesep + "objects" + filesep + "cavities");
+			cd("objects" + filesep + "cavities");
 			save(name + ".mat","cav","-mat");
 			cd(currentfolder);
 		end

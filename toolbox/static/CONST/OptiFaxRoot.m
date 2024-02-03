@@ -4,6 +4,7 @@ arguments
 end
 if devFlag
 	pathstr = pwd;
+	pathstr = pathstr + filesep + 'toolbox';
 else
 	addonPath = matlab.internal.addons.util.retrieveAddOnsInstallationFolder;
 	pathstr = addonPath + filesep + 'Toolboxes' + filesep + 'OptiFax';
