@@ -10,7 +10,7 @@ classdef Optic < matlab.mixin.Copyable
 		S1			OpticalSurface
 		Bulk		Dielectric
 		S2			OpticalSurface
-		Parent		Cavity
+		Parent		% Cavity
 	end
 	properties (Transient)
 		SimWin		SimWindow
@@ -39,7 +39,8 @@ classdef Optic < matlab.mixin.Copyable
 				theta				= 0;
 				s2					= s1;
 				celsius				= 20;
-				parent handle		= Cavity.empty;
+				% parent handle		= Cavity.empty;
+				parent handle = [];
 			end
 			if nargin > 0
 				obj.Parent = parent;

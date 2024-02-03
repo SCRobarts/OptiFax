@@ -91,6 +91,19 @@ classdef NonlinearCrystal < Waveguide
 			downPoled = obj.DomainWidths(1:2:end-1);
 			dutyCycles = upPoled./(upPoled+downPoled);
 
+			fh = figure;
+			fh.Position(4) = fh.Position(4)./2;
+			tl = tiledlayout(fh,1,2);
+			title(tl,obj.Name,"Interpreter","none");
+			
+			nexttile
+			plot(obj.DomainWallPositions,obj.DomainWidths);
+			title('Poling Function')
+			xlabel('z Position / m')
+			ylabel('Domain Width / m')
+			xlim([0 obj.Length])
+
+			nexttile
 			histogram(dutyCycles*100,11)
 			title('Crystal Duty Cycle Variation')
 			xlabel('Poled Period %')
