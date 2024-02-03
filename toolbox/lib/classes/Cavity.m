@@ -101,7 +101,8 @@ classdef Cavity < handle
 
 			fh = figure;
 			tl = tiledlayout(fh,2,2);
-
+			title(tl,obj.Name,"Interpreter","none");
+			
 			nexttile
 			wavplot(obj.SimWin.Lambdanm,obj.Transmission)
 			xlim(lims)

@@ -3,19 +3,21 @@ classdef Waveguide < Optic
 	%   Provides an interface to extend the Optic class to 
 	%	nonlinear media, where individual waveguide types
 	%	are implemented in their own classes, extending this.
+	%
+	%	Sebastian C. Robarts 2024 - sebrobarts@gmail.com
 
 	properties
-		Chi2
-		Chi3
+		Chi2	% Second order optical nonlinearity [V/m]
+		Chi3	% Todo: Implement conversion of gamma [W/m] to Chi3 [V/m]
 		RamanFraction
 		ResponseTimes	% [Inverse average phonon frequency, Characteristic phonon dampening time] [s]
 		ModeFieldDiameter	% Waveguide confinement [m]
 	end
 	properties (Abstract)
-		StepSize
+		StepSize	% Default smallest step implemented separately in each subclass [m]
 	end
 	properties (Dependent)
-		RamanResponse
+		RamanResponse	% Calculated Raman response function
 	end
 
 	methods
