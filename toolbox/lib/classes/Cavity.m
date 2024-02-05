@@ -23,6 +23,7 @@ classdef Cavity < handle
 		CrystalPosition
 		PumpGD
 		PumpChirp
+		MinGDWave
 		T struct
 		phi struct
 		GD struct
@@ -67,6 +68,12 @@ classdef Cavity < handle
 				obj.GDD = obj.GDD + opt.GDD;
 				obj.OpticalPathLength = obj.OpticalPathLength + opt.OpticalPath;
 			end
+		end
+
+		function minGDlam = get.MinGDWave(obj)
+			wavs = obj.SimWin.Lambdanm;
+			minGD = min(obj.GroupDelay(wavs > 0));
+			minGDlam = wavs(obj.GroupDelay == minGD);
 		end
 
 		function pGD = get.PumpGD(obj)

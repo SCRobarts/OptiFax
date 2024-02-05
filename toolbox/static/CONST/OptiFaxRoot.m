@@ -3,7 +3,7 @@ arguments
 	devFlag = 0;
 end
 if devFlag
-	pathstr = pwd;
+	pathstr = string(pwd);
 	pathstr = pathstr + filesep + 'toolbox';
 else
 	addonPath = matlab.internal.addons.util.retrieveAddOnsInstallationFolder;
