@@ -3,15 +3,19 @@
 %
 %	Sebastian C. Robarts 2024 - sebrobarts@gmail.com
 
-close all
-clear
+% close all
+% clear
+
+load("FemtoWHITE_CARS_12cm.mat");
+% load("FemtoWHITE_CARS.mat");
 
 %% Initialise Laser / Input Pulse
 load("Taccor800.mat");
 laser.AveragePower = 1;
-fibreSC = copy(laser);
-fibreSC.Name = "FibreContinuumSource";
-fibreSC.AveragePower = 0.3; 
+fibreOut = copy(laser);
+
+fibreOut.Name = "FibreOut";
+fibreOut.AveragePower = 0.3;
 
 %% Initialise Simulation Window
 lambda_ref = laser.Wavelength;
@@ -25,11 +29,10 @@ simWin.SpectralLimits = wavelims;
 % simWin = SimWindow(lambda_ref,npts,wavelims,tOff,"wavelims");
 
 %% Generate fibre supercontinuum
-load("FemtoWHITE_CARS.mat");
-[~] = gnlsefibsim(fibreSC,simWin,fibre);
-fibreSC.Pulse.plot;
+[~] = gnlsefibsim(fibreOut,simWin,fibre);
 
-% return
+fibreOut.Pulse.plot;
+return
 %% Initialise Optical Cavity
 load("ChirpedWaveguideLN.mat")
 % crystal.Length = 0.1e-3;
@@ -52,7 +55,7 @@ optSim.ProgressPlots = 500;
 % optSim.Hardware = "CPU";
 
 optSim.setup;
-optSim.Pulse.copyfrom(fibreSC.Pulse);
+optSim.Pulse.copyfrom(fibreOut.Pulse);
 % optSim.Pulse.applyGD(4*delay)
 optSim.PumpPulse.applyGD(delay);
 % optSim.PumpPulse.applyGDD(chirp);
