@@ -1,4 +1,4 @@
-function T = fresnel(n1,n2,theta_i,l_sim,exit)
+function [Tp,Ts] = fresnel(n1,n2,theta_i,l_sim,exit)
 	arguments
 		n1
 		n2
@@ -27,10 +27,14 @@ if exit
 end
 
 % rER     = (nr*cos(theta_t) - cos(theta_i))./(nr*cos(theta_t) + cos(theta_i));
-rET     = (2.*nr.*cos(theta_i))./(nr.*cos(theta_t) + cos(theta_i));
+% Complex amplitude transmission coefficient - s polarised
+tEs     = (2.*nr.*cos(theta_i))./(nr.*cos(theta_i) + cos(theta_t));
+% Complex amplitude transmission coefficient - p polarised
+tEp     = (2.*nr.*cos(theta_i))./(nr.*cos(theta_t) + cos(theta_i));	
 
 % R = rER.^2;
-T = (rET.^2).*(1./nr).*(cos(theta_t)./cos(theta_i));
-T = real(T);
-
+Ts = (tEs.^2).*(1./nr).*(cos(theta_t)./cos(theta_i));
+Ts = real(Ts);
+Tp = (tEp.^2).*(1./nr).*(cos(theta_t)./cos(theta_i));
+Tp = real(Tp);
 end
