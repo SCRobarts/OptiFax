@@ -1,5 +1,5 @@
 <deployment-project plugin="plugin.toolbox" plugin-version="1.0">
-  <configuration file="C:\Users\Seb Robarts\Dropbox (Heriot-Watt University Team)\RES_EPS_McCracken_Lab\Seb\OptiFax\ToolboxPackagingConfiguration.prj" location="C:\Users\Seb Robarts\Dropbox (Heriot-Watt University Team)\RES_EPS_McCracken_Lab\Seb\OptiFax" name="ToolboxPackagingConfiguration" target="target.toolbox" target-name="Package Toolbox">
+  <configuration file="C:\Users\sebro\Dropbox (Heriot-Watt University Team)\RES_EPS_McCracken_Lab\Seb\OptiFax\ToolboxPackagingConfiguration.prj" location="C:\Users\sebro\Dropbox (Heriot-Watt University Team)\RES_EPS_McCracken_Lab\Seb\OptiFax" name="ToolboxPackagingConfiguration" target="target.toolbox" target-name="Package Toolbox">
     <param.appname>OptiFax</param.appname>
     <param.authnamewatermark>Sebastian C. Robarts</param.authnamewatermark>
     <param.email>sebrobarts@gmail.com</param.email>
@@ -7,7 +7,7 @@
     <param.summary>GPU accelerated modelling of nonlinear optical systems.</param.summary>
     <param.description />
     <param.screenshot>${PROJECT_ROOT}\images\ToolboxPackaging.jpg</param.screenshot>
-    <param.version>0.3.3</param.version>
+    <param.version>0.3.4</param.version>
     <param.output>${PROJECT_ROOT}\OptiFax.mltbx</param.output>
     <param.products.name />
     <param.products.id />
@@ -115,11 +115,11 @@ resources/_Project/*
     <fileset.depfun.excluded />
     <fileset.package />
     <build-deliverables>
-      <file location="${PROJECT_ROOT}" name="OptiFax.mltbx" optional="false">C:\Users\Seb Robarts\Dropbox (Heriot-Watt University Team)\RES_EPS_McCracken_Lab\Seb\OptiFax\OptiFax.mltbx</file>
+      <file location="${PROJECT_ROOT}" name="OptiFax.mltbx" optional="false">C:\Users\sebro\Dropbox (Heriot-Watt University Team)\RES_EPS_McCracken_Lab\Seb\OptiFax\OptiFax.mltbx</file>
     </build-deliverables>
     <workflow />
     <matlab>
-      <root>D:\MATLAB\R2023b</root>
+      <root>C:\Program Files\MATLAB\R2023a</root>
       <toolboxes />
     </matlab>
     <platform>
