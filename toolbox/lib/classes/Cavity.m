@@ -23,6 +23,7 @@ classdef Cavity < handle
 		CrystalPosition
 		PumpGD
 		PumpChirp
+		MinGDWave
 		T struct
 		phi struct
 		GD struct
@@ -61,12 +62,22 @@ classdef Cavity < handle
 				if isempty(opt.Name)
 					opt.Name = obj.Optics.Properties.VariableNames(ii);
 				end
-				obj.Transmission = obj.Transmission .* opt.Transmission;
+				if strcmp(opt.Regime,"R")
+					obj.Transmission = obj.Transmission .* opt.Reflection;
+				else
+					obj.Transmission = obj.Transmission .* opt.Transmission;
+				end
 				obj.Dispersion = obj.Dispersion + opt.Dispersion;
 				obj.GroupDelay = obj.GroupDelay + opt.GroupDelay;
 				obj.GDD = obj.GDD + opt.GDD;
 				obj.OpticalPathLength = obj.OpticalPathLength + opt.OpticalPath;
 			end
+		end
+
+		function minGDlam = get.MinGDWave(obj)
+			wavs = obj.SimWin.Lambdanm;
+			minGD = min(obj.GroupDelay(wavs > 0));
+			minGDlam = wavs(obj.GroupDelay == minGD);
 		end
 
 		function pGD = get.PumpGD(obj)
@@ -135,7 +146,7 @@ classdef Cavity < handle
 			cav.Name = name;
 			currentfolder = pwd;
 			cd(OptiFaxRoot(devFlag));
-			cd("toolbox" + filesep + "objects" + filesep + "cavities");
+			cd("objects" + filesep + "cavities");
 			save(name + ".mat","cav","-mat");
 			cd(currentfolder);
 		end

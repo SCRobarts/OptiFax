@@ -7,7 +7,7 @@
     <param.summary>GPU accelerated modelling of nonlinear optical systems.</param.summary>
     <param.description />
     <param.screenshot>${PROJECT_ROOT}\images\ToolboxPackaging.jpg</param.screenshot>
-    <param.version>0.2.0</param.version>
+    <param.version>0.3.5</param.version>
     <param.output>${PROJECT_ROOT}\OptiFax.mltbx</param.output>
     <param.products.name />
     <param.products.id />
@@ -102,10 +102,12 @@ resources/_Project/*
       <file>${PROJECT_ROOT}\toolbox</file>
     </fileset.rootdir>
     <fileset.rootfiles>
+      <file>${PROJECT_ROOT}\toolbox\doc</file>
       <file>${PROJECT_ROOT}\toolbox\formatSpectrum.mlx</file>
+      <file>${PROJECT_ROOT}\toolbox\formatTransmission.mlx</file>
+      <file>${PROJECT_ROOT}\toolbox\GettingStarted.mlx</file>
       <file>${PROJECT_ROOT}\toolbox\lib</file>
       <file>${PROJECT_ROOT}\toolbox\objects</file>
-      <file>${PROJECT_ROOT}\toolbox\OPO_sim_OOP.m</file>
       <file>${PROJECT_ROOT}\toolbox\scripts</file>
       <file>${PROJECT_ROOT}\toolbox\static</file>
     </fileset.rootfiles>

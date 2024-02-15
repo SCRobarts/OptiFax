@@ -56,7 +56,7 @@ classdef OpticalFibre < Waveguide
 			fibre.Name = name;
 			currentfolder = pwd;
 			cd(OptiFaxRoot(devFlag));
-			cd("toolbox" + filesep + "objects" + filesep + "optics" + filesep + "fibres");
+			cd("objects" + filesep + "optics" + filesep + "fibres");
 			save(name + ".mat","fibre","-mat");
 			cd(currentfolder);
 		end

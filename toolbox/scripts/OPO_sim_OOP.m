@@ -43,12 +43,13 @@ simWin.NumberOfPoints = 2^15;
 optSim = OpticalSim(laser,cav,simWin,[0.2,4],0.25e-6);
 % return
 % load('pbOPOsim.mat');
-optSim.RoundTrips = 40;
+optSim.RoundTrips = 80;
 % optSim.Hardware = "CPU";
 % optSim.ProgressPlotting = 0;
 % optSim.DetectorPosition = 3;
 optSim.setup;
 
+optSim.System.Xtal.xtalplot([1100 1600]);
 % optSim.PumpPulse.plot
 % optSim.PumpPulse.refract(cav.Xtal);
 % optSim.PumpPulse.plot
@@ -85,7 +86,7 @@ optSim.OutputPulse.lplot(xlims);
 nexttile
 optSim.OutputPulse.tplot(tlims);
 
-optSim.PumpPulse.refract(cav.Optics.cavAir);
+optSim.PumpPulse.refract(cav.Optics.intraCavAir);
 return
 
 figure

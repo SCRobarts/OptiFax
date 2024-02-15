@@ -397,11 +397,11 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			hold off
 
 			yyaxis right
-			lphiPH = plot(obj.SimWin.Lambdanm,obj.SpectralPhase);
 			hold on
+			lphiPH = plot(obj.SimWin.Lambdanm,obj.SpectralPhase - min(obj.SpectralPhase(obj.SimWin.Lambdanm > lims(1))));
 			xlim(lims)
 			ylabel('Relative Phase / rad')
-			title(obj.Name + ' Spectral in ' + obj.Medium.Bulk.Material)
+			title(obj.Name + ' Spectral in ' + obj.Medium.Bulk.Material,"Interpreter","none")
 			legend off
 			updatepeaks(lmagPH);
 			hold off
@@ -417,7 +417,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			[IMax,indexMax] = max(obj.TemporalIntensity);
 			% [IHMax,indexHMax] = findnearest(obj.TemporalIntensity,IMax/2,2);
 			tmax = obj.SimWin.Timesfs(indexMax);
-			phase = unwrap(angle(obj.TemporalField));
+			% phase = unwrap(angle(obj.TemporalField));
 			yyaxis left
 			tmagPH = plot(obj.SimWin.Timesfs,obj.TemporalIntensity);
 			hold on
@@ -440,26 +440,34 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			hold off
 
 			yyaxis right
-			tphiPH = plot(obj.SimWin.Timesfs,phase);
 			hold on
+			tphiPH = plot(obj.SimWin.Timesfs,obj.TemporalPhase - min(obj.TemporalPhase(obj.SimWin.Timesfs > lims(1))));
 			ylabel('Relative Phase / rad')
-			title(obj.Name + ' Temporal in ' + obj.Medium.Bulk.Material)
+			title(obj.Name + ' Temporal in ' + obj.Medium.Bulk.Material,"Interpreter","none")
 			hold off
 
 			yyaxis left
 		end
 
-		function plot(obj,lamLims)
+		function tlh = plot(obj,lamLims,tlh)
 			arguments
 				obj
 				lamLims = [500 1600];
+				tlh = 0;
 			end
-			figure
-			tiledlayout(2,1)
-			nexttile
+	
+			if ~isa(tlh,'matlab.graphics.layout.TiledChartLayout')
+				figure
+				tlh = tiledlayout(2,1);
+			end
+			nexttile(tlh,1)
+			hold on
 			obj.lplot(lamLims);
-			nexttile
+			hold off
+			nexttile(tlh,2)
+			hold on
 			obj.tplot;
+			hold off
 		end
 
 	end

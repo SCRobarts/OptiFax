@@ -87,7 +87,7 @@ for chunk = 1:nChunks
 		tplot.YData = ifftshift(abs(Et));
 		kplot.YData = fftshift(abs(fft(ifftshift(Et))));
 		drawnow
-		pause(0.0001)
+		pause(0.001)
 		t_elapsed = toc;
 	end
 	ApFT(:,chunk) = fft(Et).';

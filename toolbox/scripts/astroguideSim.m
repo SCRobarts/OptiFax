@@ -6,29 +6,32 @@
 close all
 clear
 
+load("FemtoWHITE_CARS_12cm.mat");
+% load("FemtoWHITE_CARS.mat");
+
 %% Initialise Laser / Input Pulse
 load("Taccor800.mat");
 laser.AveragePower = 1;
-fibreSC = copy(laser);
-fibreSC.Name = "FibreContinuumSource";
-fibreSC.AveragePower = 0.3; 
+fibreOut = copy(laser);
+
+fibreOut.Name = "FibreOut";
+fibreOut.AveragePower = 0.3;
 
 %% Initialise Simulation Window
 lambda_ref = laser.Wavelength;
-npts = 2^16;
+npts = 2^13;
 tAxis = 12e-12;
 wavelims = [210 6500];
-tOff = -1.25e-12;
+tOff =  0 * -1.25e-12;
 
 simWin = SimWindow(lambda_ref,npts,tAxis,tOff);
 simWin.SpectralLimits = wavelims;
 % simWin = SimWindow(lambda_ref,npts,wavelims,tOff,"wavelims");
 
 %% Generate fibre supercontinuum
-load("FemtoWHITE_CARS.mat");
-[~] = gnlsefibsim(fibreSC,simWin,fibre);
-fibreSC.Pulse.plot;
+[~] = gnlsefibsim(fibreOut,simWin,fibre);
 
+fibreOut.Pulse.plot;
 % return
 %% Initialise Optical Cavity
 load("ChirpedWaveguideLN.mat")
@@ -47,16 +50,22 @@ minStep = 0.05e-6;		% Minimum step size
 % minStep = 0.25e-6;		% Minimum step size
 
 optSim = OpticalSim(laser,cav,simWin,errorBounds,minStep);
+% optSim = OpticalSim(fibreOut,cav,simWin,errorBounds,minStep);
 optSim.RoundTrips = 1;
-optSim.ProgressPlots = 500;
+optSim.ProgressPlots = 5;
 % optSim.Hardware = "CPU";
 
 optSim.setup;
-optSim.Pulse.copyfrom(fibreSC.Pulse);
+% optSim.Pulse.copyfrom(fibreOut.Pulse);
+optSim.Pulse.copyfrom(laser.Pulse);
+optSim.PumpPulse = copy(fibreOut.Pulse);
+optSim.PumpPulse.applyGD(-delay);
 % optSim.Pulse.applyGD(4*delay)
-optSim.PumpPulse.applyGD(delay);
+% optSim.PumpPulse.applyGD(delay);
 % optSim.PumpPulse.applyGDD(chirp);
 
+optSim.System.Xtal.xtalplot([300 500]);
+return
 optSim.run;
 
 lIW = 10*log10(abs(optSim.Pulse.SpectralField).^2);	% log scale spectral intensity
