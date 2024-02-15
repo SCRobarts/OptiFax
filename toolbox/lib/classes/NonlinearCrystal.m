@@ -97,7 +97,7 @@ classdef NonlinearCrystal < Waveguide
 			% d_eff = obj.Chi2 .* 1/pi;	% Currently Chi2 is 2*d33 hence no factor of 2
 			d_eff = 1/pi;	% Polarisation already scaled to Chi2 so only need this scaling?
 			A_p = gather(max(abs(optSim.PumpPulse.TemporalField))); % Amplitude of pump envelope, assumed constant
-			A_i = gather(max(abs(optSim.Pulse.TemporalField))); % Amplitude of idler envelope, assumed constant
+			A_i = gather(mean(abs(optSim.Pulse.TemporalField))); % Amplitude of idler envelope, assumed constant
 			pulse = 1;
 			if A_i <= 0
 				A_i = A_p / 1e3;	% Amplitude of idler envelope, assumed constant
@@ -112,7 +112,7 @@ classdef NonlinearCrystal < Waveguide
 			dz = obj.Length ./ n_steps;
 			P = obj.Polarisation(1:obj.NSteps/length(z):end);
 
-			pumprange = optSim.PumpPulse.Source.LineWidth .* [-2 2] + optSim.PumpPulse.PeakWavelength;
+			pumprange = optSim.PumpPulse.WavelengthFWHM * [-2 2] + optSim.PumpPulse.PeakWavelength;
 			pid = and(obj.SimWin.Wavelengths > pumprange(1), obj.SimWin.Wavelengths < pumprange(2));
 			pump = obj.SimWin.Wavelengths(pid);
 			p_mask = gather(optSim.PumpPulse.EnergySpectralDensity ./ max(optSim.PumpPulse.EnergySpectralDensity));

@@ -57,13 +57,15 @@ optSim.ProgressPlots = 5;
 
 optSim.setup;
 % optSim.Pulse.copyfrom(fibreOut.Pulse);
-optSim.PumpPulse.copyfrom(fibreOut.Pulse);
+optSim.Pulse.copyfrom(laser.Pulse);
+optSim.PumpPulse = copy(fibreOut.Pulse);
+optSim.PumpPulse.applyGD(-delay);
 % optSim.Pulse.applyGD(4*delay)
 % optSim.PumpPulse.applyGD(delay);
 % optSim.PumpPulse.applyGDD(chirp);
 
-% optSim.System.Xtal.xtalplot([300 500]);
-% return
+optSim.System.Xtal.xtalplot([300 500]);
+return
 optSim.run;
 
 lIW = 10*log10(abs(optSim.Pulse.SpectralField).^2);	% log scale spectral intensity
