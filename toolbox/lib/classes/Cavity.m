@@ -62,7 +62,11 @@ classdef Cavity < handle
 				if isempty(opt.Name)
 					opt.Name = obj.Optics.Properties.VariableNames(ii);
 				end
-				obj.Transmission = obj.Transmission .* opt.Transmission;
+				if strcmp(opt.Regime,"R")
+					obj.Transmission = obj.Transmission .* opt.Reflection;
+				else
+					obj.Transmission = obj.Transmission .* opt.Transmission;
+				end
 				obj.Dispersion = obj.Dispersion + opt.Dispersion;
 				obj.GroupDelay = obj.GroupDelay + opt.GroupDelay;
 				obj.GDD = obj.GDD + opt.GDD;

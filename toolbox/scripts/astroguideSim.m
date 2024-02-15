@@ -3,8 +3,8 @@
 %
 %	Sebastian C. Robarts 2024 - sebrobarts@gmail.com
 
-% close all
-% clear
+close all
+clear
 
 load("FemtoWHITE_CARS_12cm.mat");
 % load("FemtoWHITE_CARS.mat");
@@ -19,10 +19,10 @@ fibreOut.AveragePower = 0.3;
 
 %% Initialise Simulation Window
 lambda_ref = laser.Wavelength;
-npts = 2^16;
+npts = 2^13;
 tAxis = 12e-12;
 wavelims = [210 6500];
-tOff = -1.25e-12;
+tOff =  0 * -1.25e-12;
 
 simWin = SimWindow(lambda_ref,npts,tAxis,tOff);
 simWin.SpectralLimits = wavelims;
@@ -32,7 +32,7 @@ simWin.SpectralLimits = wavelims;
 [~] = gnlsefibsim(fibreOut,simWin,fibre);
 
 fibreOut.Pulse.plot;
-return
+% return
 %% Initialise Optical Cavity
 load("ChirpedWaveguideLN.mat")
 % crystal.Length = 0.1e-3;
@@ -50,16 +50,20 @@ minStep = 0.05e-6;		% Minimum step size
 % minStep = 0.25e-6;		% Minimum step size
 
 optSim = OpticalSim(laser,cav,simWin,errorBounds,minStep);
+% optSim = OpticalSim(fibreOut,cav,simWin,errorBounds,minStep);
 optSim.RoundTrips = 1;
-optSim.ProgressPlots = 500;
+optSim.ProgressPlots = 5;
 % optSim.Hardware = "CPU";
 
 optSim.setup;
-optSim.Pulse.copyfrom(fibreOut.Pulse);
+% optSim.Pulse.copyfrom(fibreOut.Pulse);
+optSim.PumpPulse.copyfrom(fibreOut.Pulse);
 % optSim.Pulse.applyGD(4*delay)
-optSim.PumpPulse.applyGD(delay);
+% optSim.PumpPulse.applyGD(delay);
 % optSim.PumpPulse.applyGDD(chirp);
 
+% optSim.System.Xtal.xtalplot([300 500]);
+% return
 optSim.run;
 
 lIW = 10*log10(abs(optSim.Pulse.SpectralField).^2);	% log scale spectral intensity
