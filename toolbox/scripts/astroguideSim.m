@@ -45,26 +45,20 @@ chirp = 1000*1e-30;
 % laser.Waist = crystal.ModeFieldDiameter./2;
 % fibreSC.Pulse.Radius = crystal.ModeFieldDiameter./2;
 delay = -250e-15;
-errorBounds = [1e-3,1e-1];	% Percentage error tolerance
-minStep = 0.05e-6;		% Minimum step size
-% errorBounds = [1e-1,1e-0];	% Percentage error tolerance
-% minStep = 0.25e-6;		% Minimum step size
+% errorBounds = [1e-3,1e-1];	% Percentage error tolerance
+% minStep = 0.05e-6;		% Minimum step size
+errorBounds = [1e-1,1e-0];	% Percentage error tolerance
+minStep = 0.25e-6;		% Minimum step size
 
 % optSim = OpticalSim(laser,cav,simWin,errorBounds,minStep);
 optSim = OpticalSim(fibreOut.Pulse,cav,simWin,errorBounds,minStep);
+optSim.Pulse = laser;
 optSim.RoundTrips = 1;
 optSim.ProgressPlots = 5;
 % optSim.Hardware = "CPU";
 
 optSim.setup;
-% optSim.Pulse.copyfrom(fibreOut.Pulse);
-optSim.Pulse.copyfrom(laser.Pulse);
-% optSim.PumpPulse = copy(fibreOut.Pulse);
-% optSim.PumpPulse.copyfrom(fibreOut.Pulse);
-% optSim.convertArrays;
-% optSim.PumpPulse.copyfrom(laser.Pulse);
 optSim.Pulse.applyGD(delay);
-% optSim.Pulse.applyGD(4*delay)
 % optSim.PumpPulse.applyGD(delay);
 % optSim.PumpPulse.applyGDD(chirp);
 

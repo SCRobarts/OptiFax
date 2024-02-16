@@ -9,14 +9,14 @@ classdef OpticalSim < matlab.mixin.Copyable
 	
 	properties
 		DetectorPosition = 0;		% Which cavity optic to collect OC data from
-		Pulse	OpticalPulse		% The pulse object for the cavity field, transient?
+		Pulse	{mustBeA(Pulse,["Laser","OpticalPulse"])} = OpticalPulse.empty;		% The pulse object for the cavity field, transient?
 		Source	{mustBeA(Source,["Laser","OpticalPulse"])} = Laser.empty; % Potentially just a pulse?
 		System	Cavity		% Leaving cavity here for now, but should open up in future
 		SimWin	SimWindow
 		StepSize
 		AdaptiveError
 		RoundTrips = 1;
-		Delay = -0.8e-13;
+		Delay = 0;
 		Solver = @OPOmexBatch;
 		Precision = 'single';
 		ProgressPlotting = 1;
@@ -83,6 +83,10 @@ classdef OpticalSim < matlab.mixin.Copyable
 			else
 				obj.Source = obj.Source.Source;
 			end
+			if isa(obj.Pulse,"Laser")
+				obj.Pulse.simulate(obj.SimWin);	% 
+				obj.Pulse = copy(obj.Pulse.Pulse);
+			end
 			obj.System.simulate(obj.SimWin);
 			if ~obj.DetectorPosition
 				obj.DetectorPosition = obj.System.OCPosition;
@@ -90,6 +94,13 @@ classdef OpticalSim < matlab.mixin.Copyable
 
 			obj.PumpPulse = copy(obj.Source.Pulse);	% Copy the source pulse to create modifiable pump
 			obj.PumpPulse.Name = "Pump Pulse";
+			
+			if isempty(obj.Pulse)
+				obj.Pulse = copy(obj.PumpPulse);	% Copy the pump pulse as basis for cavity field
+				obj.Pulse.TemporalField = obj.Pulse.TemporalField * 0;
+			end
+			obj.Pulse.Name = "Intracavity Pulse";
+			
 			obj.convertArrays;	% Convert arrays to correct precision and type
 			
 			obj.PumpPulse.applyGDD(obj.System.PumpChirp);
@@ -100,9 +111,7 @@ classdef OpticalSim < matlab.mixin.Copyable
 			obj.XInPulse.Name = "Xtal-In Pulse";
 			obj.XOutPulse = obj.PumpPulse.writeto;
 			obj.XOutPulse.Name = "Xtal-Out Pulse";
-			obj.Pulse = copy(obj.PumpPulse);	% Copy the pump pulse as basis for cavity field
-			obj.Pulse.Name = "Intracavity Pulse";
-			obj.Pulse.TemporalField = obj.Pulse.TemporalField * 0;
+
 			refresh(obj);
 		end
 
@@ -235,6 +244,7 @@ classdef OpticalSim < matlab.mixin.Copyable
 			obj.AdaptiveError = obj.convArr(obj.AdaptiveError);
 			obj.StepSizeModifiers = obj.convArr(obj.StepSizeModifiers);
 			obj.PumpPulse.TemporalField = obj.convArr(obj.PumpPulse.TemporalField);
+			obj.Pulse.TemporalField = obj.convArr(obj.Pulse.TemporalField);
 			xtal.Chi2 = obj.convArr(xtal.Chi2);
 			xtal.Transmission = obj.convArr(xtal.Transmission);
 		end
