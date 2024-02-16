@@ -50,8 +50,8 @@ minStep = 0.05e-6;		% Minimum step size
 % errorBounds = [1e-1,1e-0];	% Percentage error tolerance
 % minStep = 0.25e-6;		% Minimum step size
 
-optSim = OpticalSim(laser,cav,simWin,errorBounds,minStep);
-% optSim = OpticalSim(fibreOut,cav,simWin,errorBounds,minStep);
+% optSim = OpticalSim(laser,cav,simWin,errorBounds,minStep);
+optSim = OpticalSim(fibreOut.Pulse,cav,simWin,errorBounds,minStep);
 optSim.RoundTrips = 1;
 optSim.ProgressPlots = 5;
 % optSim.Hardware = "CPU";
@@ -60,8 +60,8 @@ optSim.setup;
 % optSim.Pulse.copyfrom(fibreOut.Pulse);
 optSim.Pulse.copyfrom(laser.Pulse);
 % optSim.PumpPulse = copy(fibreOut.Pulse);
-optSim.PumpPulse.copyfrom(fibreOut.Pulse);
-optSim.convertArrays;
+% optSim.PumpPulse.copyfrom(fibreOut.Pulse);
+% optSim.convertArrays;
 % optSim.PumpPulse.copyfrom(laser.Pulse);
 optSim.Pulse.applyGD(delay);
 % optSim.Pulse.applyGD(4*delay)

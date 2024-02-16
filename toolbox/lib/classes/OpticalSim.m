@@ -9,8 +9,8 @@ classdef OpticalSim < matlab.mixin.Copyable
 	
 	properties
 		DetectorPosition = 0;		% Which cavity optic to collect OC data from
-		Pulse	OpticalPulse	% The pulse object for the cavity field, transient?
-		Source	Laser		% Potentially just a pulse?
+		Pulse	OpticalPulse		% The pulse object for the cavity field, transient?
+		Source	{mustBeA(Source,["Laser","OpticalPulse"])} = Laser.empty; % Potentially just a pulse?
 		System	Cavity		% Leaving cavity here for now, but should open up in future
 		SimWin	SimWindow
 		StepSize
@@ -78,7 +78,11 @@ classdef OpticalSim < matlab.mixin.Copyable
 				obj.Solver = @NEE_CPU;	% Need to make a stand alone CPU adaptive solver
 			end
 			obj.TripNumber = 0;
-			obj.Source.simulate(obj.SimWin);	% Will we need to load these objects?
+			if isa(obj.Source,"Laser")
+				obj.Source.simulate(obj.SimWin);	% 
+			else
+				obj.Source = obj.Source.Source;
+			end
 			obj.System.simulate(obj.SimWin);
 			if ~obj.DetectorPosition
 				obj.DetectorPosition = obj.System.OCPosition;
