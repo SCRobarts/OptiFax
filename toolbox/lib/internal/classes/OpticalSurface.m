@@ -41,10 +41,22 @@ classdef OpticalSurface < matlab.mixin.Copyable
 		function T = get.Transmission(obj)
 			lam = obj.Parent.SimWin.Wavelengths;
 			if isnumeric(obj.Coating)
-				T = ones(size(lam)) .* obj.Coating;
-				if obj.Coating > 1 && obj.Coating < 100
+				T = ones(size(lam));
+				if length(obj.Coating) == 1
+					T = T .* obj.Coating;
+				else
+					Tvals = obj.Coating(:,1);
+					Tlims = obj.Coating(:,2);
+					T(lam<Tlims(1)) = Tvals(1);
+					for n = 2:length(Tvals)
+						T(and(lam>Tlims(n-1), lam<Tlims(n))) = Tvals(n);
+					end
+				end
+				if any(T>1)
 					T = T./100;	% allow for % syntax
 				end
+			elseif isa(obj.Coating,"function_handle")
+				T = obj.Coating(lam);
 			elseif obj.Coating == "AR"
 				T = ones(size(lam));
 			elseif obj.Coating == "None"

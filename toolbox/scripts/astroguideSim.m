@@ -19,10 +19,10 @@ fibreOut.AveragePower = 0.3;
 
 %% Initialise Simulation Window
 lambda_ref = laser.Wavelength;
-npts = 2^13;
+npts = 2^15;
 tAxis = 12e-12;
 wavelims = [210 6500];
-tOff =  0 * -1.25e-12;
+tOff =  1 * -1.25e-12;
 
 simWin = SimWindow(lambda_ref,npts,tAxis,tOff);
 simWin.SpectralLimits = wavelims;
@@ -35,7 +35,8 @@ fibreOut.Pulse.plot;
 % return
 %% Initialise Optical Cavity
 load("ChirpedWaveguideLN.mat")
-% crystal.Length = 0.1e-3;
+% load Chirped_PPLN.mat
+crystal.Length = 5e-3;
 cav = Cavity(crystal,0);
 chirp = 1000*1e-30;
 
@@ -58,14 +59,17 @@ optSim.ProgressPlots = 5;
 optSim.setup;
 % optSim.Pulse.copyfrom(fibreOut.Pulse);
 optSim.Pulse.copyfrom(laser.Pulse);
-optSim.PumpPulse = copy(fibreOut.Pulse);
-optSim.PumpPulse.applyGD(-delay);
+% optSim.PumpPulse = copy(fibreOut.Pulse);
+optSim.PumpPulse.copyfrom(fibreOut.Pulse);
+optSim.convertArrays;
+% optSim.PumpPulse.copyfrom(laser.Pulse);
+optSim.Pulse.applyGD(delay);
 % optSim.Pulse.applyGD(4*delay)
 % optSim.PumpPulse.applyGD(delay);
 % optSim.PumpPulse.applyGDD(chirp);
 
 optSim.System.Xtal.xtalplot([300 500]);
-return
+% return
 optSim.run;
 
 lIW = 10*log10(abs(optSim.Pulse.SpectralField).^2);	% log scale spectral intensity
