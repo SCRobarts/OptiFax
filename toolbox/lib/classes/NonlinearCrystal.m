@@ -158,7 +158,17 @@ classdef NonlinearCrystal < Waveguide
 
 			fh = figure;
 			if isa(obj.OptSim,"OpticalSim")
-				[gain,pump,signal] = obj.gaincalc(sigrange);
+				% [gain,pump,signal] = obj.gaincalc(sigrange);
+				if any(obj.OptSim.Pulse.TemporalField)
+					[gain,pump,signal] = qpmgain(obj,obj.OptSim.PumpPulse,sigrange,obj.OptSim.Pulse);
+					sig_unique = uniquetol(spdiags(rot90(signal,3)));
+					sig_unique = sig_unique(2:end);
+					gain_sum = sum(spdiags(rot90(gain,3)));
+				else
+					[gain,pump,signal] = qpmgain(obj,obj.OptSim.PumpPulse,sigrange);
+					sig_unique = signal(:,1);
+					gain_sum = sum(gain,2);
+				end
 				tl = tiledlayout(fh,2,2);
 			else
 				fh.Position(4) = fh.Position(4)./2;
@@ -180,15 +190,17 @@ classdef NonlinearCrystal < Waveguide
 			ylabel('Counts')
 
 			if isa(obj.OptSim,"OpticalSim")
-				nexttile
-				surf(pump,signal,gain)
+				axs = nexttile;
+				surf(axs,pump,signal,gain)
+				axs.YAxis.Direction = 'reverse';
 				shading("interp")
 				title('Numerical Phasematching')
 				xlabel('Pump Wavelength')
 				ylabel('Signal Wavelength')
 
 				nexttile
-				plot(signal,sum(gain,2))
+				% plot(signal,sum(gain,2))
+				plot(sig_unique,gain_sum)
 				title('Full Temporal Overlap')
 				xlabel('Signal Wavelength')
 				ylabel('Gain, units tbc')

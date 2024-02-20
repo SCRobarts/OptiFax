@@ -54,7 +54,7 @@ optSim.System.Xtal.xtalplot([1100 1600]);
 % optSim.PumpPulse.plot
 % optSim.PumpPulse.refract(cav.Xtal);
 % optSim.PumpPulse.plot
-% return
+return
 %% Run Sim
 optSim.run
 

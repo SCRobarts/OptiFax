@@ -19,8 +19,8 @@ fibreOut.AveragePower = 0.3;
 
 %% Initialise Simulation Window
 lambda_ref = laser.Wavelength;
-npts = 2^15;
-tAxis = 12e-12;
+npts = 2^18;
+tAxis = 8e-12;
 wavelims = [210 6500];
 tOff =  1 * -1.25e-12;
 
@@ -36,6 +36,7 @@ fibreOut.Pulse.plot;
 %% Initialise Optical Cavity
 load("ChirpedWaveguideLN.mat")
 % load Chirped_PPLN.mat
+% crystal.GratingPeriod = 3.4e-6;
 crystal.Length = 5e-3;
 cav = Cavity(crystal,0);
 chirp = 1000*1e-30;
@@ -50,9 +51,10 @@ delay = -250e-15;
 errorBounds = [1e-1,1e-0];	% Percentage error tolerance
 minStep = 0.25e-6;		% Minimum step size
 
-% optSim = OpticalSim(laser,cav,simWin,errorBounds,minStep);
-optSim = OpticalSim(fibreOut.Pulse,cav,simWin,errorBounds,minStep);
-optSim.Pulse = laser;
+optSim = OpticalSim(laser,cav,simWin,errorBounds,minStep);
+% optSim = OpticalSim(fibreOut.Pulse,cav,simWin,errorBounds,minStep);
+% optSim.Pulse = laser;
+optSim.Pulse = fibreOut.Pulse;
 optSim.RoundTrips = 1;
 optSim.ProgressPlots = 5;
 % optSim.Hardware = "CPU";
@@ -62,7 +64,7 @@ optSim.Pulse.applyGD(delay);
 % optSim.PumpPulse.applyGD(delay);
 % optSim.PumpPulse.applyGDD(chirp);
 
-optSim.System.Xtal.xtalplot([300 500]);
+optSim.System.Xtal.xtalplot([350 500]);
 % return
 optSim.run;
 
