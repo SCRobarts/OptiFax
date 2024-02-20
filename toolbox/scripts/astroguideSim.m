@@ -19,8 +19,8 @@ fibreOut.AveragePower = 0.3;
 
 %% Initialise Simulation Window
 lambda_ref = laser.Wavelength;
-npts = 2^18;
-tAxis = 8e-12;
+npts = 2^15;
+tAxis = 10e-12;
 wavelims = [210 6500];
 tOff =  1 * -1.25e-12;
 
@@ -60,12 +60,12 @@ optSim.ProgressPlots = 5;
 % optSim.Hardware = "CPU";
 
 optSim.setup;
-optSim.Pulse.applyGD(delay);
-% optSim.PumpPulse.applyGD(delay);
+% optSim.Pulse.applyGD(delay);
+optSim.PumpPulse.applyGD(delay);
 % optSim.PumpPulse.applyGDD(chirp);
 
 optSim.System.Xtal.xtalplot([350 500]);
-% return
+return
 optSim.run;
 
 lIW = 10*log10(abs(optSim.Pulse.SpectralField).^2);	% log scale spectral intensity
