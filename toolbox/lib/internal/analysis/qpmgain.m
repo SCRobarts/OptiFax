@@ -1,4 +1,4 @@
-function [gain,pump,signal,idler] = qpmgain(crystal,ppulse,sigrange,ipulse)
+function [gain,pump,signal,idler,weights,p_mask,i_mask] = qpmgain(crystal,ppulse,sigrange,ipulse)
 	%
 	%	Sebastian C. Robarts 2023 - sebrobarts@gmail.com
 	arguments
@@ -42,7 +42,7 @@ function [gain,pump,signal,idler] = qpmgain(crystal,ppulse,sigrange,ipulse)
 
 	%% Pre-Defined Idler Pulse
 	if ~isempty(ipulse)
-		idlerrange = ipulse.WavelengthFWHM * [-2 2] + ipulse.PeakWavelength;
+		idlerrange = ipulse.WavelengthFWHM * [-5 5] + ipulse.PeakWavelength;
 		% Restrict idler range according to chosen signal range
 		if sigrange(2) < pumprange(1)	% SFG regime
 			if idlerrange(1) < idler_lambda(pumprange(1),sigrange(1))
@@ -50,6 +50,12 @@ function [gain,pump,signal,idler] = qpmgain(crystal,ppulse,sigrange,ipulse)
 			end
 			if idlerrange(2) > idler_lambda(pumprange(2),sigrange(2))
 				idlerrange(2) = idler_lambda(pumprange(2),sigrange(2));
+			end
+			if idlerrange(1) > pumprange(1)
+				idlerrange(1) = pumprange(1);
+			end
+			if idlerrange(2) < pumprange(2)
+				idlerrange(2) = pumprange(2);
 			end
 		elseif sigrange(1) > pumprange(2)	% DFG regime
 			if idlerrange(1) < idler_lambda(pumprange(2),sigrange(2))
@@ -89,10 +95,18 @@ function [gain,pump,signal,idler] = qpmgain(crystal,ppulse,sigrange,ipulse)
 		kS = 2 * pi * nS ./ signal;
 	end
 
+	
 	weights = i_mask.' * p_mask;
 
 	pump = repmat(pump,size(signal,1),1);
 	kP = 2 * pi * nP ./ pump;
+
+	if sigrange(2) < pumprange(1)	% SFG regime
+		SHGid = find(pump == idler);
+		i_mask2D = diag(i_mask);
+		weights(SHGid) = weights(SHGid) + (p_mask.').^2;
+		weights(SHGid) = weights(SHGid) + (i_mask2D(SHGid)).^2;
+	end
 
 	dk = kP - kS - kI;
 	g_coeff = 1i * 2 * d_eff * (kS ./ nS.^2) .* weights;

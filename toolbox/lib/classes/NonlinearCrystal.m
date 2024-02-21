@@ -199,6 +199,7 @@ classdef NonlinearCrystal < Waveguide
 				axs = nexttile;
 				surf(axs,pump,signal,gain)
 				axs.YAxis.Direction = 'reverse';
+				colormap(axs,"hot")
 				shading("interp")
 				title('Numerical Phasematching')
 				xlabel('Pump Wavelength')

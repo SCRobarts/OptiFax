@@ -75,7 +75,7 @@ optSim.PumpPulse.applyGD(delay);
 % optSim.PumpPulse.applyGDD(chirp);
 
 optSim.System.Xtal.xtalplot([350 500]);
-% return
+return
 optSim.run;
 
 lIW = 10*log10(abs(optSim.Pulse.SpectralField).^2);	% log scale spectral intensity
