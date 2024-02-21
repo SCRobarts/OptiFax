@@ -9,7 +9,7 @@ laser.simulate(simWin);
 fibre.simulate(simWin);
 
 optic1 = laser.Pulse.Medium;
-laser.Pulse.refract(fibre);
+laser.Pulse.propagate(fibre);
 laser.Pulse.plot;
 drawnow
 

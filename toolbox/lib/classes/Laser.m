@@ -61,7 +61,7 @@ classdef Laser < matlab.mixin.Copyable
 			obj.Pulse = OpticalPulse(obj,simWin);
 			obj.PeakPowerCoefficient = 1/((sum(abs(obj.Pulse.TemporalField).^2)*...
 										obj.Pulse.SimWin.DeltaTime/obj.Pulse.DurationTL));
-			nr = obj.Pulse.Medium.Bulk.RefractiveIndex;
+			nr = obj.Pulse.Medium.Bulk.RefractiveIndex(obj.Pulse.SimWin.ReferenceIndex);
 			% Free space field magnitude scaling [W/m^2] -> [V/m]
 			I2E = sqrt(obj.IntensityTL .* 2./nr./eps0./c);
 			obj.Pulse.TemporalField = I2E .* obj.Pulse.TemporalField;
@@ -94,13 +94,23 @@ classdef Laser < matlab.mixin.Copyable
 			I0 = peakP/obj.Pulse.Area;
 		end
 
-		function writePulse(obj)
+		function specTable = writePulse(obj)
 			pulse = obj.Pulse;
+			pulse.applyGD(-pulse.SimWin.TimeOffset);
+			% pulse.spectralShift(0);
+			pulse.gather;
 			wavelength = pulse.SimWin.Wavelengths';
 			intensity = pulse.EnergySpectralDensity';
 			phase = pulse.SpectralPhase';
+			% phase = phase - phase(pulse.SimWin.ReferenceIndex);
 
 			specTable = table(wavelength,intensity,phase);
+			% specTable = specTable(and(wavelength>0,wavelength<7e-6),:);
+			fname = pulse.Source.Name + 'PulseSpectrum.txt';
+			writetable(specTable,fname);
+
+			pulse.timeShift;
+			
 		end
 
 		function store(laser,name,devFlag)

@@ -70,7 +70,9 @@ classdef OpticalPulse < matlab.mixin.Copyable
 				% Shift the pulse by simWin.TimeOffset
 				obj.timeShift;
 				% Apply calculated GDD to alter duration
-				obj.applyGDD(obj.GDD);
+				if obj.DurationCheck < obj.Duration
+					obj.applyGDD(obj.GDD);
+				end
 			end
 		end
 		
@@ -83,7 +85,8 @@ classdef OpticalPulse < matlab.mixin.Copyable
 				opt = opt_tbl.(ii);
 				% Temp removed due to high overhead of FFTs and no effect on calculated outcome:
 				% Ek = obj.refract(opt);
-				if class(opt) ~= "NonlinearCrystal"
+				% if class(opt) ~= "NonlinearCrystal"
+				if ~isa(opt,"Waveguide")
 					bOp = exp(-1i*opt.Dispersion);
 					if strcmp(opt.Regime,"T")
 						MagOp = opt.Transmission .^ 0.5;
@@ -166,7 +169,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			Ek = Ek .* exp(-1i.*chirpArg);
 			% obj.TemporalField = ifft(ifftshift(Ek));
 			obj.k2t(Ek);
-			obj.Duration = obj.DurationCheck;
+			% obj.Duration = obj.DurationCheck;
 		end
 
 		function gf = get.GFit(obj)
@@ -187,7 +190,8 @@ classdef OpticalPulse < matlab.mixin.Copyable
 		end
 
 		function gdd = get.GDD(obj)
-			chrp = sqrt( (obj.Duration .^ 2 ./ obj.DurationTL .^ 2) - 1);
+			% chrp = sqrt( (obj.Duration .^ 2 ./ obj.DurationTL .^ 2) - 1);
+			chrp = sqrt( (obj.Duration .^ 2 ./ obj.DurationCheck .^ 2) - 1);
 			% Gaussian would use 2*sqrt(log(2)), Sech uses 1 + sqrt(2) = 2.4142
 			% will need to update to work as a function of pulse profile
 			gdd = chrp .* ((obj.DurationTL./(2*sqrt(log(2.4142)))).^2);
@@ -195,8 +199,15 @@ classdef OpticalPulse < matlab.mixin.Copyable
 
 		function EtTL = get.TemporalFieldTL(obj)
 			Ek = obj.SpectralField;
-			EkMag = abs(Ek);
-			EtTL = (fftshift(ifft(ifftshift(EkMag))));
+			EkMag = abs(Ek).*exp(1i*1);
+			n = obj.SimWin.NumberOfPoints;
+			n = 2*n;
+			Et = ifft(ifftshift(EkMag,2),n,2);
+			if n > obj.SimWin.NumberOfPoints
+				EtTL = 2*Et(:,1:2:end);
+			end
+			EtTL = fftshift(EtTL);
+			% EtTL = (fftshift(ifft(ifftshift(EkMag))));
 		end
 
 		function It = get.TemporalIntensity(obj)
@@ -283,6 +294,13 @@ classdef OpticalPulse < matlab.mixin.Copyable
 		function sp = get.SpectralPhase(obj)
 			sp = unwrap(angle(obj.SpectralField));
 			sp = gather(sp);
+			% sp = sp - min(sp(obj.SimWin.Lambdanm>obj.SimWin.SpectralLimits(1)));
+		end
+
+		function set.SpectralPhase(obj,phi)
+			EkMag = abs(obj.SpectralField);
+			Ek = EkMag.*exp(1i*phi);
+			obj.k2t(Ek);
 		end
 
 		function tp = get.TemporalPhase(obj)
@@ -306,6 +324,10 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			end
 		end
 
+		function set.SpectralField(obj,Ek)
+			obj.k2t(Ek);
+		end
+
 		function a = get.Area(obj)
 			a = pi * (obj.Radius ^ 2);
 		end
@@ -322,6 +344,8 @@ classdef OpticalPulse < matlab.mixin.Copyable
 				if mat.ModeFieldDiameter
 					obj.Radius = mat.ModeFieldDiameter./2;
 				end
+			else
+				obj.Radius = obj.Source.Waist;
 			end
 		end
 
