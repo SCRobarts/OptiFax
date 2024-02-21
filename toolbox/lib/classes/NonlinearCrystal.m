@@ -160,10 +160,16 @@ classdef NonlinearCrystal < Waveguide
 			if isa(obj.OptSim,"OpticalSim")
 				% [gain,pump,signal] = obj.gaincalc(sigrange);
 				if any(obj.OptSim.Pulse.TemporalField)
+					pump_optic = obj.OptSim.PumpPulse.Medium;
+					pulse_optic = obj.OptSim.Pulse.Medium;
+					obj.OptSim.PumpPulse.refract(obj);
+					obj.OptSim.Pulse.refract(obj);
 					[gain,pump,signal] = qpmgain(obj,obj.OptSim.PumpPulse,sigrange,obj.OptSim.Pulse);
 					sig_unique = uniquetol(spdiags(rot90(signal,3)));
 					sig_unique = sig_unique(2:end);
 					gain_sum = sum(spdiags(rot90(gain,3)));
+					obj.OptSim.PumpPulse.refract(pump_optic);
+					obj.OptSim.Pulse.refract(pulse_optic);
 				else
 					[gain,pump,signal] = qpmgain(obj,obj.OptSim.PumpPulse,sigrange);
 					sig_unique = signal(:,1);

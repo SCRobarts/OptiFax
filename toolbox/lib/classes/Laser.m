@@ -94,6 +94,15 @@ classdef Laser < matlab.mixin.Copyable
 			I0 = peakP/obj.Pulse.Area;
 		end
 
+		function writePulse(obj)
+			pulse = obj.Pulse;
+			wavelength = pulse.SimWin.Wavelengths';
+			intensity = pulse.EnergySpectralDensity';
+			phase = pulse.SpectralPhase';
+
+			specTable = table(wavelength,intensity,phase);
+		end
+
 		function store(laser,name,devFlag)
 			arguments
 				laser

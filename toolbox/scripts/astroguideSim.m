@@ -15,6 +15,7 @@ laser.AveragePower = 1;
 fibreOut = copy(laser);
 
 fibreOut.Name = "FibreOut";
+% fibreOut.SourceString = "FWCARS12cm_Sim_Spectrum_149-8992nm.txt";
 fibreOut.AveragePower = 0.3;
 
 %% Initialise Simulation Window
@@ -54,6 +55,7 @@ minStep = 0.25e-6;		% Minimum step size
 optSim = OpticalSim(laser,cav,simWin,errorBounds,minStep);
 % optSim = OpticalSim(fibreOut.Pulse,cav,simWin,errorBounds,minStep);
 % optSim.Pulse = laser;
+% optSim.Pulse = fibreOut;
 optSim.Pulse = fibreOut.Pulse;
 optSim.RoundTrips = 1;
 optSim.ProgressPlots = 5;
