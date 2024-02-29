@@ -94,13 +94,13 @@ classdef SimPlotter < matlab.mixin.Copyable
 			[obj.SpectralMagPlot, obj.SpectralPhiPlot] = obj.Parent.XOutPulse.lplot(obj.SpecLimits);
 
 			obj.TemporalAxes = obj.createInOutAxes(obj.OutTiles,"t");
-			[obj.TemporalMagPlot,obj.TemporalPhiPlot,obj.TemporalText] = obj.Parent.XOutPulse.tplot(obj.TimeLimits);
+			[obj.TemporalMagPlot,obj.TemporalPhiPlot,obj.TemporalText] = obj.Parent.XOutPulse.tplot(1,obj.TimeLimits);
 
 			obj.SpectralAxes(2) = obj.createInOutAxes(obj.InTiles,"l");
 			[obj.SpectralMagPlot(2), obj.SpectralPhiPlot(2)] = obj.Parent.XInPulse.lplot(obj.SpecLimits);
 
 			obj.TemporalAxes(2) = obj.createInOutAxes(obj.InTiles,"t");
-			[obj.TemporalMagPlot(2),obj.TemporalPhiPlot(2),obj.TemporalText(2)] = obj.Parent.XInPulse.tplot(obj.TimeLimits);
+			[obj.TemporalMagPlot(2),obj.TemporalPhiPlot(2),obj.TemporalText(2)] = obj.Parent.XInPulse.tplot(1,obj.TimeLimits);
 
 			drawnow('limitrate'); 
 		end
@@ -165,14 +165,15 @@ classdef SimPlotter < matlab.mixin.Copyable
 		end
 
 		function ioplots(obj,n,pulse)
-			obj.SpectralMagPlot(n).YData = pulse.ESD_pJ_THz;
-			obj.SpectralPhiPlot(n).YData = pulse.SpectralPhase;
+			pn = 1;
+			obj.SpectralMagPlot(n).YData = pulse.ESD_pJ_THz(pn,:);
+			obj.SpectralPhiPlot(n).YData = pulse.SpectralPhase(pn,:);
 			updatepeaks(obj.SpectralMagPlot(n));
-			obj.TemporalMagPlot(n).YData = gather(pulse.TemporalIntensity);
-			obj.TemporalPhiPlot(n).YData = pulse.TemporalPhase;
+			obj.TemporalMagPlot(n).YData = gather(pulse.TemporalIntensity(pn,:));
+			obj.TemporalPhiPlot(n).YData = pulse.TemporalPhase(pn,:);
 
-			tstr = {['Energy = ', num2str(pulse.Energy*1e9,3), ' nJ'],...
-					['FWHM = ', num2str(pulse.DurationCheck*1e15,3), ' fs']};
+			tstr = {['Energy = ', num2str(pulse.Energy(pn,:)*1e9,3), ' nJ'],...
+					['FWHM = ', num2str(pulse.DurationCheck(pn)*1e15,3), ' fs']};
 
 			obj.TemporalText(n).String = tstr;
 			obj.updatetitles(n,pulse);

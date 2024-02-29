@@ -20,7 +20,7 @@ classdef OpticalSim < matlab.mixin.Copyable
 		Solver = @OPOmexBatch;
 		Precision = 'single';
 		ProgressPlotting = 1;
-		ProgressPlots = 4;
+		ProgressPlots = 5;
 		StoredPulses	OpticalPulse	% Pulse object with multiple fields, storing desired pulse each trip (currently XOut)
 		TripNumber = 0;
 	end
@@ -38,6 +38,7 @@ classdef OpticalSim < matlab.mixin.Copyable
 		FinalPlotter		SimPlotter
 	end
 	properties (Dependent)
+		NumOfParRuns
 		IkEvoData
 		ItEvoData
 	end
@@ -62,6 +63,7 @@ classdef OpticalSim < matlab.mixin.Copyable
 			gpus = gpuDeviceCount;
 			if gpus > 0.5
 				gpuDevice(1);
+				% gpuDevice(2);
 				obj.Hardware = "GPU";	% Could probably add actual GPU model info here
 			end
 		end
@@ -120,11 +122,11 @@ classdef OpticalSim < matlab.mixin.Copyable
 			obj.PumpPulse.refract(obj.System.Xtal);
 
 			obj.System.Xtal.ppole(obj);
-			obj.SpectralProgressShift = repmat(fft(fftshift(obj.PumpPulse.TemporalField)).',1,obj.ProgressPlots);
+			obj.SpectralProgressShift = repmat(fft(fftshift(obj.PumpPulse.TemporalField(1,:),2)).',1,obj.ProgressPlots,obj.NumOfParRuns);
 			if obj.RoundTrips > 1
 				obj.FinalPlotter = SimPlotter(obj,obj.TripNumber + (1:obj.RoundTrips),"Round Trip Number");
 			end
-			if obj.ProgressPlotting || obj.RoundTrips == 1
+			if obj.ProgressPlotting % || obj.RoundTrips == 1
 				ydat = linspace(0,obj.System.Xtal.Length*1e3,obj.ProgressPlots);
 				ylab = "Distance (mm)";
 				obj.ProgressPlotter = SimPlotter(obj,ydat,ylab);
@@ -132,7 +134,16 @@ classdef OpticalSim < matlab.mixin.Copyable
 			obj.StepSizeModifiers = obj.convArr(zeros(obj.RoundTrips,obj.System.Xtal.NSteps));
 			obj.PumpPulse.refract(airOpt);
 			obj.StoredPulses = obj.Pulse.writeto;
-			obj.StoredPulses.addDims([obj.RoundTrips,1]);
+			if obj.NumOfParRuns > 1
+				obj.StoredPulses.addDims([obj.NumOfParRuns,1,obj.RoundTrips]);
+			else
+				obj.StoredPulses.addDims([obj.RoundTrips,1]);
+			end
+		end
+
+		function reseed(obj)
+			obj.Source.simulate(obj.SimWin);
+			
 		end
 
 		function run(obj)
@@ -168,10 +179,10 @@ classdef OpticalSim < matlab.mixin.Copyable
 
 				obj.nexttrip
 				
-				EtShift = fftshift(obj.Pulse.TemporalField).';
-				obj.SpectralProgressShift(:,1) = fft(EtShift);
+				EtShift = fftshift(obj.Pulse.TemporalField,2).';
+				obj.SpectralProgressShift(:,1,:) = fft(EtShift);
 
-				[EtShift,obj.SpectralProgressShift(:,2:obj.ProgressPlots),obj.StepSizeModifiers(obj.SimTripNumber,:)] =...
+				[EtShift,obj.SpectralProgressShift(:,2:obj.ProgressPlots,:),obj.StepSizeModifiers(obj.SimTripNumber,:)] =...
 										obj.Solver(	EtShift,...
 													xtal.TStepShift,...
 													G33,...
@@ -184,12 +195,16 @@ classdef OpticalSim < matlab.mixin.Copyable
 													obj.AdaptiveError(2),...
 													obj.AdaptiveError(1),...
 													sel,...
-													obj.SpectralProgressShift(:,2:obj.ProgressPlots),...
+													obj.SpectralProgressShift(:,2:obj.ProgressPlots,:),...
 													obj.StepSizeModifiers(obj.SimTripNumber,:)...
 													);
 
-				obj.Pulse.TemporalField = fftshift(EtShift.');
-				obj.StoredPulses.TemporalField(obj.SimTripNumber,:) = gather(obj.Pulse.TemporalField);
+				obj.Pulse.TemporalField = fftshift(EtShift.',2);
+				if obj.NumOfParRuns > 1
+					obj.StoredPulses.TemporalField(:,:,obj.SimTripNumber) = gather(obj.Pulse.TemporalField);
+				else
+					obj.StoredPulses.TemporalField(obj.SimTripNumber,:) = gather(obj.Pulse.TemporalField);
+				end
 				obj.XOutPulse.copyfrom(obj.Pulse);
 				if obj.ProgressPlotting
 					obj.ProgressPlotter.updateplots;
@@ -249,14 +264,26 @@ classdef OpticalSim < matlab.mixin.Copyable
 			xtal.Transmission = obj.convArr(xtal.Transmission);
 		end
 
+		function N = get.NumOfParRuns(obj)
+			n_delay = length(obj.Delay);
+			n_pulse = length(obj.Pulse.TemporalField(:,1));
+			if n_pulse == n_delay
+				N = n_delay;
+			else
+				N = max(n_delay,n_pulse);
+			end
+			n_pump =  length(obj.PumpPulse.TemporalField(:,1));
+			N = max(n_pump,N);
+		end
+
 		function Ik = get.IkEvoData(obj)
-			Eks = ifftshift(obj.SpectralProgressShift.',2);
+			Eks = ifftshift(obj.SpectralProgressShift(:,:,1).',2);
 			Ik = abs(Eks(:,obj.SimWin.IsNumIndex));
 			Ik = gather(Ik);
 		end
 
 		function It = get.ItEvoData(obj)
-			Ets = (ifft(obj.SpectralProgressShift.',[],2));
+			Ets = (ifft(obj.SpectralProgressShift(:,:,1).',[],2));
 			It = abs(fftshift(Ets,2));
 			It = It(:,1:obj.SimWin.Granularity:end);
 			It = gather(It);

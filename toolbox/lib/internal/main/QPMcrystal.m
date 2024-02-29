@@ -7,7 +7,7 @@ arguments
 	dutyOff = 0;
 end
 
-	% rng('default');
+	rng('default');
 	z = linspace(0,L_m,n_steps);
 
 	if isa(grating_m, 'function_handle')
