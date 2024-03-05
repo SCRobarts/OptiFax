@@ -6,7 +6,7 @@
 close all
 clear
 
-batchRun = 0;
+batchRun = 1;
 pathstr	  = 'C:\Users\Seb Robarts\Dropbox (Heriot-Watt University Team)\RES_EPS_McCracken_Lab\Seb\PGR\Sim Data\Plots\waveguideDelayChirp\';
 folderstr = 'SimInProgress';
 % vidname = 'FixedGrating_';
@@ -15,35 +15,37 @@ dutyoff = 0 * 0.05;
 
 %% Initialise Laser / Input Pulse
 load("Taccor800.mat");
-laser.AveragePower = 0.4;
+% laser.AveragePower = 0.4;
+laser.AveragePower = 0.15;
 fibreOut = copy(laser);
 
 fibreOut.Name = "FibreOut";
-% fibreOut.SourceString = "FWCARS12cm_Sim_Spectrum_149-6998nm.txt";
+% fibreOut.SourceString = "FWCARS3cm_Sim_Spectrum.txt";
+% fibreOut.SourceString = "FWCARS3cm_Sim_Spectrum_147mW.txt";
 % fibreOut.SourceString = "FWCARS12cm_Sim_Spectrum_40mW.txt";
 fibreOut.SourceString = "FWCARS12cm_Sim_Spectrum_117mW.txt";
-% fibreOut.AveragePower = 0.6;
-% fibreOut.AveragePower = 0.0394;
-fibreOut.AveragePower = 0.117;
+% fibreOut.AveragePower = 0.75;
+% fibreOut.AveragePower = 0.15;
+% fibreOut.AveragePower = 0.117;
 % fibreOut.PulseDuration = 164e-15;
 
 %% Initialise Simulation Window
 lambda_ref = laser.Wavelength;
 npts = 2^16;
-tAxis = 10* 10e-12;
+tAxis = 30e-12;
 wavelims = [215 5500];
 tOff =  5 * -1.0e-12;
 
-% simWin = SimWindow(lambda_ref,npts,tAxis,tOff);
+simWin = SimWindow(lambda_ref,npts,tAxis,tOff);
 % simWin.SpectralLimits = wavelims;
-simWin = SimWindow(lambda_ref,npts,wavelims,tOff,"wavelims");
+% simWin = SimWindow(lambda_ref,npts,wavelims,tOff,"wavelims");
 % fibreOut.simulate(simWin);
 % fibreOut.Pulse.plot;
 % return
 
 %% Generate fibre supercontinuum
-load("FemtoWHITE_CARS_12cm.mat");
-% load("FemtoWHITE_CARS.mat");
+% load("FemtoWHITE_CARS_12cm.mat");
+load("FemtoWHITE_CARS.mat");
 
 % [~] = gnlsefibsim(fibreOut,simWin,fibre);
 % fibreOut.Pulse.tscale(sqrt(0.5));
@@ -63,7 +65,7 @@ cav = Cavity(crystal,0);
 %% Optical Simulation Setup
 
 % delay = -200 .* 1e-15;
-% errorBounds = [1e-2,2e-1];	% Percentage error tolerance
+% errorBounds = [1e-2,5e-1];	% Percentage error tolerance
 minStep = 0.1e-6;		% Minimum step size
 errorBounds = [5e-2,1e0];	% Percentage error tolerance
 % minStep = 0.20e-6;		% Minimum step size
@@ -75,39 +77,50 @@ optSim.RoundTrips = 1;
 optSim.ProgressPlots = 301;
 if batchRun
 	optSim.ProgressPlotting = 0;
-	optSim.ProgressPlots = 5;
+	optSim.ProgressPlots = 3;
 end
 % optSim.Hardware = "CPU";
 
-% P1 = 6.3e-6;
-P1 = 4.8e-6;
-% P2 = 2.2e-6;
-P2 = 3.7e-6;
-a = 5;
-polsteps = 2;
-tol = 2* ((P1-P2) ./ polsteps);
+crystal.Chi2 = 2 * 25e-12;
+crystal.StepSize = minStep;
+P1 = 6.3e-6;
+% P1 = 5.0e-6;
+P2 = 2.2e-6;
+% P2 = 3.0e-6;
+% a = 0.48;
+a = 1.5;
+
+for polsteps = 2:10
+
+% 
+% tol = 1e-12;
+% tol = 1e-7;
+tol = ((P1-P2) ./ (polsteps-1)) - eps;
+% % tol = tol * (1 + mod(polsteps,2)/2);
 crystal.GratingPeriod = @(z)chirpedgrating(z,P1,P2,a,tol);
-% crystal.GratingPeriod = P2;
-crystal.Uncertainty = uncertainty_m;
-crystal.DutyCycleOffset = dutyoff;
+% % crystal.GratingPeriod = P2;
+% crystal.Uncertainty = uncertainty_m;
+% crystal.DutyCycleOffset = dutyoff;
 
 % optSim.setup;
 % optSim.System.Xtal.xtalplot([350 500]);
-% % 
+% 
 % return
 %%
 if batchRun
-	delay = [-450:10:-250] .* 1e-15;
+	% delay = [-450:10:-250] .* 1e-15;
+	delay = [-500:10:100] .* 1e-15;
 	% delay = [-425:25:300] .* 1e-15;
-	pumpChirp = -2700e-30:100e-30:-700e-30;
+	pumpChirp = -2500e-30:100e-30:-1000e-30;
 	% pulseChirps = 0e-30:100e-30:2000e-30;
 	% periods = P2:0.2e-6:P1;
 	% as = 0.25:0.25:2.75;
-	as = [0.25, 0.5, 0.75, 1, 1.5, 2.5, 5];
+	as = [0.3, 0.5, 0.75, 1, 1.5, 2.5, 5, 10];
+	% as = a;
 else
-	delay = 1 * -270e-15;
-	% delay = [-400:100:400] .* 1e-15;
-	pumpChirp = -1900e-30;
+	delay = 1 * -260e-15;
+	% delay = [-500:10:100] .* 1e-15;
+	pumpChirp = 1 * -2000e-30;
 	% pulseChirps = 0.2 * 1000e-30;
 	% periods = 3.3e-6;
 	as = a;
@@ -126,6 +139,7 @@ for nA = 1:length(as)
 	crystal.GratingPeriod = @(z)chirpedgrating(z,P1,P2,a,tol);
 	% crystal.GratingPeriod = P;
 	optSim.setup;
+	polsteps_check = length(unique(crystal.DomainWidths));
 
 	optSim.PumpPulse.applyGDD(pumpChirp');
 	optSim.PumpPulse.TemporalField = repmat(optSim.PumpPulse.TemporalField,nDelay,1);
@@ -160,15 +174,38 @@ for nA = 1:length(as)
 	thresholdID = clIW > -35;
 	cMerit = sum(thresholdID,2) ./ cfRange;
 
-	if n_pumpChirps == 1
-		figure
-		plot(simWin.Frequencies*1e-12,[lIWrel;pIWrel])
-		xlim([230, 800])
-		ylim([-35.0, 0])
-		xlabel("Frequency/THz")
-		ylabel("Relative Intensity/dB")
-		title("Continuum Merit = " + num2str(cMerit',3))
+	if n_pumpChirps == 1 
+		if nDelay == 1
+			figure
+			plot(simWin.Frequencies*1e-12,[lIWrel;pIWrel])
+			xlim([230, 800])
+			ylim([-35.0, 0])
+			xlabel("Frequency/THz")
+			ylabel("Relative Intensity/dB")
+			title("Continuum Merit = " + num2str(cMerit',3))
+		else
+			ffig = figure("Position",[100 100 2000 1000]);
+			ax = axes(ffig);
+			ax.Interactions = [];
+			ax.Toolbar.Visible = 'off';
+			yyaxis(ax,"left")
+			pcolor(ax,simWin.Frequencies*1e-12,delayrep*1e15,lIWrel)
+			xlim([230, 800])
+			clim([-40 0])
+			colormap hot
+			shading interp
+			xlabel("Frequency/THz")
+			ylabel("Delay/fs")
 
+			yyaxis(ax,"right")
+			yticks(delay*1e15)
+			ax.YAxis(2).Limits = ax.YAxis(1).Limits;
+			yticklabels(num2str(cMerit,3))
+			ylabel("Continuum Merit")
+			title("pumpGDD = " + num2str(pumpChirp*1e30) + "fs^2, " + "pumpFWHM = " + num2str(optSim.PumpPulse.DurationCheck(1)*1e15,3) + "fs, " + ...
+				  "period = " + num2str(P1*1e6,'%.2f') + "-" + num2str(P2*1e6,'%.2f') + "\mum, a = " + num2str(a,'%.2f') + ", PSteps = " + num2str(polsteps_check,'%i') +...
+				  ", Max. Merit = " + num2str(max(cMerit),'%.3f'));
+		end
 	end
 	% figure
 	% plot(linspace(0,crystal.Length,crystal.NSteps)*1e3,optSim.StepSizeModifiers*minStep*1e6)
@@ -183,7 +220,7 @@ for nA = 1:length(as)
 			mkdir(folderstr);
 		end
 		cd(folderstr);
-		folderstrvar = ['MaxMerit_',num2str(merMax(nA),'%.3f'),'_Steps_',num2str(polsteps,'%i'),'_P_',num2str(P1*1e6,'%.2f'),'_',num2str(P2*1e6,'%.2f'),'_a_',num2str(a,'%.2f')];
+		folderstrvar = ['MaxMerit_',num2str(merMax(nA),'%.3f'),'_Steps_',num2str(polsteps_check,'%i'),'_P_',num2str(P1*1e6,'%.2f'),'_',num2str(P2*1e6,'%.2f'),'_a_',num2str(a,'%.2f')];
 		if exist(folderstrvar,'dir') ~= 7
 			mkdir(folderstrvar);
 		end
@@ -216,7 +253,7 @@ for nA = 1:length(as)
 			% 	  "pumpFWHM = " + num2str(optSim.PumpPulse.DurationCheck(nc)*1e15,3) + "fs, " + "pulseFWHM = " + num2str(continuumFWHM*1e15,3) + "fs, " + ...
 			% 	  "Max. Merit = " + num2str(max(cMerit(:,:,nc)),3));
 			title("pumpGDD = " + num2str(pumpChirp(nc)*1e30) + "fs^2, " + "pumpFWHM = " + num2str(optSim.PumpPulse.DurationCheck(nc)*1e15,3) + "fs, " + ...
-				  "period = " + num2str(P1*1e6,'%.2f') + "-" + num2str(P2*1e6,'%.2f') + "\mum, a = " + num2str(a,'%.2f') + ", PSteps = " + num2str(polsteps,'%i') +...
+				  "period = " + num2str(P1*1e6,'%.2f') + "-" + num2str(P2*1e6,'%.2f') + "\mum, a = " + num2str(a,'%.2f') + ", PSteps = " + num2str(polsteps_check,'%i') +...
 				  ", Max. Merit = " + num2str(max(cMerit(:,:,nc)),'%.3f'));
 			% return
 			
@@ -261,9 +298,11 @@ end % End WG parameter loop
 if n_pumpChirps > 1
 	cd(pathstr);
 	merMaxStr = num2str(max(merMax,[],"all"),'%.3f');
-	sweepFolder = ['MaxMerit_',merMaxStr,'_Steps_',num2str(polsteps,'%i'),'_P_',num2str(P1*1e6,'%.2f'),'_',num2str(P2*1e6,'%.2f')];
+	sweepFolder = ['MaxMerit_',merMaxStr,'_Steps_',num2str(polsteps_check,'%i'),'_P_',num2str(P1*1e6,'%.2f'),'_',num2str(P2*1e6,'%.2f')];
 	movefile(folderstr,sweepFolder);
 end
+
+end % end polsteps
 return
 %% Get frames
 h = findobj("Type","figure");

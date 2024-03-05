@@ -6,13 +6,16 @@ arguments
 	a = 0.48;
 	tol = 0.1e-6;
 end
+	% PSteps = round(((P1 - P2) ./ tol) + 1);
+	P1 = P1 + tol;
 	% Define continuous period function
 	zfrac = z./max(z);
 	gratings = P1 + (P2-P1).*(zfrac.^a);
-	gratings = gratings - P2;
+	gratings = gratings - (P2 + tol/2);
 	% Discretise according to a smallest difference in period sizes
 	domains = round(gratings/tol).*tol./2;
 	domains = domains + (P2/2);
+
 	% granularity = -log10(tol);
 	% domains = round(gratings,granularity)./2;
 	% dist = mod(gratings,tol);
