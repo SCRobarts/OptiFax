@@ -317,7 +317,7 @@ __global__ void Error_kernel (	float2 * const K1,
     //int const gi = blockDim.x * blockIdx.x + threadIdx.x;
     float errfv, pcterrfv;
 
-  	// 2D grid?
+  	// 2D grid
     int const gx = blockDim.x * blockIdx.x + threadIdx.x;
 	int const gi = (blockDim.x * blockIdx.x) + threadIdx.x + (Npoints * blockIdx.y);
     if (gx < Npoints)

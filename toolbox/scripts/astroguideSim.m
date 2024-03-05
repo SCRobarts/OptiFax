@@ -87,25 +87,26 @@ P1 = 6.3e-6;
 % P1 = 5.0e-6;
 P2 = 2.2e-6;
 % P2 = 3.0e-6;
-% a = 0.48;
-a = 1.5;
+a = 0.48;
+% a = 1.5;
 
-for polsteps = 2:10
+% for polsteps = 2:10
 
 % 
 % tol = 1e-12;
 % tol = 1e-7;
-tol = ((P1-P2) ./ (polsteps-1)) - eps;
+% tol = ((P1-P2) ./ (polsteps-1)) - eps;
 % % tol = tol * (1 + mod(polsteps,2)/2);
-crystal.GratingPeriod = @(z)chirpedgrating(z,P1,P2,a,tol);
+% crystal.GratingPeriod = @(z)chirpedgrating(z,P1,P2,a,tol);
+crystal.GratingPeriod = "ChirpedWGPolarisationDomains.xlsx";
 % % crystal.GratingPeriod = P2;
 % crystal.Uncertainty = uncertainty_m;
 % crystal.DutyCycleOffset = dutyoff;
 
-% optSim.setup;
-% optSim.System.Xtal.xtalplot([350 500]);
-% 
-% return
+optSim.setup;
+optSim.System.Xtal.xtalplot([350 500]);
+
+return
 %%
 if batchRun
 	% delay = [-450:10:-250] .* 1e-15;
@@ -115,8 +116,8 @@ if batchRun
 	% pulseChirps = 0e-30:100e-30:2000e-30;
 	% periods = P2:0.2e-6:P1;
 	% as = 0.25:0.25:2.75;
-	as = [0.3, 0.5, 0.75, 1, 1.5, 2.5, 5, 10];
-	% as = a;
+	% as = [0.3, 0.5, 0.75, 1, 1.5, 2.5, 5, 10];
+	as = a;
 else
 	delay = 1 * -260e-15;
 	% delay = [-500:10:100] .* 1e-15;
@@ -136,10 +137,10 @@ for nA = 1:length(as)
 	% P = periods(nP);
 	a = as(nA);
 	optSim.Pulse = fibreOut;
-	crystal.GratingPeriod = @(z)chirpedgrating(z,P1,P2,a,tol);
+	% crystal.GratingPeriod = @(z)chirpedgrating(z,P1,P2,a,tol);
 	% crystal.GratingPeriod = P;
 	optSim.setup;
-	polsteps_check = length(unique(crystal.DomainWidths));
+	polsteps_check = length(unique(crystal.DomainWidths)) -2;
 
 	optSim.PumpPulse.applyGDD(pumpChirp');
 	optSim.PumpPulse.TemporalField = repmat(optSim.PumpPulse.TemporalField,nDelay,1);
@@ -302,7 +303,7 @@ if n_pumpChirps > 1
 	movefile(folderstr,sweepFolder);
 end
 
-end % end polsteps
+% end % end polsteps
 return
 %% Get frames
 h = findobj("Type","figure");

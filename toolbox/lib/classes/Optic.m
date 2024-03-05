@@ -174,7 +174,7 @@ classdef Optic < matlab.mixin.Copyable
 			obj.Name = name;
 			currentfolder = pwd;
 			cd(OptiFaxRoot(devFlag));
-			cd("toolbox" + filesep + "objects" + filesep + "optics");
+			cd("objects" + filesep + "optics");
 			save(name + ".mat","obj","-mat");
 			cd(currentfolder);
 		end

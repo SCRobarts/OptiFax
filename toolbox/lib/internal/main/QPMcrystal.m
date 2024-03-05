@@ -12,6 +12,10 @@ end
 
 	if isa(grating_m, 'function_handle')
 		domain_widths = grating_m(z);
+	elseif isa(grating_m, 'string')
+		opts = detectImportOptions(grating_m);
+		domains = readtable(grating_m,opts);
+		domain_widths = domains.(1)';
 	else
 		nDomains = floor(2 * L_m / grating_m);
 		% domain_widths = random('Normal',grating_m./2,uncertainty_m./2,[1,nDomains-1]);

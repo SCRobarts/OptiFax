@@ -503,6 +503,24 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			hold off
 		end
 
+		function spectrogram(obj)
+			x = obj.TemporalField;		% Input signal for spectrogram
+			win_size = 2^7;			% Segment size for each STFT
+			num_olap = 1.5*2^6;			% Points of overlap between segments
+			nfft = 2^15;				% Number of DFT points
+			fs = 1/obj.SimWin.DeltaTime;% Sampling rate
+
+			spectrogram(x,win_size,num_olap,nfft,fs,'centered','yaxis','MinThreshold',-25);
+
+			spax = gca;
+			spax.Children.XData = spax.Children.XData - ((obj.SimWin.TemporalRange/2) + obj.SimWin.TimeOffset) * 1e12;
+			spax.Children.YData = spax.Children.YData + obj.SimWin.Frequencies(obj.SimWin.ReferenceIndex)*1e-12;
+			pulseN = 1;
+			tlims = 10e12*[-obj.DurationCheck(pulseN) obj.DurationCheck(pulseN)];
+			xlim(spax,tlims);
+			ylim(spax,[0 800]);
+
+		end
 	end
 
 end
