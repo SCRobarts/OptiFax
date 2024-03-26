@@ -32,13 +32,13 @@ fibreOut.SourceString = "FWCARS12cm_Sim_Spectrum_117mW.txt";
 %% Initialise Simulation Window
 lambda_ref = laser.Wavelength;
 npts = 2^16;
-tAxis = 30e-12;
-wavelims = [215 5500];
-tOff =  5 * -1.0e-12;
+tAxis = 1 * 30e-12;
+wavelims = [215 6500];
+tOff =  0 * 5 * -1.0e-12;
 
-simWin = SimWindow(lambda_ref,npts,tAxis,tOff);
+% simWin = SimWindow(lambda_ref,npts,tAxis,tOff);
 % simWin.SpectralLimits = wavelims;
-% simWin = SimWindow(lambda_ref,npts,wavelims,tOff,"wavelims");
+simWin = SimWindow(lambda_ref,npts,wavelims,tOff,"wavelims");
 % fibreOut.simulate(simWin);
 % fibreOut.Pulse.plot;
 % return
@@ -54,6 +54,9 @@ load("FemtoWHITE_CARS.mat");
 
 %% Initialise Optical Cavity
 load("ChirpedWaveguideLN.mat")
+bpf = load("IdealBandPassFilter.mat");
+bpf = bpf.obj;
+bpf.simulate(simWin);
 % load Chirped_PPLN.mat
 % load PPLN_Fanout_1mm.mat
 % crystal.GratingPeriod = 4.25e-6;
@@ -104,7 +107,22 @@ crystal.GratingPeriod = "ChirpedWGPolarisationDomains.xlsx";
 % crystal.DutyCycleOffset = dutyoff;
 
 optSim.setup;
-optSim.System.Xtal.xtalplot([350 500]);
+% optSim.System.Xtal.xtalplot([350 500]);
+
+% optSim.Pulse.propagate(bpf);
+
+[f,t,p] = optSim.Pulse.spectrogram;
+tplot = (simWin.Times(and(simWin.Timesfs>-1000,simWin.Timesfs<1500)) + 1e-12 );
+
+figure
+fsst(optSim.Pulse.TemporalField(and(simWin.Timesfs>-1000,simWin.Timesfs<1500)),1/simWin.DeltaTime,2^9,'yaxis')
+[sst,fst]=fsst(optSim.Pulse.TemporalField(and(simWin.Timesfs>-1000,simWin.Timesfs<1500)),1/simWin.DeltaTime,2^9);
+
+[fridge, ~] = tfridge(gather(sst),gather(fst),10);
+hold on
+% plot((simWin.Times(and(simWin.Timesfs>-1000,simWin.Timesfs<1500)) + simWin.TemporalRange/2)*1e12,fridge*1e-12,'r')
+plot(tplot*1e12,fridge*1e-12,'r')
+hold off
 
 return
 %%
@@ -113,7 +131,7 @@ if batchRun
 	delay = [-500:10:100] .* 1e-15;
 	% delay = [-425:25:300] .* 1e-15;
 	pumpChirp = -2500e-30:100e-30:-1000e-30;
-	% pulseChirps = 0e-30:100e-30:2000e-30;
+	pulseChirps = 1440e-30:20e-30:1480e-30;
 	% periods = P2:0.2e-6:P1;
 	% as = 0.25:0.25:2.75;
 	% as = [0.3, 0.5, 0.75, 1, 1.5, 2.5, 5, 10];
@@ -131,11 +149,13 @@ nDelay = length(delay);
 n_pumpChirps = length(pumpChirp);
 delayrep = repmat(delay,n_pumpChirps,1);
 
+for n = 1:length(pulseChirps)
 % for nP = 1:length(periods)
-for nA = 1:length(as)
-	% pulseChirp = pulseChirps(pc);
+% for n = 1:length(as)
+	pulseChirp = pulseChirps(n);
 	% P = periods(nP);
-	a = as(nA);
+	% a = as(n);
+
 	optSim.Pulse = fibreOut;
 	% crystal.GratingPeriod = @(z)chirpedgrating(z,P1,P2,a,tol);
 	% crystal.GratingPeriod = P;
@@ -145,19 +165,17 @@ for nA = 1:length(as)
 	optSim.PumpPulse.applyGDD(pumpChirp');
 	optSim.PumpPulse.TemporalField = repmat(optSim.PumpPulse.TemporalField,nDelay,1);
 	optSim.PumpPulse.applyGD(delayrep(:));
-	% optSim.Pulse.applyGDD(pulseChirp');
+	optSim.Pulse.applyGDD(pulseChirp');
+		optSim.Pulse.propagate(bpf);		% Band pass filter
 	continuumFWHM = optSim.Pulse.DurationCheck;
 	optSim.refresh;
 	% crystal.Transmission(simWin.Lambdanm>350) = 0.95;
 	optSim.run;
 
 	%% Plotting
-	% lIW = 10*log10(abs(optSim.Pulse.SpectralField).^2);	% log scale spectral intensity
 	lIW = 10*log10(optSim.Pulse.EnergySpectralDensity);	% log scale spectral intensity
-	% lIW = smoothdata(gather(lIW),2,"gaussian",npts.*0.00005);
 	mlIW = max(max(lIW));							% max value, for scaling plot
 
-	% pIW = 10*log10(abs(optSim.PumpPulse.SpectralField).^2);	% log scale spectral intensity
 	pIW = 10*log10(optSim.PumpPulse.EnergySpectralDensity);	% log scale spectral intensity
 	mpIW = max(max(pIW));							% max value, for scaling plot
 
@@ -215,13 +233,14 @@ for nA = 1:length(as)
 
 	if n_pumpChirps > 1
 
-		merMax(nA) = max(cMerit,[],"all"); %#ok<*SAGROW>
+		merMax(n) = max(cMerit,[],"all"); %#ok<*SAGROW>
 		cd(pathstr);
 		if exist(folderstr,'dir') ~= 7
 			mkdir(folderstr);
 		end
 		cd(folderstr);
-		folderstrvar = ['MaxMerit_',num2str(merMax(nA),'%.3f'),'_Steps_',num2str(polsteps_check,'%i'),'_P_',num2str(P1*1e6,'%.2f'),'_',num2str(P2*1e6,'%.2f'),'_a_',num2str(a,'%.2f')];
+		% folderstrvar = ['MaxMerit_',num2str(merMax(nA),'%.3f'),'_Steps_',num2str(polsteps_check,'%i'),'_P_',num2str(P1*1e6,'%.2f'),'_',num2str(P2*1e6,'%.2f'),'_a_',num2str(a,'%.2f')];
+		folderstrvar = ['MaxMerit_',num2str(merMax(n),'%.3f'),'_cGDD_',num2str(pulseChirp*1e30),'_P_',num2str(P1*1e6,'%.2f'),'_',num2str(P2*1e6,'%.2f'),'_a_',num2str(a,'%.2f')];
 		if exist(folderstrvar,'dir') ~= 7
 			mkdir(folderstrvar);
 		end
@@ -254,6 +273,7 @@ for nA = 1:length(as)
 			% 	  "pumpFWHM = " + num2str(optSim.PumpPulse.DurationCheck(nc)*1e15,3) + "fs, " + "pulseFWHM = " + num2str(continuumFWHM*1e15,3) + "fs, " + ...
 			% 	  "Max. Merit = " + num2str(max(cMerit(:,:,nc)),3));
 			title("pumpGDD = " + num2str(pumpChirp(nc)*1e30) + "fs^2, " + "pumpFWHM = " + num2str(optSim.PumpPulse.DurationCheck(nc)*1e15,3) + "fs, " + ...
+				  "pulseGDD = " + num2str(pulseChirp*1e30) + "fs^2, " + ...
 				  "period = " + num2str(P1*1e6,'%.2f') + "-" + num2str(P2*1e6,'%.2f') + "\mum, a = " + num2str(a,'%.2f') + ", PSteps = " + num2str(polsteps_check,'%i') +...
 				  ", Max. Merit = " + num2str(max(cMerit(:,:,nc)),'%.3f'));
 			% return
@@ -299,6 +319,7 @@ end % End WG parameter loop
 if n_pumpChirps > 1
 	cd(pathstr);
 	merMaxStr = num2str(max(merMax,[],"all"),'%.3f');
+	% sweepFolder = ['MaxMerit_',merMaxStr,'_Steps_',num2str(polsteps_check,'%i'),'_P_',num2str(P1*1e6,'%.2f'),'_',num2str(P2*1e6,'%.2f')];
 	sweepFolder = ['MaxMerit_',merMaxStr,'_Steps_',num2str(polsteps_check,'%i'),'_P_',num2str(P1*1e6,'%.2f'),'_',num2str(P2*1e6,'%.2f')];
 	movefile(folderstr,sweepFolder);
 end
