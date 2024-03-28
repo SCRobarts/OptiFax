@@ -108,9 +108,14 @@ function [gain,pump,signal,idler,weights,p_mask,i_mask] = qpmgain(crystal,ppulse
 		weights(SHGid) = weights(SHGid) + (i_mask2D(SHGid)).^2;
 	end
 
-	dk = kP - kS - kI;
+	if gpuDeviceCount > 0
+		dk = gpuArray(kP - kS - kI);
+	else
+		dk = (kP - kS - kI);
+	end
 	g_coeff = 1i * 2 * d_eff * (kS ./ nS.^2) .* weights;
-	QPMevo = reshape(exp(1i*dk(:).*z).*P.*dz,[size(idler) n_steps]);
+	QPMevo = exp(1i*dk(:).*z).*P.*dz;
+	QPMevo = reshape(QPMevo,[size(idler) n_steps]);
 	gain = abs(g_coeff .* sum(QPMevo,3)) ./ max(p_mask) ./simWin.NumberOfPoints;
 
 end

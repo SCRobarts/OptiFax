@@ -112,6 +112,37 @@ classdef NonlinearCrystal < Waveguide
 			tss = fftshift(ts);
 		end
 
+		function fanoutplot(obj,sigrange,n_pos)
+			% n_pos = 5;
+			[gain,~,signal] = qpmgain(obj,obj.OptSim.PumpPulse,sigrange);
+			sig_unique = signal(:,1);
+			gain_sum = single(zeros(n_pos,length(gain(:,1))));
+			ys = linspace(0,obj.Height,n_pos);
+
+			for n = 1:n_pos
+				obj.VerticalPosition = ys(n);
+				obj.pole;
+
+				[gain] = qpmgain(obj,obj.OptSim.PumpPulse,sigrange);
+				gain_sum(n,:) = sum(gain,2);
+				disp(['Step ', num2str(n) ,' complete'])
+			end
+
+			fh = figure;
+			axs = axes(fh);
+			% surf(axs,sig_unique,ys,gain_sum)
+			imagesc(axs,sig_unique,ys,gain_sum)
+				axs.YAxis.Direction = 'normal';
+			colormap(axs,"turbo")
+				axs.Color = [0 0 0];
+				axs.GridColor = [1 1 1];
+				axs.MinorGridColor = [1 1 1];
+				shading("interp")
+			title('Full Temporal Overlap QPM')
+			xlabel('Signal Wavelength / m')
+			ylabel('Crystal Y Position / m')
+		end
+
 		function xtalplot(obj,sigrange)
 			arguments
 				obj NonlinearCrystal
