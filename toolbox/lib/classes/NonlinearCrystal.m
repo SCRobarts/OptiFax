@@ -1,6 +1,6 @@
 classdef NonlinearCrystal < Waveguide
 	%NONLINEARCRYSTAL A non-centrosymmetric crystal gain medium
-	%   Inherits the Optic class and extends it to allow crystal
+	%   Inherits the Waveguide (Optic) class and extends it to allow crystal
 	%   specific methods, like the bulk of the OPO simulation.
 	%
 	%	Sebastian C. Robarts 2023 - sebrobarts@gmail.com
@@ -10,6 +10,8 @@ classdef NonlinearCrystal < Waveguide
 		Uncertainty
 		DutyCycleOffset
 		StepSize = 1e-7;
+		Height = 1e-3;	% Crystal height in [m], used for fanout calcs.
+		VerticalPosition = 1;	% Int for stepped, [m] for fanout.
 	end
 	properties (Transient)
 		OptSim
@@ -46,7 +48,7 @@ classdef NonlinearCrystal < Waveguide
 			obj@Waveguide(optArgs{:});
 
 			if strcmp(obj.Bulk.Material,"PPLN")
-				obj.Chi2 = 2*27e-12;
+				obj.Chi2 = 2*26e-12;
 			end
 			obj.GratingPeriod = grating_m;
 			obj.Uncertainty = uncertainty_m;
@@ -57,8 +59,35 @@ classdef NonlinearCrystal < Waveguide
 			simulate@Waveguide(obj,simWin);
 			L_m = obj.Bulk.Length;
 			obj.NSteps = floor(L_m / obj.StepSize);
+
+			obj.pole;
+		end
+
+		function ppole(obj,optSim)
+			obj.OptSim = optSim;
+			L_m = obj.Bulk.Length;
+			obj.NSteps = floor(L_m / optSim.StepSize);
 			
-			xtal = QPMcrystal(obj.NSteps,L_m,obj.GratingPeriod,...
+			obj.pole;
+		end
+
+		function pole(obj)
+			L_m = obj.Bulk.Length;
+			if isnumeric(obj.GratingPeriod)
+				n = length(obj.GratingPeriod);
+				switch n
+					case 1
+						grating = obj.GratingPeriod;
+					case 2
+						grating = obj.fanout;
+					otherwise
+						grating = obj.GratingPeriod(obj.VerticalPosition);
+				end
+			else
+				grating = obj.GratingPeriod;
+			end
+			
+			xtal = QPMcrystal(obj.NSteps,L_m,grating,...
 										 obj.Uncertainty,...
 										 obj.DutyCycleOffset);
 
@@ -68,19 +97,14 @@ classdef NonlinearCrystal < Waveguide
 			obj.Periods = xtal.periods;
 		end
 
-		function ppole(obj,optSim)
-			obj.OptSim = optSim;
-			L_m = obj.Bulk.Length;
-			obj.NSteps = floor(L_m / optSim.StepSize);
-			
-			xtal = QPMcrystal(obj.NSteps,L_m,obj.GratingPeriod,...
-										 obj.Uncertainty,...
-										 obj.DutyCycleOffset);
+		function grating = fanout(obj)
+			P1 = obj.GratingPeriod(1);
+			P2 = obj.GratingPeriod(2);
+			h = obj.Height;
+			dgdy = (P2-P1)/h;
+			y = obj.VerticalPosition;
 
-			obj.Polarisation = xtal.P * obj.Chi2;
-			obj.DomainWidths = xtal.domains;
-			obj.DomainWallPositions = xtal.walls;
-			obj.Periods = xtal.periods;
+			grating = P1 + (dgdy*y);
 		end
 		
 		function tss = get.TStepShift(obj)
