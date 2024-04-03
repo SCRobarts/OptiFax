@@ -9,6 +9,7 @@ classdef OpticalSurface < matlab.mixin.Copyable
 		IncidentAngle
 		Order
 		Parent %Optic
+		GDD
 	end
 	properties (Dependent)
 		Transmission
@@ -17,7 +18,7 @@ classdef OpticalSurface < matlab.mixin.Copyable
 	end
 
 	methods
-		function obj = OpticalSurface(coating,material,theta,order,parent)
+		function obj = OpticalSurface(coating,material,theta,order,parent,gdd)
 			%OPTICALSURFACE Construct an instance of this class
 			%   Detailed explanation goes here
 			arguments
@@ -27,6 +28,7 @@ classdef OpticalSurface < matlab.mixin.Copyable
 				order = 1;
 				% parent handle = Optic.empty;
 				parent handle = [];
+				gdd = 0;
 			end
 			obj.Coating = coating;
 			if class(material) == "Dielectric"
@@ -36,6 +38,7 @@ classdef OpticalSurface < matlab.mixin.Copyable
 			obj.IncidentAngle = theta;
 			obj.Order = order;
 			obj.Parent = parent;
+			obj.GDD = gdd;
 		end
 
 		function T = get.Transmission(obj)
@@ -77,7 +80,11 @@ classdef OpticalSurface < matlab.mixin.Copyable
 
 		function phi_rel = get.Dispersion(obj)
 			lam = obj.Parent.SimWin.Wavelengths;
-			phi_rel = zeros(size(lam));
+			if ~obj.GDD
+				phi_rel = zeros(size(lam));
+			else
+
+			end
 		end
 
 		% function simulate(obj,simWin)

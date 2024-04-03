@@ -42,5 +42,4 @@ end
 	end
 	% phi = phi_off;
 	phi_rel = phi_off - phi_off(:,w_abs == interp1(w_abs,w_abs,w0,'nearest'));
-
 end
