@@ -1,7 +1,6 @@
 function [phi_rel,GD_rel] = GDDimport2phi(src_str,w_abs,w_rel,w0)
 %% GDDimport2phi.m
-% !!! Suspect this may be incorrect, should generalise the GD2phi section
-% of phi_calc and use that in the latter part of this function. !!!
+% Should now be correct? Agrees with phi_calc.
 
 GDDdat = readtable(src_str);
 

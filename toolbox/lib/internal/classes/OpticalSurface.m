@@ -4,6 +4,7 @@ classdef OpticalSurface < matlab.mixin.Copyable
 	%
 	%	Sebastian C. Robarts 2023 - sebrobarts@gmail.com
 	properties
+		Name		string
 		Material
 		Coating
 		IncidentAngle
@@ -80,11 +81,31 @@ classdef OpticalSurface < matlab.mixin.Copyable
 
 		function phi_rel = get.Dispersion(obj)
 			lam = obj.Parent.SimWin.Wavelengths;
-			if ~obj.GDD
+			w_abs = obj.Parent.SimWin.Omegas;
+			w_rel = obj.Parent.SimWin.RelativeOmegas;
+			w0 = obj.Parent.SimWin.ReferenceOmega;
+			if isa(obj.GDD,"string")
+				phi_rel = GDDimport2phi(obj.GDD,w_abs,w_rel,w0);
+			elseif ~obj.GDD
 				phi_rel = zeros(size(lam));
 			else
-
+				% Placeholder in case of future need to pass dispersion directly
+				phi_rel = obj.GDD;	
 			end
+		end
+
+		function store(coating,name,devFlag)
+			arguments
+				coating
+				name
+				devFlag = 0;
+			end
+			coating.Name = name;
+			currentfolder = pwd;
+			cd(OptiFaxRoot(devFlag));
+			cd("objects" + filesep + "optics" + filesep + "coatings");
+			save(name + ".mat","coating","-mat");
+			cd(currentfolder);
 		end
 
 		% function simulate(obj,simWin)

@@ -47,22 +47,21 @@ classdef Optic < matlab.mixin.Copyable
 				obj.SimWin = SimWindow.empty;
 				if class(s1) ~= "OpticalSurface"
 					s1 = OpticalSurface(s1,material,theta,1,obj);
+				else
+					s1 = OpticalSurface(s1.Coating,material,theta,1,obj,s1.GDD);
 				end
 				obj.Regime = regimeStr;
 				obj.S1 = s1;
-				% if regimeStr == "R"
-				% 
-				% elseif regimeStr == "T"
-
-					if class(material) ~= "Dielectric"
-						material = Dielectric(material,length_m,celsius,obj);	
-					end
-					if class(s2) ~= "OpticalSurface"
-						s2 = OpticalSurface(s2,material,theta,2,obj);
-					end
-					obj.Bulk = material;
-					obj.S2 = s2;
-			% 	end
+				if class(material) ~= "Dielectric"
+					material = Dielectric(material,length_m,celsius,obj);
+				end
+				if class(s2) ~= "OpticalSurface"
+					s2 = OpticalSurface(s2,material,theta,2,obj);
+				else
+					s2 = OpticalSurface(s2.Coating,material,theta,2,obj,s2.GDD);
+				end
+				obj.Bulk = material;
+				obj.S2 = s2;
 			end
 		end
 
