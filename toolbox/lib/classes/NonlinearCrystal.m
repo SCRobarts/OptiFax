@@ -1,6 +1,6 @@
 classdef NonlinearCrystal < Waveguide
 	%NONLINEARCRYSTAL A non-centrosymmetric crystal gain medium
-	%   Inherits the Optic class and extends it to allow crystal
+	%   Inherits the Waveguide (Optic) class and extends it to allow crystal
 	%   specific methods, like the bulk of the OPO simulation.
 	%
 	%	Sebastian C. Robarts 2023 - sebrobarts@gmail.com
@@ -10,6 +10,8 @@ classdef NonlinearCrystal < Waveguide
 		Uncertainty
 		DutyCycleOffset
 		StepSize = 1e-7;
+		Height = 1e-3;	% Crystal height in [m], used for fanout calcs.
+		VerticalPosition = 1;	% Int for stepped, [m] for fanout.
 	end
 	properties (Transient)
 		OptSim
@@ -46,7 +48,7 @@ classdef NonlinearCrystal < Waveguide
 			obj@Waveguide(optArgs{:});
 
 			if strcmp(obj.Bulk.Material,"PPLN")
-				obj.Chi2 = 2*27e-12;
+				obj.Chi2 = 2*26e-12;
 			end
 			obj.GratingPeriod = grating_m;
 			obj.Uncertainty = uncertainty_m;
@@ -57,15 +59,8 @@ classdef NonlinearCrystal < Waveguide
 			simulate@Waveguide(obj,simWin);
 			L_m = obj.Bulk.Length;
 			obj.NSteps = floor(L_m / obj.StepSize);
-			
-			xtal = QPMcrystal(obj.NSteps,L_m,obj.GratingPeriod,...
-										 obj.Uncertainty,...
-										 obj.DutyCycleOffset);
 
-			obj.Polarisation = xtal.P * obj.Chi2;
-			obj.DomainWidths = xtal.domains;
-			obj.DomainWallPositions = xtal.walls;
-			obj.Periods = xtal.periods;
+			obj.pole;
 		end
 
 		function ppole(obj,optSim)
@@ -73,7 +68,26 @@ classdef NonlinearCrystal < Waveguide
 			L_m = obj.Bulk.Length;
 			obj.NSteps = floor(L_m / optSim.StepSize);
 			
-			xtal = QPMcrystal(obj.NSteps,L_m,obj.GratingPeriod,...
+			obj.pole;
+		end
+
+		function pole(obj)
+			L_m = obj.Bulk.Length;
+			if isnumeric(obj.GratingPeriod)
+				n = length(obj.GratingPeriod);
+				switch n
+					case 1
+						grating = obj.GratingPeriod;
+					case 2
+						grating = obj.fanout;
+					otherwise
+						grating = obj.GratingPeriod(obj.VerticalPosition);
+				end
+			else
+				grating = obj.GratingPeriod;
+			end
+			
+			xtal = QPMcrystal(obj.NSteps,L_m,grating,...
 										 obj.Uncertainty,...
 										 obj.DutyCycleOffset);
 
@@ -82,69 +96,51 @@ classdef NonlinearCrystal < Waveguide
 			obj.DomainWallPositions = xtal.walls;
 			obj.Periods = xtal.periods;
 		end
+
+		function grating = fanout(obj)
+			P1 = obj.GratingPeriod(1);
+			P2 = obj.GratingPeriod(2);
+			h = obj.Height;
+			dgdy = (P2-P1)/h;
+			y = obj.VerticalPosition;
+
+			grating = P1 + (dgdy*y);
+		end
 		
 		function tss = get.TStepShift(obj)
 			ts = obj.Transmission .^ (1/obj.NSteps);
 			tss = fftshift(ts);
 		end
 
-		function [gain,pump,signal] = gaincalc(obj,sigrange,optSim)
-			arguments
-				obj NonlinearCrystal
-				sigrange	% Chosen signal limits in nm
-				optSim OpticalSim = obj.OptSim;
-			end
-			% d_eff = obj.Chi2 .* 1/pi;	% Currently Chi2 is 2*d33 hence no factor of 2
-			d_eff = 1/pi;	% Polarisation already scaled to Chi2 so only need this scaling?
-			A_p = gather(max(abs(optSim.PumpPulse.TemporalField))); % Amplitude of pump envelope, assumed constant
-			A_i = gather(mean(abs(optSim.Pulse.TemporalField))); % Amplitude of idler envelope, assumed constant
-			pulse = 1;
-			if A_i <= 0
-				A_i = A_p / 1e3;	% Amplitude of idler envelope, assumed constant
-				pulse = 0;
-			end
-			if obj.Length > 1e-2
-				n_steps = 1e4 * obj.Length;
-			else
-				n_steps = 1e5 * obj.Length;
-			end
-			z = linspace(0,obj.Length,n_steps);
-			dz = obj.Length ./ n_steps;
-			P = obj.Polarisation(1:obj.NSteps/length(z):end);
+		function fanoutplot(obj,sigrange,n_pos)
+			% n_pos = 5;
+			[gain,~,signal] = qpmgain(obj,obj.OptSim.PumpPulse,sigrange);
+			sig_unique = signal(:,1);
+			gain_sum = single(zeros(n_pos,length(gain(:,1))));
+			ys = linspace(0,obj.Height,n_pos);
 
-			pumprange = optSim.PumpPulse.WavelengthFWHM * [-2 2] + optSim.PumpPulse.PeakWavelength;
-			pid = and(obj.SimWin.Wavelengths > pumprange(1), obj.SimWin.Wavelengths < pumprange(2));
-			pump = obj.SimWin.Wavelengths(pid);
-			p_mask = gather(optSim.PumpPulse.EnergySpectralDensity ./ max(optSim.PumpPulse.EnergySpectralDensity));
-			p_mask = p_mask(pid);
-			nP = obj.Bulk.RefractiveIndex(pid);
-			kP = 2 * pi * nP ./ pump;
+			for n = 1:n_pos
+				obj.VerticalPosition = ys(n);
+				obj.pole;
 
-			sigrange = sigrange * 1e-9;
-			olap = and(sigrange > pumprange(1), sigrange < pumprange(2));
-			if olap(1)
-				sigrange(1) = pumprange(2) + 1e-9;
-			elseif olap(2)
-				sigrange(2) = pumprange(1) - 1e-9;
+				[gain] = qpmgain(obj,obj.OptSim.PumpPulse,sigrange);
+				gain_sum(n,:) = sum(gain,2);
+				disp(['Step ', num2str(n) ,' complete'])
 			end
-			sid = and(obj.SimWin.Wavelengths > sigrange(1), obj.SimWin.Wavelengths < sigrange(2));
-			signal = obj.SimWin.Wavelengths(sid);
-			nS = obj.Bulk.RefractiveIndex(sid);
-			kS = 2 * pi * nS ./ signal;
 
-			idler = idler_lambda(pump,signal.');
-			if pulse
-				i_mask = gather(optSim.Pulse.EnergySpectralDensity ./ max(optSim.Pulse.EnergySpectralDensity));
-				% i_mask = i_mask(iid)
-			end
-			nI = sellmeier(idler*1e6,obj.Bulk.Material,obj.Bulk.Temperature);
-			kI = 2 * pi * nI ./ idler;
-
-			dk = kP - kS' - kI;
-			% Eq. (5) in our notes on QPM
-			g1_coeff = 1i * 2 * d_eff .* (2*pi*c./idler) .* A_p .* p_mask .* A_i ./ nI ./ c;
-			QPM_evo = reshape(exp(1i*dk(:).*z).*P.*dz,[size(idler) n_steps]);
-			gain = abs(g1_coeff .* sum(QPM_evo,3)) ./ A_p;
+			fh = figure;
+			axs = axes(fh);
+			% surf(axs,sig_unique,ys,gain_sum)
+			imagesc(axs,sig_unique,ys,gain_sum)
+				axs.YAxis.Direction = 'normal';
+			colormap(axs,"turbo")
+				axs.Color = [0 0 0];
+				axs.GridColor = [1 1 1];
+				axs.MinorGridColor = [1 1 1];
+				shading("interp")
+			title('Full Temporal Overlap QPM')
+			xlabel('Signal Wavelength / m')
+			ylabel('Crystal Y Position / m')
 		end
 
 		function xtalplot(obj,sigrange)
@@ -158,7 +154,23 @@ classdef NonlinearCrystal < Waveguide
 
 			fh = figure;
 			if isa(obj.OptSim,"OpticalSim")
-				[gain,pump,signal] = obj.gaincalc(sigrange);
+				% [gain,pump,signal] = obj.gaincalc(sigrange);
+				if any(obj.OptSim.Pulse.TemporalField)
+					pump_optic = obj.OptSim.PumpPulse.Medium;
+					pulse_optic = obj.OptSim.Pulse.Medium;
+					obj.OptSim.PumpPulse.refract(obj);
+					obj.OptSim.Pulse.refract(obj);
+					[gain,pump,signal] = qpmgain(obj,obj.OptSim.PumpPulse,sigrange,obj.OptSim.Pulse);
+					sig_unique = uniquetol(spdiags(rot90(signal,3)));
+					sig_unique = sig_unique(2:end);
+					gain_sum = sum(spdiags(rot90(gain,3)));
+					obj.OptSim.PumpPulse.refract(pump_optic);
+					obj.OptSim.Pulse.refract(pulse_optic);
+				else
+					[gain,pump,signal] = qpmgain(obj,obj.OptSim.PumpPulse,sigrange);
+					sig_unique = signal(:,1);
+					gain_sum = sum(gain,2);
+				end
 				tl = tiledlayout(fh,2,2);
 			else
 				fh.Position(4) = fh.Position(4)./2;
@@ -180,15 +192,26 @@ classdef NonlinearCrystal < Waveguide
 			ylabel('Counts')
 
 			if isa(obj.OptSim,"OpticalSim")
-				nexttile
-				surf(pump,signal,gain)
+				axs = nexttile;
+				surf(axs,pump,signal,gain)
+				axs.YAxis.Direction = 'reverse';
+				if sigrange(2)*1e-9 < max(pump,[],"all")
+					zlim(axs,[0 max(gain,[],"all")]./2)
+					clim(axs,[0 max(gain,[],"all")]./2)
+				end
+				view(-80,30);
+				colormap(axs,"turbo")
+				axs.Color = [0 0 0];
+				axs.GridColor = [1 1 1];
+				axs.MinorGridColor = [1 1 1];
 				shading("interp")
 				title('Numerical Phasematching')
 				xlabel('Pump Wavelength')
 				ylabel('Signal Wavelength')
 
 				nexttile
-				plot(signal,sum(gain,2))
+				% plot(signal,sum(gain,2))
+				plot(sig_unique,gain_sum)
 				title('Full Temporal Overlap')
 				xlabel('Signal Wavelength')
 				ylabel('Gain, units tbc')

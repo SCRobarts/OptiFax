@@ -6,22 +6,15 @@ lambdanm = simWin.Lambdanm;
 taxis = simWin.TemporalRange;
 
 laser.simulate(simWin);
-laser.Pulse.Radius = fibre.ModeFieldDiameter./2;
-laser.Pulse.plot;
-drawnow
 fibre.simulate(simWin);
 
+optic1 = laser.Pulse.Medium;
+laser.Pulse.propagate(fibre);
+laser.Pulse.plot;
+drawnow
+
 P0 = laser.Pulse.PeakPower;
-nr = laser.Pulse.Medium.Bulk.RefractiveIndex; 
-Esq2I = nr.*c.*eps0 / 2;
-ITmag = Esq2I .* (abs(laser.Pulse.TemporalField)).^2;
-ITphi = laser.Pulse.TemporalPhase;
-
-ITmag = ITmag .* laser.Pulse.Area;
-IT = ITmag .* exp(1i*ITphi);
-
-AT = sqrt(IT);
-% AT = sqrt(laser.Pulse.TemporalIntensity .* laser.Area);
+AT = laser.Pulse.TemporalRootPower;
 
 t = simWin.Times;
 w0 = simWin.ReferenceOmega;
@@ -32,12 +25,13 @@ fR = fibre.RamanFraction;
 hR = fibre.RamanResponse;
 L = fibre.Length;
 loss = 0;
-nplots = 21;
+nplots = L * 1e3 + 1;
 
 [Z, AT, AW, W, B] = gnlsefib(t, AT, w0, gamma0, betas, ...
                              loss, fR, hR, L, nplots);
 
 laser.Pulse.TemporalRootPower = (AT(end,:));
+laser.Pulse.refract(optic1);
 
 % === plot output
 figure();

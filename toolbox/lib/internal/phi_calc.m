@@ -1,4 +1,6 @@
 %% phi_calc.m
+%
+%	Sebastian C. Robarts 2023 - sebrobarts@gmail.com
 
 function [phi_rel,GD_rel,phi_abs] = phi_calc(lengths,material,w_abs,w_rel,T,w0)
 arguments
@@ -10,7 +12,6 @@ T = 90;
 w0 = w_abs( length(w_abs)/2 );
 end
 	material = string(material);
-	n_points = length(w_abs);
 	lam = 2*pi*c./w_abs;
 	% lam(lam<0) = eps;
 	if strcmp(material,'PPLN')
@@ -42,5 +43,4 @@ end
 	end
 	% phi = phi_off;
 	phi_rel = phi_off - phi_off(:,w_abs == interp1(w_abs,w_abs,w0,'nearest'));
-
 end

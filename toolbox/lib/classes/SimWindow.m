@@ -20,6 +20,7 @@ classdef SimWindow < handle
 		Timesfs
 		TimesfsPlot		% Timesfs sampled according to Granularity
 		Frequencies
+		RelativeFrequencies
 		Omegas
 		RelativeOmegas
 		Wavelengths
@@ -62,11 +63,11 @@ classdef SimWindow < handle
 				t_axis = obj.TemporalRange;
 				t_rel = (-np/2:np/2-1)/np*t_axis;	% relative time array [s]
 			else
-				t_rel = fftax(obj.Frequencies);		% relative time from relative frequency array [s]
+				t_rel = fftax(obj.RelativeFrequencies);		% relative time from relative frequency array [s]
 			end
 		end
 
-		function f_rel = get.Frequencies(obj)
+		function f_rel = get.RelativeFrequencies(obj)
 			if strcmp(obj.Constraint,"time")
 				f_rel = fftax(obj.Times);		% relative frequency from relative time array [Hz]
 			else
@@ -79,18 +80,24 @@ classdef SimWindow < handle
 			end
 		end
 
-		function w_abs = get.Omegas(obj)
-			f0 = c/obj.ReferenceWave;
-			f = obj.Frequencies;
-			w_abs = 2*pi*(f+(1*f0));        % absolute angular frequency
+		function f = get.Frequencies(obj)
+			f0 = c./obj.ReferenceWave;
+			f_rel = obj.RelativeFrequencies;
+			f = f_rel + f0;
 		end
 
-		function l = get.Wavelengths(obj)
-			l = 2*pi*c./obj.Omegas;
+		function w_abs = get.Omegas(obj)
+			f0 = c/obj.ReferenceWave;
+			f = obj.RelativeFrequencies;
+			w_abs = 2*pi*(f+(1*f0));        % absolute angular frequency
 		end
 
 		function w_rel = get.RelativeOmegas(obj)
 			w_rel = obj.Omegas - obj.ReferenceOmega;        % relative angular frequency
+		end
+
+		function l = get.Wavelengths(obj)
+			l = 2*pi*c./obj.Omegas;
 		end
 
 		function tfs = get.Timesfs(obj)
@@ -111,7 +118,7 @@ classdef SimWindow < handle
 		end
 		
 		function dNu = get.DeltaNu(obj)
-			dNu = obj.Frequencies(2) - obj.Frequencies(1);
+			dNu = obj.RelativeFrequencies(2) - obj.RelativeFrequencies(1);
 		end
 
 		function cgrain = get.Granularity(obj)

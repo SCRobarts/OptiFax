@@ -37,19 +37,21 @@ load('simWin.mat');
 % simWin.Limits = [300 5500];
 % simWin.TemporalRange = simWin.TemporalRange * 2;
 % simWin.TimeOffset = -1.5e-12;
-simWin.NumberOfPoints = 2^15;
+simWin.NumberOfPoints = 2^16;
 
 %% Optical Simulation Setup
 optSim = OpticalSim(laser,cav,simWin,[0.2,4],0.25e-6);
 % return
 % load('pbOPOsim.mat');
-optSim.RoundTrips = 80;
+optSim.Delay = -0.8e-13;
+optSim.RoundTrips = 100;
+% optSim.ProgressPlots = 3;
 % optSim.Hardware = "CPU";
 % optSim.ProgressPlotting = 0;
 % optSim.DetectorPosition = 3;
 optSim.setup;
 
-optSim.System.Xtal.xtalplot([1100 1600]);
+% optSim.System.Xtal.xtalplot([1100 1600]);
 % optSim.PumpPulse.plot
 % optSim.PumpPulse.refract(cav.Xtal);
 % optSim.PumpPulse.plot
@@ -74,17 +76,17 @@ optSim.PumpPulse.refract(cav.Xtal);
 axh = nexttile;
 optSim.PumpPulse.lplot(xlims);
 nexttile
-optSim.PumpPulse.tplot(tlims);
+optSim.PumpPulse.tplot(1,tlims);
 
 axh = nexttile;
 optSim.Pulse.lplot(xlims);
 nexttile
-optSim.Pulse.tplot(tlims);
+optSim.Pulse.tplot(1,tlims);
 
 axh = nexttile;
 optSim.OutputPulse.lplot(xlims);
 nexttile
-optSim.OutputPulse.tplot(tlims);
+optSim.OutputPulse.tplot(1,tlims);
 
 optSim.PumpPulse.refract(cav.Optics.intraCavAir);
 return

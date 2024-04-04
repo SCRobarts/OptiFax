@@ -5,7 +5,7 @@ arguments
 	minProm = 50;
 end
 axh = pH.Parent;
-yyaxis left
+yyaxis(axh,'left');
 x = pH.XData;
 y = pH.YData;
 

@@ -9,18 +9,18 @@ classdef OpticalSim < matlab.mixin.Copyable
 	
 	properties
 		DetectorPosition = 0;		% Which cavity optic to collect OC data from
-		Pulse	OpticalPulse	% The pulse object for the cavity field, transient?
-		Source	Laser		% Potentially just a pulse?
+		Pulse	{mustBeA(Pulse,["Laser","OpticalPulse"])} = OpticalPulse.empty;		% The pulse object for the cavity field, transient?
+		Source	{mustBeA(Source,["Laser","OpticalPulse"])} = Laser.empty; % Potentially just a pulse?
 		System	Cavity		% Leaving cavity here for now, but should open up in future
 		SimWin	SimWindow
 		StepSize
 		AdaptiveError
 		RoundTrips = 1;
-		Delay = -0.8e-13;
+		Delay = 0;
 		Solver = @OPOmexBatch;
 		Precision = 'single';
 		ProgressPlotting = 1;
-		ProgressPlots = 4;
+		ProgressPlots = 5;
 		StoredPulses	OpticalPulse	% Pulse object with multiple fields, storing desired pulse each trip (currently XOut)
 		TripNumber = 0;
 	end
@@ -38,6 +38,7 @@ classdef OpticalSim < matlab.mixin.Copyable
 		FinalPlotter		SimPlotter
 	end
 	properties (Dependent)
+		NumOfParRuns
 		IkEvoData
 		ItEvoData
 	end
@@ -62,6 +63,7 @@ classdef OpticalSim < matlab.mixin.Copyable
 			gpus = gpuDeviceCount;
 			if gpus > 0.5
 				gpuDevice(1);
+				% gpuDevice(2);
 				obj.Hardware = "GPU";	% Could probably add actual GPU model info here
 			end
 		end
@@ -78,7 +80,15 @@ classdef OpticalSim < matlab.mixin.Copyable
 				obj.Solver = @NEE_CPU;	% Need to make a stand alone CPU adaptive solver
 			end
 			obj.TripNumber = 0;
-			obj.Source.simulate(obj.SimWin);	% Will we need to load these objects?
+			if isa(obj.Source,"Laser")
+				obj.Source.simulate(obj.SimWin);	% 
+			else
+				obj.Source = obj.Source.Source;
+			end
+			if isa(obj.Pulse,"Laser")
+				obj.Pulse.simulate(obj.SimWin);	% 
+				obj.Pulse = copy(obj.Pulse.Pulse);
+			end
 			obj.System.simulate(obj.SimWin);
 			if ~obj.DetectorPosition
 				obj.DetectorPosition = obj.System.OCPosition;
@@ -86,6 +96,13 @@ classdef OpticalSim < matlab.mixin.Copyable
 
 			obj.PumpPulse = copy(obj.Source.Pulse);	% Copy the source pulse to create modifiable pump
 			obj.PumpPulse.Name = "Pump Pulse";
+			
+			if isempty(obj.Pulse)
+				obj.Pulse = copy(obj.PumpPulse);	% Copy the pump pulse as basis for cavity field
+				obj.Pulse.TemporalField = obj.Pulse.TemporalField * 0;
+			end
+			obj.Pulse.Name = "Intracavity Pulse";
+			
 			obj.convertArrays;	% Convert arrays to correct precision and type
 			
 			obj.PumpPulse.applyGDD(obj.System.PumpChirp);
@@ -96,9 +113,7 @@ classdef OpticalSim < matlab.mixin.Copyable
 			obj.XInPulse.Name = "Xtal-In Pulse";
 			obj.XOutPulse = obj.PumpPulse.writeto;
 			obj.XOutPulse.Name = "Xtal-Out Pulse";
-			obj.Pulse = copy(obj.PumpPulse);	% Copy the pump pulse as basis for cavity field
-			obj.Pulse.Name = "Intracavity Pulse";
-			obj.Pulse.TemporalField = obj.Pulse.TemporalField * 0;
+
 			refresh(obj);
 		end
 
@@ -107,11 +122,11 @@ classdef OpticalSim < matlab.mixin.Copyable
 			obj.PumpPulse.refract(obj.System.Xtal);
 
 			obj.System.Xtal.ppole(obj);
-			obj.SpectralProgressShift = repmat(fft(fftshift(obj.PumpPulse.TemporalField)).',1,obj.ProgressPlots);
+			obj.SpectralProgressShift = repmat(fft(fftshift(obj.PumpPulse.TemporalField(1,:),2)).',1,obj.ProgressPlots,obj.NumOfParRuns);
 			if obj.RoundTrips > 1
 				obj.FinalPlotter = SimPlotter(obj,obj.TripNumber + (1:obj.RoundTrips),"Round Trip Number");
 			end
-			if obj.ProgressPlotting || obj.RoundTrips == 1
+			if obj.ProgressPlotting % || obj.RoundTrips == 1
 				ydat = linspace(0,obj.System.Xtal.Length*1e3,obj.ProgressPlots);
 				ylab = "Distance (mm)";
 				obj.ProgressPlotter = SimPlotter(obj,ydat,ylab);
@@ -119,7 +134,16 @@ classdef OpticalSim < matlab.mixin.Copyable
 			obj.StepSizeModifiers = obj.convArr(zeros(obj.RoundTrips,obj.System.Xtal.NSteps));
 			obj.PumpPulse.refract(airOpt);
 			obj.StoredPulses = obj.Pulse.writeto;
-			obj.StoredPulses.addDims([obj.RoundTrips,1]);
+			if obj.NumOfParRuns > 1
+				obj.StoredPulses.addDims([obj.NumOfParRuns,1,obj.RoundTrips]);
+			else
+				obj.StoredPulses.addDims([obj.RoundTrips,1]);
+			end
+		end
+
+		function reseed(obj)
+			obj.Source.simulate(obj.SimWin);
+			
 		end
 
 		function run(obj)
@@ -155,10 +179,10 @@ classdef OpticalSim < matlab.mixin.Copyable
 
 				obj.nexttrip
 				
-				EtShift = fftshift(obj.Pulse.TemporalField).';
-				obj.SpectralProgressShift(:,1) = fft(EtShift);
+				EtShift = fftshift(obj.Pulse.TemporalField,2).';
+				obj.SpectralProgressShift(:,1,:) = fft(EtShift);
 
-				[EtShift,obj.SpectralProgressShift(:,2:obj.ProgressPlots),obj.StepSizeModifiers(obj.SimTripNumber,:)] =...
+				[EtShift,obj.SpectralProgressShift(:,2:obj.ProgressPlots,:),obj.StepSizeModifiers(obj.SimTripNumber,:)] =...
 										obj.Solver(	EtShift,...
 													xtal.TStepShift,...
 													G33,...
@@ -171,12 +195,16 @@ classdef OpticalSim < matlab.mixin.Copyable
 													obj.AdaptiveError(2),...
 													obj.AdaptiveError(1),...
 													sel,...
-													obj.SpectralProgressShift(:,2:obj.ProgressPlots),...
+													obj.SpectralProgressShift(:,2:obj.ProgressPlots,:),...
 													obj.StepSizeModifiers(obj.SimTripNumber,:)...
 													);
 
-				obj.Pulse.TemporalField = fftshift(EtShift.');
-				obj.StoredPulses.TemporalField(obj.SimTripNumber,:) = gather(obj.Pulse.TemporalField);
+				obj.Pulse.TemporalField = fftshift(EtShift.',2);
+				if obj.NumOfParRuns > 1
+					obj.StoredPulses.TemporalField(:,:,obj.SimTripNumber) = gather(obj.Pulse.TemporalField);
+				else
+					obj.StoredPulses.TemporalField(obj.SimTripNumber,:) = gather(obj.Pulse.TemporalField);
+				end
 				obj.XOutPulse.copyfrom(obj.Pulse);
 				if obj.ProgressPlotting
 					obj.ProgressPlotter.updateplots;
@@ -231,18 +259,31 @@ classdef OpticalSim < matlab.mixin.Copyable
 			obj.AdaptiveError = obj.convArr(obj.AdaptiveError);
 			obj.StepSizeModifiers = obj.convArr(obj.StepSizeModifiers);
 			obj.PumpPulse.TemporalField = obj.convArr(obj.PumpPulse.TemporalField);
+			obj.Pulse.TemporalField = obj.convArr(obj.Pulse.TemporalField);
 			xtal.Chi2 = obj.convArr(xtal.Chi2);
 			xtal.Transmission = obj.convArr(xtal.Transmission);
 		end
 
+		function N = get.NumOfParRuns(obj)
+			n_delay = length(obj.Delay);
+			n_pulse = length(obj.Pulse.TemporalField(:,1));
+			if n_pulse == n_delay
+				N = n_delay;
+			else
+				N = max(n_delay,n_pulse);
+			end
+			n_pump =  length(obj.PumpPulse.TemporalField(:,1));
+			N = max(n_pump,N);
+		end
+
 		function Ik = get.IkEvoData(obj)
-			Eks = ifftshift(obj.SpectralProgressShift.',2);
+			Eks = ifftshift(obj.SpectralProgressShift(:,:,1).',2);
 			Ik = abs(Eks(:,obj.SimWin.IsNumIndex));
 			Ik = gather(Ik);
 		end
 
 		function It = get.ItEvoData(obj)
-			Ets = (ifft(obj.SpectralProgressShift.',[],2));
+			Ets = (ifft(obj.SpectralProgressShift(:,:,1).',[],2));
 			It = abs(fftshift(Ets,2));
 			It = It(:,1:obj.SimWin.Granularity:end);
 			It = gather(It);
