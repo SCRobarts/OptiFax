@@ -7,7 +7,7 @@
     <param.summary>GPU accelerated modelling of nonlinear optical systems.</param.summary>
     <param.description />
     <param.screenshot>${PROJECT_ROOT}\images\ToolboxPackaging.jpg</param.screenshot>
-    <param.version>0.3.5</param.version>
+    <param.version>0.4.0</param.version>
     <param.output>${PROJECT_ROOT}\OptiFax.mltbx</param.output>
     <param.products.name />
     <param.products.id />
@@ -53,8 +53,8 @@ resources/_Project/*
     <param.required.addons />
     <param.matlab.project.id>c26be81e-7542-4686-8366-e3988cf11101</param.matlab.project.id>
     <param.matlab.project.name>OptiFax</param.matlab.project.name>
-    <param.release.start />
-    <param.release.end />
+    <param.release.start>R2023a</param.release.start>
+    <param.release.end>latest</param.release.end>
     <param.release.current.only>false</param.release.current.only>
     <param.compatiblity.windows>true</param.compatiblity.windows>
     <param.compatiblity.macos>true</param.compatiblity.macos>
@@ -84,8 +84,6 @@ resources/_Project/*
       <param.javaclasspath.excludes />
       <param.exported.on.package />
       <param.required.addons />
-      <param.release.start />
-      <param.release.end />
       <param.release.current.only />
       <param.compatiblity.windows />
       <param.compatiblity.macos />
