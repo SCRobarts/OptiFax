@@ -63,13 +63,15 @@ end
 		phi = interp1(w, phi, w_sim, 'linear','extrap');
 		E_ft = E_ft  .* exp(-1i*phi);
 	else
+		% This section needs work, import without phase isn't functioning
+		% correctly.
 		phi = zeros(size(w_sim));
 
 		[~,max_i] = max(E_ft);
 
 		phi = (((w_sim - w_sim(max_i))./w_sim(max_i)).^2).*(100*pi);
 		% E_ft = E_ft  .* exp(-1i*phi);
-		% E_ft = E_ft  .* exp(1i*phi);
+		E_ft = E_ft  .* exp(1i*phi);
 	end
 
 	
@@ -79,7 +81,6 @@ end
 	% E = fftshift(ifft((E_ft)));		% Shift to preserve shape, transform, and shift back
 	% E = (ifft((E_ft),"symmetric"));		% Shift to preserve shape, transform, and shift back
 	
-	% E = E / abs(max(abs(E)));	
 	E = E ./ (max(abs(E)));		% Normalise field
 	dt = t_sim(2) - t_sim(1);			% Calculate time step
 	t_shift = round(t_off/dt);	% Calculate number of places to shift for simulation time offset

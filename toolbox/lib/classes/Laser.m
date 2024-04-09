@@ -44,7 +44,7 @@ classdef Laser < matlab.mixin.Copyable
 				power
 				src_str
 				dtau = 100e-15;
-				dlam = (4 * c * 0.315 * dtau * (lambda_central^2)) / ((2*c*dtau)^2 - (lambda_central*0.315)^2) ;
+				dlam = (4 * c * 0.315 * dtau * (lambda_central^2)) / ((2*c*dtau)^2 - (lambda_central*0.315)^2);
 				phase_str = NaN;
 			end
 			obj.Wavelength = lambda_central;
