@@ -10,7 +10,7 @@ classdef NonlinearCrystal < Waveguide
 		Uncertainty
 		DutyCycleOffset
 		StepSize = 1e-7;
-		Height = 1e-3;	% Crystal height in [m], used for fanout calcs.
+		Height = 1;				% Int for stepped, [m] for fanout.
 		VerticalPosition = 1;	% Int for stepped, [m] for fanout.
 	end
 	properties (Transient)
@@ -81,6 +81,8 @@ classdef NonlinearCrystal < Waveguide
 					case 2
 						grating = obj.fanout;
 					otherwise
+						obj.Height = uint8(n);
+						obj.VerticalPosition = uint8(obj.VerticalPosition);
 						grating = obj.GratingPeriod(obj.VerticalPosition);
 				end
 			else
@@ -117,8 +119,13 @@ classdef NonlinearCrystal < Waveguide
 			[gain,~,signal] = qpmgain(obj,obj.OptSim.PumpPulse,sigrange);
 			sig_unique = signal(:,1);
 			gain_sum = single(zeros(n_pos,length(gain(:,1))));
-			ys = linspace(0,obj.Height,n_pos);
 
+			if isinteger(obj.Height)
+				ys = 1:n_pos;
+			else
+				ys = linspace(0,obj.Height,n_pos);
+			end
+		
 			for n = 1:n_pos
 				obj.VerticalPosition = ys(n);
 				obj.pole;
@@ -126,6 +133,10 @@ classdef NonlinearCrystal < Waveguide
 				[gain] = qpmgain(obj,obj.OptSim.PumpPulse,sigrange);
 				gain_sum(n,:) = sum(gain,2);
 				disp(['Step ', num2str(n) ,' complete'])
+			end
+
+			if isinteger(obj.Height)
+				ys = obj.GratingPeriod;
 			end
 
 			fh = figure;
@@ -138,9 +149,14 @@ classdef NonlinearCrystal < Waveguide
 				axs.GridColor = [1 1 1];
 				axs.MinorGridColor = [1 1 1];
 				shading("interp")
+				colorbar;
 			title('Full Temporal Overlap QPM')
 			xlabel('Signal Wavelength / m')
-			ylabel('Crystal Y Position / m')
+			if isinteger(obj.Height)
+				ylabel('Grating Period / m')
+			else
+				ylabel('Crystal Y Position / m')
+			end
 		end
 
 		function xtalplot(obj,sigrange)

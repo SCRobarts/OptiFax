@@ -24,13 +24,14 @@ function [gain,pump,signal,idler,weights,p_mask,i_mask] = qpmgain(crystal,ppulse
 	dz = crystal.Length ./ n_steps;
 	z = linspace(0,crystal.Length,n_steps);
 	P = crystal.Polarisation(1:crystal.NSteps/length(z):end);
+	P = double(P);
 	
 	%% Pump
 	pumprange = ppulse.WavelengthFWHM * [-2 2] + ppulse.PeakWavelength;
 			pid = and(simWin.Wavelengths > pumprange(1), simWin.Wavelengths < pumprange(2));
 			pump = simWin.Wavelengths(pid);
 			p_mask = gather(abs(ppulse.SpectralField));
-			p_mask = p_mask(pid);
+			p_mask = double(p_mask(pid));
 			nP = crystal.Bulk.RefractiveIndex(pid);
 			% Prevent attempts to plot signal data within pump range
 			olap = and(sigrange > pumprange(1), sigrange < pumprange(2));
@@ -88,6 +89,7 @@ function [gain,pump,signal,idler,weights,p_mask,i_mask] = qpmgain(crystal,ppulse
 
 		idler = idler_lambda(pump,signal.');
 		nI = sellmeier(idler*1e6,crystal.Bulk.Material,crystal.Bulk.Temperature);
+		nI = abs(nI);
 		i_mask = ones(1,length(signal)) .* mean(p_mask);
 		kI = 2 * pi * nI ./ idler;
 

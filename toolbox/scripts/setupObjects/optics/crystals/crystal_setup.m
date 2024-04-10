@@ -13,19 +13,23 @@ close all
 coating_str = 'AR';	% Idealised 100% anti-reflection across all wavelengths
 temp_C = 60;
 L = 3e-3;
-name = "PPLN_3mm_60C_single_G";
+name = "MOPO3_1_3mm_60C";
 
 %% Crystal specific arguments
 % grating function arguments:
-P1 = 29.5e-6;	% Starting grating period [m]
+P1 = 28.5e-6;	% Starting grating period [m]
+% P1 = 29.5e-6;	% Starting grating period [m]
+P2 = 31.0e-6;	% Finishing grating period [m]
 uncertainty_m = 0.2e-6;	% Small perturbation in domain wall locations [m]
 dutyOff = 0;	% Systematic offset of duty cycle within each period (not currently implemented for chirped)
-grating_m = P1;
+grating_m = linspace(P1,P2,6);
+grating_m = [grating_m, 31.7e-6];
 
 xtalArgs = {grating_m, uncertainty_m, dutyOff};
 
 PPLN = NonlinearCrystal(xtalArgs{:},coating_str,"PPLN",L);
 PPLN.Bulk.Temperature = temp_C;
+PPLN.VerticalPosition = 3;
 
 % Create a simulation window object using a default time window since we're
 % only interested in spectral information here
@@ -55,4 +59,4 @@ laser.Pulse.plot;
 PPLN.store(name,1);
 PPLN.plot;
 PPLN.xtalplot([1200 1800]);
-PPLN.fanoutplot([1200 1800],1000);
+PPLN.fanoutplot([1200 1800],PPLN.Height);
