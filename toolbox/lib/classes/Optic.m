@@ -27,6 +27,18 @@ classdef Optic < matlab.mixin.Copyable
 		GDD
 	end
 
+	methods(Access = protected)
+      % Override copyElement method:
+      function cpObj = copyElement(obj)
+         % Make a shallow copy of all properties
+         cpObj = copyElement@matlab.mixin.Copyable(obj);
+         % Make a deep copy of the Deep object
+         cpObj.S1 = copy(obj.S1);
+		 cpObj.Bulk = copy(obj.Bulk);
+		 cpObj.S2 = copy(obj.S2);
+	  end
+	end	
+
 	methods
 		function obj = Optic(regimeStr,s1,material,length_m,theta,s2,celsius,parent)
 			%OPTIC Construct an instance of this class
