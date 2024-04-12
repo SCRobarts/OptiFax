@@ -71,4 +71,4 @@ laser.Pulse.plot;
 PPLN.store(name,1);
 PPLN.plot;
 PPLN.xtalplot([1350 1800]);
-PPLN.fanoutplot([1350 1800],3000);
+PPLN.scanplot([1350 1800],3000);

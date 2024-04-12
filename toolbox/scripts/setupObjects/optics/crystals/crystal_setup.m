@@ -29,7 +29,7 @@ xtalArgs = {grating_m, uncertainty_m, dutyOff};
 
 PPLN = NonlinearCrystal(xtalArgs{:},coating_str,"PPLN",L);
 PPLN.Bulk.Temperature = temp_C;
-PPLN.VerticalPosition = 3;
+PPLN.VerticalPosition = 4;
 
 % Create a simulation window object using a default time window since we're
 % only interested in spectral information here
@@ -59,4 +59,4 @@ laser.Pulse.plot;
 PPLN.store(name,1);
 PPLN.plot;
 PPLN.xtalplot([1200 1800]);
-PPLN.fanoutplot([1200 1800],PPLN.Height);
+PPLN.scanplot([1200 1800],PPLN.Height);

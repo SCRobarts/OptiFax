@@ -114,7 +114,7 @@ classdef NonlinearCrystal < Waveguide
 			tss = fftshift(ts);
 		end
 
-		function fanoutplot(obj,sigrange,n_pos)
+		function scanplot(obj,sigrange,n_pos)
 			% n_pos = 5;
 			[gain,~,signal] = qpmgain(obj,obj.OptSim.PumpPulse,sigrange);
 			sig_unique = signal(:,1);
@@ -141,22 +141,37 @@ classdef NonlinearCrystal < Waveguide
 
 			fh = figure;
 			axs = axes(fh);
-			% surf(axs,sig_unique,ys,gain_sum)
-			imagesc(axs,sig_unique,ys,gain_sum)
-				axs.YAxis.Direction = 'normal';
-			colormap(axs,"turbo")
-				axs.Color = [0 0 0];
-				axs.GridColor = [1 1 1];
-				axs.MinorGridColor = [1 1 1];
-				shading("interp")
-				colorbar;
+			if isinteger(obj.Height)
+				p = waterfall(axs,sig_unique,ys,gain_sum);
+					view(-0.01,30);
+					p.EdgeColor ='k';
+					p.LineWidth = 1.25;
+					p.FaceColor="flat";
+					p.FaceVertexCData = parula(n);
+					p.FaceAlpha = 0.7;
+					axs.Color = [1 1 1]*0.9;
+					axs.GridColor = [1 1 1]*0;
+					axs.MinorGridColor = [1 1 1]*0;
+					grid minor
+					
+
+				% p = plot(axs,sig_unique,gain_sum);
+				% 	legend(num2str(ys'))
+				% 
+					ylabel('Grating Period / m')
+			else
+				imagesc(axs,sig_unique,ys,gain_sum)
+					axs.YAxis.Direction = 'normal';
+					colormap(axs,"turbo")
+					axs.Color = [0 0 0];
+					axs.GridColor = [1 1 1];
+					axs.MinorGridColor = [1 1 1];
+					shading("interp")
+					colorbar;
+					ylabel('Crystal Y Position / m')
+			end
 			title('Full Temporal Overlap QPM')
 			xlabel('Signal Wavelength / m')
-			if isinteger(obj.Height)
-				ylabel('Grating Period / m')
-			else
-				ylabel('Crystal Y Position / m')
-			end
 		end
 
 		function xtalplot(obj,sigrange)

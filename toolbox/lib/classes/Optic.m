@@ -20,6 +20,7 @@ classdef Optic < matlab.mixin.Copyable
 		Dispersion
 	end
 	properties (Dependent)
+		IncidentAngle
 		Length
 		OpticalPath
 		GroupDelay
@@ -116,8 +117,12 @@ classdef Optic < matlab.mixin.Copyable
 			[~,GDD] = phi2GD(obj.Dispersion,obj.SimWin.DeltaOmega);
 		end
 
-		function set.Length(obj,l)
-			obj.Bulk.Length = l;
+		function theta = get.IncidentAngle(obj)
+			theta = obj.S1.IncidentAngle;
+		end
+
+		function set.IncidentAngle(obj,theta)
+			obj.S1.IncidentAngle = theta;
 		end
 
 		function l = get.Length(obj)
@@ -126,6 +131,10 @@ classdef Optic < matlab.mixin.Copyable
 			else
 				l = 0;
 			end
+		end
+
+		function set.Length(obj,l)
+			obj.Bulk.Length = l;
 		end
 
 		function opl = get.OpticalPath(obj)
