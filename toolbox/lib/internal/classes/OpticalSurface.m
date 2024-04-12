@@ -77,7 +77,7 @@ classdef OpticalSurface < matlab.mixin.Copyable
 					lamTmax = lam(lamIDmax);
 					dLam = (lam(lamIDmax+1) - lam(lamIDmax-1)) / 2;
 					lamshift = lamTmax * 0.2 * (sind(obj.IncidentAngle)^2);
-					idshift = round(lamshift/dLam);
+					idshift = ceil(lamshift/dLam);
 					T = circshift(T,-idshift);
 				end
 			end
@@ -94,13 +94,13 @@ classdef OpticalSurface < matlab.mixin.Copyable
 			w0 = obj.Parent.SimWin.ReferenceOmega;
 			if isa(obj.GDD,"string")
 				phi_rel = GDDimport2phi(obj.GDD,w_abs,w_rel,w0);
-				% if obj.IncidentAngle ~= 0
-				% 	refID = obj.Parent.SimWin.ReferenceIndex;
-				% 	dLam = (lam(refID+1) - lam(refID-1)) / 2;
-				% 	lamshift = lam(refID) * 0.2 * (sind(obj.IncidentAngle)^2);
-				% 	idshift = round(lamshift/dLam);
-				% 	phi_rel = circshift(phi_rel,-idshift);
-				% end
+				if obj.IncidentAngle ~= 0
+					refID = obj.Parent.SimWin.ReferenceIndex;
+					dLam = (lam(refID+1) - lam(refID-1)) / 2;
+					lamshift = lam(refID) * 0.2 * (sind(obj.IncidentAngle)^2);
+					idshift = round(lamshift/dLam);
+					phi_rel = circshift(phi_rel,-idshift);
+				end
 			elseif ~obj.GDD
 				phi_rel = zeros(size(lam));
 			else

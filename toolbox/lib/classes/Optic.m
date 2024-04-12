@@ -61,7 +61,7 @@ classdef Optic < matlab.mixin.Copyable
 				if class(s1) ~= "OpticalSurface"
 					s1 = OpticalSurface(s1,material,theta,1,obj);
 				else
-					s1 = OpticalSurface(s1.Coating,material,theta,1,obj,s1.GDD);
+					% s1 = OpticalSurface(s1.Coating,material,theta,1,obj,s1.GDD);
 				end
 				obj.Regime = regimeStr;
 				obj.S1 = s1;

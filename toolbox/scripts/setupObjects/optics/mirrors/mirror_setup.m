@@ -9,6 +9,9 @@
 clear
 close all
 
+name = "Auskerry_Cav_Mirror";
+% name = "Auskerry_Idler_OC_Mirror";
+
 %% General Optic arguments
 % If only one surface is specified, it's assumed that the same coating
 % exists on each surface.
@@ -22,8 +25,6 @@ s2 = 'AR';	% Idealised 100% anti-reflection across all wavelengths
 % coating_str = 0;	% Idealised 100% reflection across all wavelengths
 material = "FS";
 L = 6.35e-3;
-name = "Layertec_Cav_Mirror";
-% name = "Layertec_Idler_OC_Mirror";
 
 mirror = Optic(regime,coating,material,L,0,s2);
 
@@ -45,5 +46,5 @@ cav = Cavity(mirror,0);
 cav.simulate(lamWin);
 % laser.Pulse.plot;
 
-mirror.store(name,1);
+% mirror.store(name,1);
 mirror.plot;

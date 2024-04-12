@@ -46,6 +46,12 @@ classdef Cavity < handle
 
 		function obj = simulate(obj,simWin)
 			obj.SimWin = simWin;
+			obj.PumpDispersion = 0;
+			obj.Transmission = 1;
+			obj.Dispersion = 0;
+			obj.GroupDelay = 0;
+			obj.GDD = 0;
+			obj.OpticalPathLength = 0;
 			for ii = 1:width(obj.PreCavityOptics)
 				opt = obj.PreCavityOptics.(ii);
 				opt.Parent = obj;
@@ -68,7 +74,8 @@ classdef Cavity < handle
 					obj.Transmission = obj.Transmission .* opt.Transmission;
 				end
 				obj.Dispersion = obj.Dispersion + opt.Dispersion;
-				obj.GroupDelay = obj.GroupDelay + opt.GroupDelay;
+				% obj.GroupDelay = obj.GroupDelay + opt.GroupDelay;
+				obj.GroupDelay = obj.GroupDelay + opt.RelativeGD;
 				obj.GDD = obj.GDD + opt.GDD;
 				obj.OpticalPathLength = obj.OpticalPathLength + opt.OpticalPath;
 			end
