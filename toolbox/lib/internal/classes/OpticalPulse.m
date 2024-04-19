@@ -503,25 +503,53 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			hold off
 		end
 
-		function [freqs,times,powerSpec] = spectrogram(obj)
-			x = obj.TemporalField;		% Input signal for spectrogram
+		function [lnm,tfs,pSplot] = spectrogram(obj,wavlims,pulseN)
+			arguments
+				obj
+				wavlims = [300 6000];
+				pulseN = 1;
+			end
+			x = obj.TemporalField(pulseN,:);		% Input signal for spectrogram
 			win_size = 2^7;			% Segment size for each STFT
 			num_olap = 1.5*2^6;			% Points of overlap between segments
 			nfft = 2^15;				% Number of DFT points
 			fs = 1/obj.SimWin.DeltaTime;% Sampling rate
 
-			spectrogram(x,win_size,num_olap,nfft,fs,"reassigned",'centered','yaxis','MinThreshold',-25);
+			f0 = obj.SimWin.Frequencies(obj.SimWin.ReferenceIndex);
+			tshift = -((obj.SimWin.TemporalRange/2) + obj.SimWin.TimeOffset);
 
-			spax = gca;
-			spax.Children.XData = spax.Children.XData - ((obj.SimWin.TemporalRange/2) + obj.SimWin.TimeOffset) * 1e12;
-			spax.Children.YData = spax.Children.YData + obj.SimWin.Frequencies(obj.SimWin.ReferenceIndex)*1e-12;
-			pulseN = 1;
-			tlims = 10e12*[-obj.DurationCheck(pulseN) obj.DurationCheck(pulseN)];
-			xlim(spax,tlims);
-			ylim(spax,[0 800]);
+			% % spectrogram(x,win_size,num_olap,nfft,fs,"reassigned",'centered','yaxis','MinThreshold',-25);
+			% spax = gca;
+			% % Center to sim time window
+			% spax.Children.XData = spax.Children.XData + tshift.* 1e12;
+			% % Center to sim reference frequency
+			% spax.Children.YData = spax.Children.YData + f0.*1e-12;
+			% pulseN = 1;
+			% tlims = 10e12*[-obj.DurationCheck(pulseN) obj.DurationCheck(pulseN)];
+			% xlim(spax,tlims);
+			% ylim(spax,[0 800]);
 
 			[~,freqs,times,powerSpec] = spectrogram(x,win_size,num_olap,nfft,fs,"reassigned",'centered','yaxis','MinThreshold',-25);
+			freqs = freqs + f0;
+			times = (times + tshift);
+			tfs = times*1e15;
+			powerSpec = 10*log10(powerSpec);	% Convert to spectral density in dB/Hz;
+			powerSpec(powerSpec<-10) = -10;	% Remove -Infs 
 
+			lambdas = (c./freqs).*1e9;
+			pID = and(lambdas>wavlims(1),lambdas<wavlims(2));
+			lnm = lambdas(pID);
+			pSplot = powerSpec(pID,:);
+			pSplot = smoothdata(gather(pSplot),"movmedian",5);
+
+			% figure
+			pcolor(tfs,lnm,pSplot);
+			shading interp
+			colorbar
+			clim([0 35])
+			xlabel("Time / fs")
+			ylabel("Wavelength / nm")
+			title("Reassigned-Frequency Pulse Spectrogram")
 		end
 	end
 

@@ -189,7 +189,7 @@ for n = 1:length(pulseChirps)
 
 	cfID = and(simWin.Frequencies>550e12,simWin.Frequencies<800e12);
 	cfRange = length(simWin.Frequencies(cfID));
-	clIW = lIWrel(:,cfID,:);
+	clIW = lIWrel(:,cfID,:);  % Continuum log scale spectral intensity 			
 	thresholdID = clIW > -35;
 	cMerit = sum(thresholdID,2) ./ cfRange;
 

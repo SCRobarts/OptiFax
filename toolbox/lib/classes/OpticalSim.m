@@ -135,6 +135,9 @@ classdef OpticalSim < matlab.mixin.Copyable
 			obj.PumpPulse.refract(airOpt);
 			obj.StoredPulses = obj.Pulse.writeto;
 			if obj.NumOfParRuns > 1
+				if length(obj.Delay) > 1
+					obj.PumpPulse.addDims([length(obj.Delay),1])
+				end
 				obj.StoredPulses.addDims([obj.NumOfParRuns,1,obj.RoundTrips]);
 			else
 				obj.StoredPulses.addDims([obj.RoundTrips,1]);
@@ -208,7 +211,10 @@ classdef OpticalSim < matlab.mixin.Copyable
 				obj.XOutPulse.copyfrom(obj.Pulse);
 				if obj.ProgressPlotting
 					obj.ProgressPlotter.updateplots;
+				else
+					disp(["Completed trip " , num2str(obj.SimTripNumber)])
 				end
+				pause(0.01)
 				
 				obj.Pulse.refract(airOpt);
 				if obj.DetectorPosition > 1
@@ -220,11 +226,11 @@ classdef OpticalSim < matlab.mixin.Copyable
 				if obj.DetectorPosition < width(obj.System.Optics)
 					obj.Pulse.propagate(obj.System.Optics(:,obj.DetectorPosition+1:end));
 				end
-				obj.Pulse.applyGD(obj.Delay);
+				obj.Pulse.applyGD(obj.Delay(:));
 
 			end
 			
-			if obj.RoundTrips > 1
+			if obj.RoundTrips > 1 && obj.NumOfParRuns < 2
 				obj.FinalPlotter.updateYData((obj.TripNumber-obj.RoundTrips) + (1:obj.RoundTrips));
 				obj.FinalPlotter.roundtripplots;
 			end
