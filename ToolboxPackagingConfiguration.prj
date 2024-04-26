@@ -7,7 +7,7 @@
     <param.summary>GPU accelerated modelling of nonlinear optical systems.</param.summary>
     <param.description />
     <param.screenshot>${PROJECT_ROOT}\images\ToolboxPackaging.jpg</param.screenshot>
-    <param.version>0.4.0</param.version>
+    <param.version>0.4.1</param.version>
     <param.output>${PROJECT_ROOT}\OptiFax.mltbx</param.output>
     <param.products.name />
     <param.products.id />
