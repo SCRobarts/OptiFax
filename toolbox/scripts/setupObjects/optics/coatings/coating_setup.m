@@ -14,8 +14,8 @@ material = "FS";	% Placeholder, can be replaced when applied to optic
 theta = 0;	% Base angle of incidence
 order = 1;	% Placeholder
 parent = []; % Placeholder
-gdd_str = "Layertec_126761_GDD";
-name = "Layertec_126761";
+gdd_str = "Layertec_Proposed_GDD";
+name = "Layertec_Proposed";
 
 coating = OpticalSurface(coating_str,material,theta,order,parent,gdd_str);
 coating.store(name,1);

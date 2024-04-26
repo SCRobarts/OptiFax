@@ -13,8 +13,10 @@ dw = diff(w_abs);
 dw = padarray(dw,[0 1],'replicate','pre');
 
 GDD_interp = interp1(w,GDD,w_abs,'spline');
-GDD_interp(w_abs > max(w)) = max(GDD);
-GDD_interp(w_abs < min(w)) = min(GDD);
+% GDD_interp(w_abs > max(w)) = max(GDD);
+% GDD_interp(w_abs < min(w)) = min(GDD);
+GDD_interp(w_abs > max(w)) = GDD(1);
+GDD_interp(w_abs < min(w)) = GDD(end);
 
 GD_abs = cumtrapz(GDD_interp .* dw);
 GD_0 = GD_abs(:,w_abs == interp1(w_abs,w_abs,w0,'nearest'));

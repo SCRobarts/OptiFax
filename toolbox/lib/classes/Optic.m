@@ -108,8 +108,6 @@ classdef Optic < matlab.mixin.Copyable
 		end
 
 		function GD_rel = get.RelativeGD(obj)
-			% GD = obj.GroupDelay;
-			% GD_rel = GD - GD(obj.SimWin.ReferenceIndex);
 			GD_rel = phi2GD(obj.Dispersion,obj.SimWin.DeltaOmega);
 		end
 

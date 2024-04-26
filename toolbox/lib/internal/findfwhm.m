@@ -5,7 +5,7 @@ if sz(1) > sz(2)
 end
 %finds fwhm of a well behaved function q on an abscissa of x
 
-fwhm = zeros(1,min(sz));
+fwhm = zeros(min(sz),1);
 for ii = 1:min(sz)
 	q = y(ii,:);
 	q=q./max(q);

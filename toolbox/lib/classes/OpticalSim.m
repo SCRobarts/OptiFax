@@ -212,7 +212,8 @@ classdef OpticalSim < matlab.mixin.Copyable
 				if obj.ProgressPlotting
 					obj.ProgressPlotter.updateplots;
 				else
-					disp(["Completed trip " , num2str(obj.SimTripNumber)])
+					t_trip = string(datetime('now','Format','HH:mm:ss.SSS'));
+					disp("Completed trip " + num2str(obj.SimTripNumber) + " at " + t_trip);
 				end
 				pause(0.01)
 				

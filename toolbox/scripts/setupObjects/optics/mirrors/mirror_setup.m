@@ -9,7 +9,7 @@
 clear
 close all
 
-name = "Auskerry_Cav_Mirror";
+name = "Auskerry_Test_Mirror";
 % name = "Auskerry_Idler_OC_Mirror";
 
 %% General Optic arguments
@@ -18,7 +18,7 @@ name = "Auskerry_Cav_Mirror";
 % regime = "T";
 regime = "R";
 % coating_str = "Layertec_126761_T"; % To be extracted?
-coating = "Layertec_126761";
+coating = "Layertec_Proposed";
 load(coating);
 % s2 = "None";
 s2 = 'AR';	% Idealised 100% anti-reflection across all wavelengths

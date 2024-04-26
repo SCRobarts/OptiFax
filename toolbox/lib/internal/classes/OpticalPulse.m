@@ -189,7 +189,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 
 		function lam_max = get.PeakWavelength(obj)
 			[~,lam_index] = max(obj.EnergySpectralDensity,[],2);
-			lam_max = obj.SimWin.Wavelengths(lam_index);
+			lam_max = obj.SimWin.Wavelengths(lam_index)';
 		end
 
 		function gdd = get.GDD(obj)
@@ -256,7 +256,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 		end
 
 		function PPC = get.PeakPowerCoefficient(obj)
-		PPC = max(obj.TemporalIntensity)/((sum(obj.TemporalIntensity)*obj.SimWin.DeltaTime/obj.DurationCheck));
+		PPC = max(obj.TemporalIntensity,[],2)./((sum(obj.TemporalIntensity,2).*obj.SimWin.DeltaTime./obj.DurationCheck));
 		end
 
 		function PP = get.PeakPower(obj)
