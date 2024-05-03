@@ -6,6 +6,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 		Source		Laser
 		Duration
 		Radius		% 1/e Intensity radius (m)
+		AppliedGDD = 0;
 	end
 	properties (Transient)
 		SimWin		SimWindow
@@ -28,7 +29,8 @@ classdef OpticalPulse < matlab.mixin.Copyable
 		DurationCheck	% Current pulse duration (I fwhm)
 		TBPTL			% TimeBandwidthProduct Transform Limited
 		TBP				% TimeBandwidthProduct
-		GDD				% GroupDelayDispersion (s^2)
+		RequiredGDD				% GroupDelayDispersion (s^2)
+		CalculatedGDD
 		PeakWavelength	% Max intensity wavelength (m)
 		Power
 		PeakPowerCoefficient
@@ -73,9 +75,9 @@ classdef OpticalPulse < matlab.mixin.Copyable
 				% Shift the pulse by simWin.TimeOffset
 				obj.timeShift;
 				% Apply calculated GDD to alter duration
-				if obj.DurationCheck < obj.Duration
-					obj.applyGDD(obj.GDD);
-				end
+				% if obj.DurationCheck < obj.Duration
+					obj.applyGDD(obj.RequiredGDD);
+				% end
 			end
 		end
 		
@@ -150,7 +152,6 @@ classdef OpticalPulse < matlab.mixin.Copyable
 		
 		function spectralShift(obj,lam)
 			wNew = 2*pi*c / lam;
-			% wRef = obj.SimWin.ReferenceOmega;
 			wOld = 2*pi*c / obj.PeakWavelength;
 			t = obj.SimWin.Times;
 			Et = obj.TemporalField;
@@ -170,9 +171,8 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			wPeak = 2*pi*c./obj.PeakWavelength;
 			chirpArg = 0.5.*gdd.*(obj.SimWin.Omegas - wPeak).^2;
 			Ek = Ek .* exp(-1i.*chirpArg);
-			% obj.TemporalField = ifft(ifftshift(Ek));
 			obj.k2t(Ek);
-			% obj.Duration = obj.DurationCheck;
+			obj.AppliedGDD = obj.AppliedGDD + gdd;
 		end
 
 		function gf = get.GFit(obj)
@@ -192,13 +192,28 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			lam_max = obj.SimWin.Wavelengths(lam_index)';
 		end
 
-		function gdd = get.GDD(obj)
-			% chrp = sqrt( (obj.Duration .^ 2 ./ obj.DurationTL .^ 2) - 1);
+		function gdd = get.RequiredGDD(obj)
 			chrp = abs(sqrt( (obj.Duration .^ 2 ./ obj.DurationCheck .^ 2) - 1));
-			% Gaussian would use 2*sqrt(log(2)), Sech uses 1 + sqrt(2) = 2.4142
-			% will need to update to work as a function of pulse profile
+
+			%%% will need to update to work as a function of pulse profile
+			%%% Gaussian would use 2*sqrt(log(2)), 
+			% gdd = abs(chrp .* ((obj.DurationTL./(2*sqrt(log(2)))).^2));
+			%%% Sech uses 1 + sqrt(2) = 2.4142
 			gdd = abs(chrp .* ((obj.DurationTL./(2*sqrt(log(2.4142)))).^2));
+
 		end
+
+		function gdd = get.CalculatedGDD(obj)
+			chrp = sqrt( (obj.DurationCheck .^ 2 ./ obj.DurationTL .^ 2) - 1);
+
+			%%% will need to update to work as a function of pulse profile
+			%%% Gaussian would use 2*sqrt(log(2)), 
+			% gdd = abs(chrp .* ((obj.DurationTL./(2*sqrt(log(2)))).^2));
+			%%% Sech uses 1 + sqrt(2) = 2.4142
+			gdd = abs(chrp .* ((obj.DurationTL./(2*sqrt(log(2.4142)))).^2));
+
+		end
+
 
 		function EtTL = get.TemporalFieldTL(obj)
 			Ek = obj.SpectralField;
@@ -239,16 +254,16 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			Qe = sum(obj.EnergySpectralDensity,2)*obj.SimWin.DeltaNu;
 		end
 
-		function Ik = get.EnergySpectralDensity(obj)
-			Ik = (abs(obj.SpectralField)).^2;
+		function ESD = get.EnergySpectralDensity(obj)
+			EkSq = (abs(obj.SpectralField)).^2;
 			A = obj.Area;
 			frep = obj.Source.RepetitionRate;
 			dt = obj.SimWin.DeltaTime;
 			np = obj.SimWin.NumberOfPoints;
 			df = obj.SimWin.DeltaNu;
 			nr = obj.Medium.Bulk.RefractiveIndex;
-			[~,~,Ik] = I2pow(Ik,nr,A,frep,dt,np);
-			Ik = Ik / df;
+			[~,~,Ik] = I2pow(EkSq,nr,A,frep,dt,np);
+			ESD = Ik / df;
 		end
 
 		function P = get.Power(obj)

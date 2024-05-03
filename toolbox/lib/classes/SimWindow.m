@@ -72,6 +72,13 @@ classdef SimWindow < handle
 				f_rel = fftax(obj.Times);		% relative frequency from relative time array [Hz]
 			else
 			np = obj.NumberOfPoints;
+			% Prevent f0 = 0;
+			if ~mod(obj.ReferenceWave*1e9,obj.SpectralLimits(1))
+				obj.SpectralLimits(1) = obj.SpectralLimits(1) - 1;
+			end
+			if ~mod(obj.SpectralLimits(2),obj.ReferenceWave*1e9)
+				obj.SpectralLimits(2) = obj.SpectralLimits(2) + 1;
+			end
 			f0 = c./obj.ReferenceWave;
 			f_max = (c ./ obj.SpectralLimits(1) ./1e-9) - f0;
 			f_min = (c ./ obj.SpectralLimits(2) ./1e-9) - f0;

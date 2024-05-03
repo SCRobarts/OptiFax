@@ -34,12 +34,12 @@ end
 	GD_rel = GD_abs - GD_0;
     del_phi = GD_rel .* [zeros(size(material)) diff(w_rel_rep,1,2)];
 	% phi_off = zeros(size(del_phi));
-	phi_off_r = cumtrapz(del_phi(:,lam>2E-7),2);
+	phi_off_r = cumtrapz(del_phi(:,and(lam>2E-7,lam<2e-5)),2);
 	% phi_off(:,lam>2E-7) = phi_off_r;
 	if length(phi_off_r(:,1)) > 1
-		phi_off = interp1(lam(lam>2E-7).',phi_off_r.',lam,'spline').';
+		phi_off = interp1(lam(and(lam>2E-7,lam<2e-5)).',phi_off_r.',lam,'spline').';
 	else
-		phi_off = interp1(lam(lam>2E-7).',phi_off_r.',lam,'spline');
+		phi_off = interp1(lam(and(lam>2E-7,lam<2e-5)).',phi_off_r.',lam,'spline');
 	end
 	% phi = phi_off;
 	phi_rel = phi_off - phi_off(:,w_abs == interp1(w_abs,w_abs,w0,'nearest'));
