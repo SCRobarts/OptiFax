@@ -5,7 +5,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 		TemporalField		% E(t) / (V/m) complex array
 		Source		Laser
 		Duration
-		Radius		% 1/e Intensity radius (m)
+		Radius	= 1;	% 1/e Intensity radius (m)
 		AppliedGDD = 0;
 	end
 	properties (Transient)
@@ -39,7 +39,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 	end
 
 	methods
-		% Constructor
+		%% Construction
 		function obj = OpticalPulse(laser,simWin)
 			if nargin > 0
 				obj.Name = laser.Name + ' ' + obj.Name;
@@ -81,6 +81,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			end
 		end
 		
+		%% Propagation
 		function propagate(obj,opt_tbl)
 			if ~istable(opt_tbl)
 				opt_tbl = table(opt_tbl);
@@ -143,6 +144,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			obj.k2t(Ek);
 		end
 
+		%% Transformation
 		function timeShift(obj)
 			Ek = obj.SpectralField;
 			wPump = 2*pi*c / obj.PeakWavelength;
@@ -175,6 +177,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			obj.AppliedGDD = obj.AppliedGDD + gdd;
 		end
 
+		%% Analysis
 		function gf = get.GFit(obj)
 			sigmaIntensity = std(obj.SimWin.Times,obj.TemporalIntensity);
 
@@ -263,7 +266,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			df = obj.SimWin.DeltaNu;
 			nr = obj.Medium.Bulk.RefractiveIndex;
 			[~,~,Ik] = I2pow(EkSq,nr,A,frep,dt,np);
-			ESD = Ik / df;
+			ESD = Ik ./ df;
 		end
 
 		function P = get.Power(obj)
@@ -347,23 +350,29 @@ classdef OpticalPulse < matlab.mixin.Copyable
 		end
 
 		function a = get.Area(obj)
-			a = pi * (obj.Radius ^ 2);
-		end
-
-		function set.Radius(obj,r)
-			x = obj.Radius./r;
-			obj.Radius = r;
-			obj.tscale(x);
+			a = pi * (obj.Radius .^ 2);
 		end
 
 		function set.Medium(obj,mat)
 			obj.Medium = mat;
 			if isa(mat,"Waveguide")
-				if mat.ModeFieldDiameter
+				if isa(mat.ModeFieldDiameter,"function_handle")
+					obj.Radius = mat.ModeFieldDiameter(obj.SimWin.Frequencies)./2;
+				elseif any(mat.ModeFieldDiameter)
 					obj.Radius = mat.ModeFieldDiameter./2;
 				end
 			else
 				obj.Radius = obj.Source.Waist;
+			end
+		end
+
+		function set.Radius(obj,r)
+			x = obj.Radius./r;
+			obj.Radius = r;
+			if length(x) > 1
+				obj.kscale(x);
+			else
+				obj.tscale(x);
 			end
 		end
 
@@ -373,6 +382,14 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			phi = obj.TemporalPhase;
 			obj.TemporalField = EtMag;
 			obj.TemporalPhase = phi;
+		end
+
+		function kscale(obj,x)
+			EkMag = abs(obj.SpectralField);
+			EkMag = EkMag.*x;
+			phi = obj.SpectralPhase;
+			Ek = EkMag.*exp(1i*phi);
+			obj.SpectralField = Ek;
 		end
 
 		function k2t(obj,Ek)

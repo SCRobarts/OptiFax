@@ -46,11 +46,18 @@ classdef SimPlotter < matlab.mixin.Copyable
 	end
 
 	methods
-		function obj = SimPlotter(optSim,ydat,ylab)
+		function obj = SimPlotter(optSim,ydat,ylab,kplotlims)
+			arguments
+				optSim	OpticalSim
+				ydat 
+				ylab = "Distance / (mm)";
+				kplotlims = [350 2000];
+			end
 		%SIMPLOTTER Construct an instance of this class
 			obj.Parent = optSim;
 			obj.YData = ydat;
 			obj.YLabel = ylab;
+			obj.SpecLimits = kplotlims;
 			obj.ScreenPositions = groot().MonitorPositions + 50*[1 1 -2 -3];
 			if length(obj.ScreenPositions(:,1)) < obj.Screen
 				obj.Screen = length(obj.ScreenPositions(:,1));

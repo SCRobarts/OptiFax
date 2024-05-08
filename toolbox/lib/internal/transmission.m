@@ -5,7 +5,6 @@ function [T,T_step,a_step] = transmission(Tstr,l_sim,Nsteps,nmat,FRnum,lim1,lim2
 		Nsteps = 1
 		nmat = 1
 		FRnum = 0
-		% lim1 = min(l_sim)
 		lim1 = 300e-9;
 		lim2 = max(l_sim)
 	end
@@ -33,8 +32,6 @@ T(or(l_sim<lim1,l_sim>lim2)) = 0;
 if max(T) > 1
 	T = T./max(T);
 end
-
-
 
 a_step = -log(T)./Nsteps;
 a_step = a_step/2;

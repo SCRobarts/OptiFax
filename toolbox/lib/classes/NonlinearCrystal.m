@@ -177,7 +177,7 @@ classdef NonlinearCrystal < Waveguide
 		function xtalplot(obj,sigrange)
 			arguments
 				obj NonlinearCrystal
-				sigrange = [1000 1600];	% Chosen signal limits in nm
+				sigrange = [1400 1800];	% Chosen signal limits in nm
 			end
 			upPoled = obj.DomainWidths(2:2:end);
 			downPoled = obj.DomainWidths(1:2:end-1);

@@ -9,8 +9,8 @@
 clear
 close all
 
-name = "Auskerry_Test_Mirror";
-% name = "Auskerry_Idler_OC_Mirror";
+% name = "Auskerry_Test_Mirror";
+name = "Auskerry_Idler_OC_Mirror";
 
 %% General Optic arguments
 % If only one surface is specified, it's assumed that the same coating
@@ -18,13 +18,16 @@ name = "Auskerry_Test_Mirror";
 % regime = "T";
 regime = "R";
 % coating_str = "Layertec_126761_T"; % To be extracted?
-coating = "Layertec_Proposed";
+% coating = "Layertec_Proposed";
+coating = "Layertec_135111";
 load(coating);
+% coating = [50,1.0e-06;1,1.1e-06;60,1.3e-06;1,2.1e-06;98,6.5e-06];
 % s2 = "None";
 s2 = 'AR';	% Idealised 100% anti-reflection across all wavelengths
 % coating_str = 0;	% Idealised 100% reflection across all wavelengths
-material = "FS";
-L = 6.35e-3;
+material = "YAG";
+% L = 6.35e-3;
+L = 3.0e-3;
 
 mirror = Optic(regime,coating,material,L,0,s2);
 
@@ -46,5 +49,5 @@ cav = Cavity(mirror,0);
 cav.simulate(lamWin);
 % laser.Pulse.plot;
 
-% mirror.store(name,1);
+mirror.store(name,1);
 mirror.plot;

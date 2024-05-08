@@ -26,10 +26,10 @@ classdef OpticalSim < matlab.mixin.Copyable
 	end
 	properties (Transient)
 		PumpPulse	OpticalPulse	% Pulse object for intracavity pump field
-		XInPulse	OpticalPulse	% Pulse object to temp. store Xtal input
-		XOutPulse	OpticalPulse	% Pulse object to temp. store Xtal output
+		XInPulse	OpticalPulse	% Pulse object to store Xtal input
+		XOutPulse	OpticalPulse	% Pulse object to store Xtal output
 		InputPulse	OpticalPulse	% Pulse object to store what enters the cavity each SIM
-		OutputPulse	OpticalPulse	% Pulse object to temp. store what exits the cavity each TRIP
+		OutputPulse	OpticalPulse	% Pulse object to store what exits the cavity each TRIP
 		Hardware = "CPU"
 		SimTripNumber = 0;
 		StepSizeModifiers
@@ -70,7 +70,7 @@ classdef OpticalSim < matlab.mixin.Copyable
 
 		function setup(obj)
 			%SETUP Setup the simulation and ready pulse for cavity injection
-			%   Detailed explanation goes here
+			%
 			% Will need individual class functions to convert to gpuArray?
 			%	or just do it here for those required in .run?
 
@@ -227,7 +227,8 @@ classdef OpticalSim < matlab.mixin.Copyable
 				if obj.DetectorPosition < width(obj.System.Optics)
 					obj.Pulse.propagate(obj.System.Optics(:,obj.DetectorPosition+1:end));
 				end
-				obj.Pulse.applyGD(obj.Delay(:));
+				% obj.Pulse.applyGD(obj.Delay(:));
+				obj.Pulse.applyGD(random('Normal',obj.Delay(:),2*obj.SimWin.DeltaTime));
 
 			end
 			

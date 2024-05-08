@@ -27,6 +27,10 @@ classdef Waveguide < Optic
 			obj@Optic("T",varargin{:});
 		end
 
+		function simulate(obj,simWin)
+			simulate@Optic(obj,simWin);
+		end
+
 		function hR = get.RamanResponse(obj)
 			%METHOD1 Summary of this method goes here
 			%   Detailed explanation goes here

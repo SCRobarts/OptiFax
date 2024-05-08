@@ -4,7 +4,7 @@ function [gain,pump,signal,idler,weights,p_mask,i_mask] = qpmgain(crystal,ppulse
 	arguments
 		crystal NonlinearCrystal
 		ppulse OpticalPulse
-		sigrange = [1000 1700];
+		sigrange = [1100 1700];
 		ipulse = OpticalPulse.empty;
 	end
 	% if isa(sigrange,"OpticalPulse")
