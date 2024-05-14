@@ -7,10 +7,10 @@ classdef OpticalSurface < matlab.mixin.Copyable
 		Name		string
 		Material
 		Coating
-		IncidentAngle
+		IncidentAngle	% Degrees
 		Order
 		Parent %Optic
-		GDD
+		GDD = 0;
 	end
 	properties (Dependent)
 		Transmission

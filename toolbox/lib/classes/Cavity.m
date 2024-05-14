@@ -41,6 +41,9 @@ classdef Cavity < handle
 			end
 			obj.Optics = optics;
 			obj.OCPosition = ocPos;
+			if ~istable(preCavOptics)
+				preCavOptics = table(preCavOptics);
+			end
 			obj.PreCavityOptics = preCavOptics;
 		end
 
@@ -52,14 +55,16 @@ classdef Cavity < handle
 			obj.GroupDelay = 0;
 			obj.GDD = 0;
 			obj.OpticalPathLength = 0;
-			for ii = 1:width(obj.PreCavityOptics)
-				opt = obj.PreCavityOptics.(ii);
-				opt.Parent = obj;
-				opt.simulate(obj.SimWin);
-				if isempty(opt.Name)
-					opt.Name = obj.PreCavityOptics.Properties.VariableNames(ii);
+			if ~isempty(obj.PreCavityOptics)
+				for ii = 1:width(obj.PreCavityOptics)
+					opt = obj.PreCavityOptics.(ii);
+					opt.Parent = obj;
+					opt.simulate(obj.SimWin);
+					if isempty(opt.Name)
+						opt.Name = obj.PreCavityOptics.Properties.VariableNames(ii);
+					end
+					obj.PumpDispersion = obj.PumpDispersion + opt.Dispersion;
 				end
-				obj.PumpDispersion = obj.PumpDispersion + opt.Dispersion;
 			end
 			for ii = 1:width(obj.Optics)
 				opt = obj.Optics.(ii);

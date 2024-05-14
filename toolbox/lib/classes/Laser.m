@@ -59,8 +59,8 @@ classdef Laser < matlab.mixin.Copyable
 
 		function simulate(obj,simWin)
 			obj.Pulse = OpticalPulse(obj,simWin);
-			obj.PeakPowerCoefficientTL = 1/((sum(abs(obj.Pulse.TemporalField).^2)*...
-										obj.Pulse.SimWin.DeltaTime/obj.Pulse.DurationTL));
+			obj.PeakPowerCoefficientTL = 1./((sum(abs(obj.Pulse.TemporalField).^2).*...
+										obj.Pulse.SimWin.DeltaTime./obj.Pulse.DurationTL));
 			nr = obj.Pulse.Medium.Bulk.RefractiveIndex(obj.Pulse.SimWin.ReferenceIndex);
 			% Free space field magnitude scaling [W/m^2] -> [V/m]
 			I2E = sqrt(obj.PulseIntensity .* 2./nr./eps0./c);
@@ -71,11 +71,11 @@ classdef Laser < matlab.mixin.Copyable
 		end
 
 		function f = get.Frequency(obj)
-			f = c / obj.Wavelength;
+			f = c ./ obj.Wavelength;
 		end
 
 		function a = get.WaistArea(obj)
-			a = pi * (obj.Waist ^ 2);
+			a = pi .* (obj.Waist .^ 2);
 		end
 
 		function Qe = get.PulseEnergy(obj)
@@ -83,9 +83,9 @@ classdef Laser < matlab.mixin.Copyable
 		end
 		
 		function I0TL = get.PulseIntensity(obj)
-			peakPTL = obj.PulseEnergy / obj.Pulse.DurationTL;
-			peakPTL = peakPTL * obj.PeakPowerCoefficientTL;
-			I0TL = peakPTL/obj.Pulse.Area;
+			peakPTL = obj.PulseEnergy ./ obj.Pulse.DurationTL;
+			peakPTL = peakPTL .* obj.PeakPowerCoefficientTL;
+			I0TL = peakPTL./obj.Pulse.Area;
 		end
 
 		function I0 = get.IntensityCheck(obj)

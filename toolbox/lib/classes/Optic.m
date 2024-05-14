@@ -20,7 +20,7 @@ classdef Optic < matlab.mixin.Copyable
 		Dispersion
 	end
 	properties (Dependent)
-		IncidentAngle
+		IncidentAngle	% Degrees
 		Length
 		OpticalPath
 		GroupDelay
@@ -100,6 +100,25 @@ classdef Optic < matlab.mixin.Copyable
 			else
 				% obj.Transmission = 1 - obj.Transmission;
 			end
+		end
+
+		function scaleT(obj,lamOCnm,target,lamLimsnm)
+			arguments
+				obj Optic
+				lamOCnm
+				target
+				lamLimsnm = [350 2000];
+			end
+
+			limIDs = and(obj.SimWin.Lambdanm>lamLimsnm(1),obj.SimWin.Lambdanm<lamLimsnm(2));
+			nuOC = c ./ (lamOCnm .* 1e-9);
+			lamID = find(abs(obj.SimWin.Frequencies - nuOC) < obj.SimWin.DeltaNu./2);
+			prevOC = obj.Transmission(lamID);
+			newOC = target;
+			powOC = log2(newOC)./log2(prevOC);
+
+			obj.Transmission(limIDs) = obj.Transmission(limIDs) .^ powOC;
+			obj.Reflection(limIDs) = 1 - obj.Transmission(limIDs);
 		end
 
 		function GD = get.GroupDelay(obj)

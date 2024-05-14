@@ -139,7 +139,7 @@ classdef NonlinearCrystal < Waveguide
 				ys = obj.GratingPeriod;
 			end
 
-			fh = figure;
+			fh = figure("Position",[100 100 800 600]);
 			axs = axes(fh);
 			if isinteger(obj.Height)
 				p = waterfall(axs,sig_unique,ys,gain_sum);
@@ -153,14 +153,10 @@ classdef NonlinearCrystal < Waveguide
 					axs.GridColor = [1 1 1]*0;
 					axs.MinorGridColor = [1 1 1]*0;
 					grid minor
-					
 
-				% p = plot(axs,sig_unique,gain_sum);
-				% 	legend(num2str(ys'))
-				% 
 					ylabel('Grating Period / m')
 			else
-				imagesc(axs,sig_unique,ys,gain_sum)
+				imagesc(axs,sig_unique,ys*1e3,gain_sum)
 					axs.YAxis.Direction = 'normal';
 					colormap(axs,"turbo")
 					axs.Color = [0 0 0];
@@ -168,9 +164,22 @@ classdef NonlinearCrystal < Waveguide
 					axs.MinorGridColor = [1 1 1];
 					shading("interp")
 					colorbar;
-					ylabel('Crystal Y Position / m')
+					ylabel('Crystal Y Position / mm')
+					ysecondarylabel("\Lambda="+num2str(obj.GratingPeriod(1)*1e6,'%.2f')...
+										  +"-"+num2str(obj.GratingPeriod(2)*1e6,'%.2f')+"\mum")
+					% yticks([yticks,obj.Height*1e3])
+					% ytls = yticklabels;
+
 			end
-			title('Full Temporal Overlap QPM')
+			titleStr    = "Full Temporal Overlap QPM, " ...
+						+ "\chi^{(2)} = " + num2str(obj.Chi2*1e12,'%i') + "pVm^{-1}, " ...
+						+ "L = " + num2str(obj.Length*1e3,'%.1f') + "mm, ";
+
+			subtitleStr = "T = " + num2str(obj.Bulk.Temperature) + "\circC, " ...
+						+ "\sigma(\Lambda) = " + num2str(obj.Uncertainty*1e6,'%.2f') + "\mum" ...
+						+ ", DCO = " + num2str(obj.DutyCycleOffset,'%.2f');
+			
+			title(titleStr,subtitleStr)
 			xlabel('Signal Wavelength / m')
 		end
 
@@ -207,7 +216,12 @@ classdef NonlinearCrystal < Waveguide
 				fh.Position(4) = fh.Position(4)./2;
 				tl = tiledlayout(fh,1,2);
 			end
-			title(tl,obj.Name,"Interpreter","none");
+			if isinteger(obj.Height)
+				titleStr = obj.Name + ", Pos = " + num2str(obj.VerticalPosition,'%i');
+			else
+				titleStr = obj.Name + ", Pos = " + num2str(obj.VerticalPosition*1e3,'%.2f') + "mm";
+			end
+			title(tl,titleStr,"Interpreter","none");
 			
 			nexttile
 			plot(obj.DomainWallPositions,obj.DomainWidths);
@@ -230,7 +244,8 @@ classdef NonlinearCrystal < Waveguide
 					zlim(axs,[0 max(gain,[],"all")]./2)
 					clim(axs,[0 max(gain,[],"all")]./2)
 				end
-				view(-80,30);
+				% view(-80,30);
+				view(-90,90);
 				colormap(axs,"turbo")
 				axs.Color = [0 0 0];
 				axs.GridColor = [1 1 1];

@@ -21,6 +21,7 @@ classdef OpticalSim < matlab.mixin.Copyable
 		Precision = 'single';
 		ProgressPlotting = 1;
 		ProgressPlots = 5;
+		SpectralPlotLimits = [350 4500];
 		StoredPulses	OpticalPulse	% Pulse object with multiple fields, storing desired pulse each trip (currently XOut)
 		TripNumber = 0;
 	end
@@ -124,12 +125,12 @@ classdef OpticalSim < matlab.mixin.Copyable
 			obj.System.Xtal.ppole(obj);
 			obj.SpectralProgressShift = repmat(fft(fftshift(obj.PumpPulse.TemporalField(1,:),2)).',1,obj.ProgressPlots,obj.NumOfParRuns);
 			if obj.RoundTrips > 1
-				obj.FinalPlotter = SimPlotter(obj,obj.TripNumber + (1:obj.RoundTrips),"Round Trip Number");
+				obj.FinalPlotter = SimPlotter(obj,obj.TripNumber + (1:obj.RoundTrips),"Round Trip Number",obj.SpectralPlotLimits);
 			end
 			if obj.ProgressPlotting % || obj.RoundTrips == 1
 				ydat = linspace(0,obj.System.Xtal.Length*1e3,obj.ProgressPlots);
 				ylab = "Distance (mm)";
-				obj.ProgressPlotter = SimPlotter(obj,ydat,ylab);
+				obj.ProgressPlotter = SimPlotter(obj,ydat,ylab,obj.SpectralPlotLimits);
 			end
 			obj.StepSizeModifiers = obj.convArr(zeros(obj.RoundTrips,obj.System.Xtal.NSteps));
 			obj.PumpPulse.refract(airOpt);
@@ -138,7 +139,7 @@ classdef OpticalSim < matlab.mixin.Copyable
 				if length(obj.Delay) > 1
 					obj.PumpPulse.addDims([length(obj.Delay),1])
 				end
-				obj.StoredPulses.addDims([obj.NumOfParRuns,1,obj.RoundTrips]);
+					obj.StoredPulses.addDims([obj.NumOfParRuns/obj.PumpPulse.NumberOfPulses,1,obj.RoundTrips]);
 			else
 				obj.StoredPulses.addDims([obj.RoundTrips,1]);
 			end
@@ -203,11 +204,7 @@ classdef OpticalSim < matlab.mixin.Copyable
 													);
 
 				obj.Pulse.TemporalField = fftshift(EtShift.',2);
-				if obj.NumOfParRuns > 1
-					obj.StoredPulses.TemporalField(:,:,obj.SimTripNumber) = gather(obj.Pulse.TemporalField);
-				else
-					obj.StoredPulses.TemporalField(obj.SimTripNumber,:) = gather(obj.Pulse.TemporalField);
-				end
+
 				obj.XOutPulse.copyfrom(obj.Pulse);
 				if obj.ProgressPlotting
 					obj.ProgressPlotter.updateplots;
@@ -247,6 +244,11 @@ classdef OpticalSim < matlab.mixin.Copyable
 				pulseOC = obj.Pulse;
 			end
 			obj.OutputPulse.copyfrom(pulseOC);
+			if obj.NumOfParRuns > 1
+				obj.StoredPulses.TemporalField(:,:,obj.SimTripNumber) = gather(obj.OutputPulse.TemporalField);
+			else
+				obj.StoredPulses.TemporalField(obj.SimTripNumber,:) = gather(obj.OutputPulse.TemporalField);
+			end
 		end
 		
 		function pump(obj)

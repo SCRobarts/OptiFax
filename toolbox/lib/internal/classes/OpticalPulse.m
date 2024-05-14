@@ -36,6 +36,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 		PeakPowerCoefficient
 		PeakPower
 		GFit			% An attempt to quantify how Gaussian a pulse is?
+		NumberOfPulses
 	end
 
 	methods
@@ -46,7 +47,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 				obj.Medium.simulate(simWin);
 				obj.SimWin = simWin;
 				obj.Source = laser;
-				obj.Radius = laser.Waist;
+				% obj.Radius = laser.Waist;
 				t = simWin.Times;
 				t_off = simWin.TimeOffset;
 				str = laser.SourceString;
@@ -78,7 +79,16 @@ classdef OpticalPulse < matlab.mixin.Copyable
 				% if obj.DurationCheck < obj.Duration
 					obj.applyGDD(obj.RequiredGDD);
 				% end
+				obj.Radius = laser.Waist;
 			end
+		end
+
+		function addDims(obj,sz)
+			obj.TemporalField = repmat(obj.TemporalField,sz);
+		end
+
+		function nP = get.NumberOfPulses(obj)
+			nP = length(obj.TemporalField(:,1));
 		end
 		
 		%% Propagation
@@ -147,7 +157,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 		%% Transformation
 		function timeShift(obj)
 			Ek = obj.SpectralField;
-			wPump = 2*pi*c / obj.PeakWavelength;
+			wPump = 2*pi*c ./ obj.PeakWavelength;
 			Ek = Ek .* exp(-1i.*(obj.SimWin.Omegas-wPump).*obj.SimWin.TimeOffset);
 			obj.k2t(Ek);
 		end
@@ -163,7 +173,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 
 		function applyGD(obj,gd)
 			Ek = obj.SpectralField;
-			beta = gd * obj.SimWin.RelativeOmegas;
+			beta = gd .* obj.SimWin.RelativeOmegas;
 			Ek = Ek .* exp(-1i * beta);
 			obj.k2t(Ek);
 		end
@@ -402,6 +412,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			obj.TemporalField = Et;
 		end
 
+		%% Combining Pulses
 		function add(obj,pulse)
 			% EkMag = abs(obj.SpectralField) + abs(pulse.SpectralField);
 			% EkPhase = unwrap(angle(obj.SpectralField));
@@ -431,10 +442,6 @@ classdef OpticalPulse < matlab.mixin.Copyable
 		function pulse = writeto(obj)
 			pulse = copy(obj);
 			pulse.gather;
-		end
-
-		function addDims(obj,sz)
-			obj.TemporalField = repmat(obj.TemporalField,sz);
 		end
 
 		function gather(obj)
