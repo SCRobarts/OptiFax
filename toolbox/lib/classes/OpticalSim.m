@@ -24,6 +24,11 @@ classdef OpticalSim < matlab.mixin.Copyable
 		SpectralPlotLimits = [350 4500];
 		StoredPulses	OpticalPulse	% Pulse object with multiple fields, storing desired pulse each trip (currently XOut)
 		TripNumber = 0;
+		ESDPumpDepAverage
+		ESDOutAverage
+		ESDIdlerAverage
+		PowerOutAverage
+		PowerIdlerAverage
 	end
 	properties (Transient)
 		PumpPulse	OpticalPulse	% Pulse object for intracavity pump field
@@ -134,15 +139,32 @@ classdef OpticalSim < matlab.mixin.Copyable
 			end
 			obj.StepSizeModifiers = obj.convArr(zeros(obj.RoundTrips,obj.System.Xtal.NSteps));
 			obj.PumpPulse.refract(airOpt);
-			obj.StoredPulses = obj.Pulse.writeto;
-			if obj.NumOfParRuns > 1
-				if length(obj.Delay) > 1
-					obj.PumpPulse.addDims([length(obj.Delay),1])
-				end
-					obj.StoredPulses.addDims([obj.NumOfParRuns/obj.PumpPulse.NumberOfPulses,1,obj.RoundTrips]);
+			% obj.StoredPulses = obj.Pulse.writeto;
+			if length(obj.Delay) > (obj.PumpPulse.NumberOfPulses/length(obj.PumpPulse.Radius))
+				obj.PumpPulse.addDims([length(obj.Delay),1])
+			end
+			obj.StoredPulses = obj.PumpPulse.writeto;
+			obj.StoredPulses.Name = "Stored XOut Pulses";
+			if obj.NumOfParRuns > 1	
+				obj.StoredPulses.addDims([obj.NumOfParRuns/obj.PumpPulse.NumberOfPulses,1,obj.RoundTrips]);
 			else
 				obj.StoredPulses.addDims([obj.RoundTrips,1]);
 			end
+		end
+
+		function prepareRun(obj)
+			obj.SimTripNumber = 0;
+			obj.InputPulse.copyfrom(obj.PumpPulse);
+			obj.InputPulse.add(obj.Pulse);
+			obj.OutputPulse = copy(obj.Pulse);
+			if obj.DetectorPosition
+				obj.OutputPulse.Name = "Detected Pulse (" + obj.System.Optics.(obj.DetectorPosition).Name + ")";
+			end
+			obj.ESDOutAverage = zeros(size(obj.OutputPulse.ESD_pJ_THz));
+			obj.ESDPumpDepAverage = obj.ESDOutAverage;
+			obj.ESDIdlerAverage = obj.ESDOutAverage;
+			obj.PowerOutAverage = zeros(size(obj.OutputPulse.Power));
+			obj.PowerIdlerAverage = obj.PowerOutAverage;
 		end
 
 		function reseed(obj)
@@ -170,14 +192,8 @@ classdef OpticalSim < matlab.mixin.Copyable
 			hBshift = obj.convArr(hBshift);
 			airOpt = obj.Pulse.Medium;
 			dt = obj.SimWin.DeltaTime;
-			obj.SimTripNumber = 0;
-
-			obj.InputPulse.copyfrom(obj.PumpPulse);
-			obj.InputPulse.add(obj.Pulse);
-			obj.OutputPulse = copy(obj.Pulse);
-			if obj.DetectorPosition
-				obj.OutputPulse.Name = "Detected Pulse (" + obj.System.Optics.(obj.DetectorPosition).Name + ")";
-			end
+			
+			obj.prepareRun;
 
 			while obj.SimTripNumber < obj.RoundTrips
 
@@ -204,7 +220,6 @@ classdef OpticalSim < matlab.mixin.Copyable
 													);
 
 				obj.Pulse.TemporalField = fftshift(EtShift.',2);
-
 				obj.XOutPulse.copyfrom(obj.Pulse);
 				if obj.ProgressPlotting
 					obj.ProgressPlotter.updateplots;
@@ -215,11 +230,18 @@ classdef OpticalSim < matlab.mixin.Copyable
 				pause(0.01)
 				
 				obj.Pulse.refract(airOpt);
+				if obj.NumOfParRuns > 1
+					obj.StoredPulses.TemporalField(:,:,obj.SimTripNumber) = gather(obj.Pulse.TemporalField);
+				else
+					obj.StoredPulses.TemporalField(obj.SimTripNumber,:) = gather(obj.Pulse.TemporalField);
+				end
+
 				if obj.DetectorPosition > 1
 					obj.Pulse.propagate(obj.System.Optics(:,1:obj.DetectorPosition-1));
 				end
-				% obj.Pulse.refract(airOpt);
+	
 				obj.detect;
+				obj.averageSimPulses;
 
 				if obj.DetectorPosition < width(obj.System.Optics)
 					obj.Pulse.propagate(obj.System.Optics(:,obj.DetectorPosition+1:end));
@@ -229,11 +251,27 @@ classdef OpticalSim < matlab.mixin.Copyable
 
 			end
 			
-			if obj.RoundTrips > 1 && obj.NumOfParRuns < 2
-				obj.FinalPlotter.updateYData((obj.TripNumber-obj.RoundTrips) + (1:obj.RoundTrips));
-				obj.FinalPlotter.roundtripplots;
+			if obj.RoundTrips > 1
+				
+				if obj.NumOfParRuns < 2
+					obj.FinalPlotter.updateYData((obj.TripNumber-obj.RoundTrips) + (1:obj.RoundTrips));
+					obj.FinalPlotter.roundtripplots;
+				end
 			end
 
+		end
+
+		function averageSimPulses(obj)
+			obj.ESDPumpDepAverage = obj.ESDPumpDepAverage + (obj.XOutPulse.ESD_pJ_THz./obj.RoundTrips);
+			pumpLim = (obj.Source.Wavelength + 5*obj.Source.LineWidth)*1e9;
+			obj.ESDPumpDepAverage(obj.SimWin.LambdanmPlot>pumpLim) = 0;
+
+			obj.ESDOutAverage = obj.ESDOutAverage + (obj.OutputPulse.ESD_pJ_THz./obj.RoundTrips);
+			obj.PowerOutAverage = obj.PowerOutAverage + (obj.OutputPulse.Power./obj.RoundTrips);
+
+			obj.ESDIdlerAverage = obj.ESDIdlerAverage + (obj.XOutPulse.ESD_pJ_THz./obj.RoundTrips);
+			idlerLim = 2100;
+			obj.ESDIdlerAverage(obj.SimWin.LambdanmPlot<idlerLim) = 0;
 		end
 
 		function detect(obj)
@@ -244,11 +282,11 @@ classdef OpticalSim < matlab.mixin.Copyable
 				pulseOC = obj.Pulse;
 			end
 			obj.OutputPulse.copyfrom(pulseOC);
-			if obj.NumOfParRuns > 1
-				obj.StoredPulses.TemporalField(:,:,obj.SimTripNumber) = gather(obj.OutputPulse.TemporalField);
-			else
-				obj.StoredPulses.TemporalField(obj.SimTripNumber,:) = gather(obj.OutputPulse.TemporalField);
-			end
+			% if obj.NumOfParRuns > 1
+			% 	obj.StoredPulses.TemporalField(:,:,obj.SimTripNumber) = gather(obj.OutputPulse.TemporalField);
+			% else
+			% 	obj.StoredPulses.TemporalField(obj.SimTripNumber,:) = gather(obj.OutputPulse.TemporalField);
+			% end
 		end
 		
 		function pump(obj)
