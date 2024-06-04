@@ -13,8 +13,9 @@ classdef SimWindow < handle
 		ReferenceOmega
 		ReferenceIndex
 		DeltaTime
-		DeltaOmega
+		DeltaLambda0
 		DeltaNu
+		DeltaOmega
 		Granularity		% Colour plot sample spacing
 		Times
 		Timesfs
@@ -82,7 +83,8 @@ classdef SimWindow < handle
 			f0 = c./obj.ReferenceWave;
 			f_max = (c ./ obj.SpectralLimits(1) ./1e-9) - f0;
 			f_min = (c ./ obj.SpectralLimits(2) ./1e-9) - f0;
-			f_axis = 2 * max(f_min,f_max);
+			% f_axis = 2 * max(abs(f_min),abs(f_max));
+			f_axis = 4 * max(abs(f_min),abs(f_max)); % avoid spectral aliasing?
 			f_rel = (-np/2:np/2-1)/np*f_axis;	% relative frequency array [Hz]
 			end
 		end
@@ -118,6 +120,10 @@ classdef SimWindow < handle
 
 		function dt = get.DeltaTime(obj)
 			dt = obj.Times(2) - obj.Times(1);
+		end
+
+		function dl0 = get.DeltaLambda0(obj)
+			dl0 = (obj.Wavelengths(obj.ReferenceIndex-1) - obj.Wavelengths(obj.ReferenceIndex+1))/2;
 		end
 
 		function dw = get.DeltaOmega(obj)

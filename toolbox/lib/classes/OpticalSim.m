@@ -249,6 +249,7 @@ classdef OpticalSim < matlab.mixin.Copyable
 				% obj.Pulse.applyGD(obj.Delay(:));
 				obj.Pulse.applyGD(random('Normal',obj.Delay(:),2*obj.SimWin.DeltaTime));
 
+				obj.annularDivergence;
 			end
 			
 			if obj.RoundTrips > 1
@@ -272,6 +273,20 @@ classdef OpticalSim < matlab.mixin.Copyable
 			obj.ESDIdlerAverage = obj.ESDIdlerAverage + (obj.XOutPulse.ESD_pJ_THz./obj.RoundTrips);
 			idlerLim = 2100;
 			obj.ESDIdlerAverage(obj.SimWin.LambdanmPlot<idlerLim) = 0;
+		end
+
+		function annularDivergence(obj)
+			if length(obj.PumpPulse.Radius) > 1
+				% DivergentPulse = optSim.OutputPulse.writeto;
+				% obj.Pulse.TemporalRootPower(end-1,:) = obj.Pulse.TemporalRootPower(end-1,:) + obj.Pulse.TemporalRootPower(end,:);
+				% obj.Pulse.TemporalRootPower(2:end,:) = obj.Pulse.TemporalRootPower(1:end-1,:);
+				% obj.Pulse.TemporalRootPower(1,:) = obj.Pulse.TemporalRootPower(1,:).*0.1;
+
+				divScale = 0.0;
+				obj.Pulse.TemporalRootPower(end,:) = obj.Pulse.TemporalRootPower(end,:).*(1./(1-divScale));
+				obj.Pulse.TemporalRootPower(2:end,:) = (1-divScale).*obj.Pulse.TemporalRootPower(2:end,:) + divScale.*obj.Pulse.TemporalRootPower(1:end-1,:);
+				obj.Pulse.TemporalRootPower(1,:) = obj.Pulse.TemporalRootPower(1,:).*(1-divScale);
+			end
 		end
 
 		function detect(obj)

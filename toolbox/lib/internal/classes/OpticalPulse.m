@@ -542,14 +542,15 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			hold off
 		end
 
-		function [lnm,tfs,pSplot] = spectrogram(obj,wavlims,pulseN)
+		function [lnm,tfs,pSplot] = spectrogram(obj,wavlims,pulseN,tlims)
 			arguments
 				obj
 				wavlims = [300 6000];
 				pulseN = 1;
+				tlims = [min(obj.SimWin.Timesfs) max(obj.SimWin.Timesfs)];
 			end
-			x = obj.TemporalField(pulseN,:);		% Input signal for spectrogram
-			win_size = 2^7;			% Segment size for each STFT
+			x = obj.TemporalField(pulseN,:); % Input signal for spectrogram
+			win_size = 2^7;			    % Segment size for each STFT
 			num_olap = 1.5*2^6;			% Points of overlap between segments
 			nfft = 2^15;				% Number of DFT points
 			fs = 1/obj.SimWin.DeltaTime;% Sampling rate
@@ -568,17 +569,18 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			% xlim(spax,tlims);
 			% ylim(spax,[0 800]);
 
-			[~,freqs,times,powerSpec] = spectrogram(x,win_size,num_olap,nfft,fs,"reassigned",'centered','yaxis','MinThreshold',-25);
-			freqs = freqs + f0;
-			times = (times + tshift);
-			tfs = times*1e15;
-			powerSpec = 10*log10(powerSpec);	% Convert to spectral density in dB/Hz;
-			powerSpec(powerSpec<-10) = -10;	% Remove -Infs 
+			[~,freqs,times,powerSpec] = spectrogram(x,win_size,num_olap,nfft,fs,"reassigned",'centered','yaxis','MinThreshold',-30);
+			powerSpec = 10*log10(powerSpec+eps);	% Convert to spectral density in dB/Hz;
+			% powerSpec(powerSpec<-40) = -40;	% Remove -Infs 
 
+			freqs = freqs + f0;
 			lambdas = (c./freqs).*1e9;
-			pID = and(lambdas>wavlims(1),lambdas<wavlims(2));
-			lnm = lambdas(pID);
-			pSplot = powerSpec(pID,:);
+			lID = and(lambdas>wavlims(1),lambdas<wavlims(2));
+			lnm = lambdas(lID);
+			times = (times + tshift)*1e15;
+			tID = and(times>tlims(1),times<tlims(2));
+			tfs = times(tID);
+			pSplot = powerSpec(lID,tID);
 			pSplot = smoothdata(gather(pSplot),"movmedian",5);
 
 			% figure

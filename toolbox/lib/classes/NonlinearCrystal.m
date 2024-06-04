@@ -23,6 +23,7 @@ classdef NonlinearCrystal < Waveguide
 	end
 	properties (Dependent)
 		TStepShift
+		Z
 	end
 
 	methods
@@ -47,9 +48,17 @@ classdef NonlinearCrystal < Waveguide
 			% Superclass constructor call, which can't be conditional
 			obj@Waveguide(optArgs{:});
 
-			if strcmp(obj.Bulk.Material,"PPLN")
-				obj.Chi2 = 2*26e-12;
+			switch obj.Bulk.Material
+				case {"PPLN","LN_e","LN_o"}
+					obj.Chi2 = 27e-12;
+				case {"OP-GaP","OPGaP"}
+					obj.Chi2 = 70e-12;
+				otherwise
+					obj.Chi2 = 0e-12;
 			end
+			% if strcmp(obj.Bulk.Material,"PPLN")
+			% 	obj.Chi2 = 2*26e-12;
+			% end
 			obj.GratingPeriod = grating_m;
 			obj.Uncertainty = uncertainty_m;
 			obj.DutyCycleOffset = dutyOff;
@@ -93,7 +102,7 @@ classdef NonlinearCrystal < Waveguide
 										 obj.Uncertainty,...
 										 obj.DutyCycleOffset);
 
-			obj.Polarisation = xtal.P * obj.Chi2;
+			obj.Polarisation = xtal.P .* 2 .* obj.Chi2;
 			obj.DomainWidths = xtal.domains;
 			obj.DomainWallPositions = xtal.walls;
 			obj.Periods = xtal.periods;
@@ -114,10 +123,27 @@ classdef NonlinearCrystal < Waveguide
 			tss = fftshift(ts);
 		end
 
-		function scanplot(obj,sigrange,n_pos)
+		function z = get.Z(obj)
+			dz = obj.Length/(obj.NSteps-1);
+			z = 0:dz:obj.Length;
+		end
+
+		%% Plotting
+		function scanplot(obj,sigrange,n_pos,beam_str,axs)
+			arguments
+				obj
+				sigrange
+				n_pos
+				beam_str = "Signal";
+				axs = 0;
+			end
 			% n_pos = 5;
-			[gain,~,signal] = qpmgain(obj,obj.OptSim.PumpPulse,sigrange);
-			sig_unique = signal(:,1);
+			[gain,~,signal,idler] = qpmgain(obj,obj.OptSim.PumpPulse,sigrange);
+			if strcmp(beam_str,"Signal")
+				sig_unique = signal(:,1);
+			elseif strcmp(beam_str,"Idler")
+				sig_unique = idler(:,1);
+			end
 			gain_sum = single(zeros(n_pos,length(gain(:,1))));
 
 			if isinteger(obj.Height)
@@ -139,8 +165,10 @@ classdef NonlinearCrystal < Waveguide
 				ys = obj.GratingPeriod;
 			end
 
-			fh = figure("Position",[100 100 800 600]);
-			axs = axes(fh);
+			if ~isgraphics(axs,"axes")
+				fh = figure("Position",[100 100 800 600]);
+				axs = axes(fh);
+			end
 			if isinteger(obj.Height)
 				p = waterfall(axs,sig_unique,ys,gain_sum);
 					view(-0.01,30);
@@ -172,15 +200,19 @@ classdef NonlinearCrystal < Waveguide
 
 			end
 			titleStr    = "Full Temporal Overlap QPM, " ...
-						+ "\chi^{(2)} = " + num2str(obj.Chi2*1e12,'%i') + "pVm^{-1}, " ...
-						+ "L = " + num2str(obj.Length*1e3,'%.1f') + "mm, ";
+						+ "\chi^{(2)} = " + num2str(obj.Chi2*1e12,'%i') + "pVm^{-1}";
 
-			subtitleStr = "T = " + num2str(obj.Bulk.Temperature) + "\circC, " ...
+			subtitleStr = "L = " + num2str(obj.Length*1e3,'%.1f') + "mm, " ...
+						+ "T = " + num2str(obj.Bulk.Temperature) + "\circC, " ...
 						+ "\sigma(\Lambda) = " + num2str(obj.Uncertainty*1e6,'%.2f') + "\mum" ...
 						+ ", DCO = " + num2str(obj.DutyCycleOffset,'%.2f');
 			
 			title(titleStr,subtitleStr)
-			xlabel('Signal Wavelength / m')
+			if strcmp(beam_str,"Signal")
+				xlabel('Signal Wavelength / m')
+			elseif strcmp(beam_str,"Idler")
+				xlabel('Idler Wavelength / m')
+			end
 		end
 
 		function xtalplot(obj,sigrange)
