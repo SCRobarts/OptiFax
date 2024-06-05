@@ -54,7 +54,7 @@ end
 		end
 
 		E_ft = E_ft  .* exp(1i*phi);
-		E_ft = ifftshift(E_ft);
+		% E_ft = ifftshift(E_ft);
 
 	elseif isstring(phase_str)
 		phasedat = readtable(phase_str);

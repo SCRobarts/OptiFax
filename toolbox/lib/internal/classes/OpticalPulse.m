@@ -61,7 +61,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 					% Shift spectrum from reference to pump wavelength
 					obj.TemporalField = obj.TemporalField .* exp(1i*(wPump-simWin.ReferenceOmega)*t);
 				else
-					obj.TemporalField = specpulseimport(str,t,t_off,...
+					[~,obj.SpectralField] = specpulseimport(str,t,t_off,...
 										simWin.Omegas,laser.PhaseString);
 				end
 				
