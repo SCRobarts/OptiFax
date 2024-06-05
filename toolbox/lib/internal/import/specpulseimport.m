@@ -21,6 +21,7 @@ else
 end
 
 w = 2e9*pi*c ./ (pulsedat.(1).');	% Convert wavelength to ang. freq. and transpose to row 
+% w = sort(w);
 E_ft = pulsedat.(2).';
 
 if width(pulsedat) > 2
@@ -32,7 +33,8 @@ end
 	
 	%% Interpolation and extrapolation of initial spectrum
 	if length(w) < length(w_sim)
-		w = [min(w_sim) w max(w_sim)];	% Set w limits of extrapolation to limits of simulation
+		% w = [min(w_sim) w max(w_sim)];	% Set w limits of extrapolation to limits of simulation
+		w = [max(w_sim) w min(w_sim)];	% Set w limits of extrapolation to limits of simulation
 		E_ft = [0 E_ft 0];				% Set spectral field to zero at the limits
 		E_ft = interp1(w, E_ft, w_sim, 'makima',0);	% Expand field to meet sim requirements
 		E_ft((E_ft) < 0) = 0;	% Remove the large negative components which arise during extrapolation
@@ -50,7 +52,10 @@ end
 		elseif length(w) > length(w_sim)
 			phi = interp1(w, phi, w_sim, 'makima','extrap');
 		end
+
 		E_ft = E_ft  .* exp(1i*phi);
+		E_ft = ifftshift(E_ft);
+
 	elseif isstring(phase_str)
 		phasedat = readtable(phase_str);
 		w = 2e9*pi*c ./ (phasedat.Wavelength.');	% Convert wavelength to ang. freq. and transpose to row
@@ -61,7 +66,7 @@ end
 		% 	phi = [((phi(1)-phi(21))/(20*dw))*(w(2)-w(1)) phi ((phi(end)-phi(end-21))/(20*dw))*(w(end)-w(end-1))];
 		phi = [phi(1) phi phi(end)];
 		phi = interp1(w, phi, w_sim, 'linear','extrap');
-		E_ft = E_ft  .* exp(-1i*phi);
+		E_ft = E_ft  .* exp(1i*phi);
 	else
 		% This section needs work, import without phase isn't functioning
 		% correctly.
@@ -77,7 +82,8 @@ end
 	
 	%% Temporal pulse
 	% E = fftshift(ifft(ifftshift(E_ft)));	% Shift to preserve shape, transform, and shift back
-	E = (ifft(ifftshift(E_ft)));	% Shift to preserve shape, transform, and shift back
+	% E = (ifft(ifftshift(E_ft)));	% Shift to preserve shape, transform, and shift back
+	  E = ((ifft(E_ft)));
 	% E = fftshift(ifft((E_ft)));		% Shift to preserve shape, transform, and shift back
 	% E = (ifft((E_ft),"symmetric"));		% Shift to preserve shape, transform, and shift back
 	

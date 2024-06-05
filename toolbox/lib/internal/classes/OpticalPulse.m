@@ -73,12 +73,13 @@ classdef OpticalPulse < matlab.mixin.Copyable
 				[~,indexMax] = max(obj.TemporalIntensity);
 				tmax = obj.SimWin.Times(indexMax);
 				obj.applyGD(-tmax);
+				% obj.TemporalField = ifftshift(obj.TemporalField);
 				% Shift the pulse by simWin.TimeOffset
 				obj.timeShift;
 				% Apply calculated GDD to alter duration
-				% if obj.DurationCheck < obj.Duration
+				if obj.DurationCheck < obj.Duration
 					obj.applyGDD(obj.RequiredGDD);
-				% end
+				end
 				obj.Radius = laser.Waist;
 			end
 		end
@@ -183,6 +184,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			wPeak = 2*pi*c./obj.PeakWavelength;
 			chirpArg = 0.5.*gdd.*(obj.SimWin.Omegas - wPeak).^2;
 			Ek = Ek .* exp(-1i.*chirpArg);
+			% Ek = Ek .* exp(1i.*chirpArg);
 			obj.k2t(Ek);
 			obj.AppliedGDD = obj.AppliedGDD + gdd;
 		end
