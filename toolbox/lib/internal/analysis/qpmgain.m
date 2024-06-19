@@ -17,10 +17,10 @@ function [gain,pump,signal,idler,weights,p_mask,i_mask] = qpmgain(crystal,ppulse
 	simWin = ppulse.SimWin;
 	d_eff = 1/pi;	% Polarisation already scaled to Chi2 so only need this scaling?
 	% if crystal.Length > 1e-2 || simWin.NumberOfPoints > 2^14
-	if  crystal.Length > 1e-2 && simWin.NumberOfPoints > 2^13
-		n_steps = 1e4 * crystal.Length;
+	if  (crystal.Length > 1e-2 && simWin.NumberOfPoints > 2^13) || simWin.NumberOfPoints > 2^15
+		n_steps = round(1e4 * crystal.Length);
 	else
-		n_steps = 1e5 * crystal.Length;
+		n_steps = round(1e5 * crystal.Length);
 	end
 	dz = crystal.Length ./ n_steps;
 	z = linspace(0,crystal.Length,n_steps);

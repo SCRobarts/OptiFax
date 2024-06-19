@@ -47,6 +47,9 @@ classdef SimWindow < handle
 			if strcmp(constraint,"time")
 				obj.TemporalRange = win_range;
 				% obj.SpectralLimits = [min(obj.Wavelengths) max(obj.Wavelengths)].*1e9;
+				% if obj.SpectralLimits(1) < 0
+				% 	obj.SpectralLimits(1) = 0 + eps;
+				% end
 			else
 				obj.SpectralLimits = win_range;
 				obj.TemporalRange = range(obj.Times);

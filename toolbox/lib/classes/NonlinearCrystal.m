@@ -12,6 +12,7 @@ classdef NonlinearCrystal < Waveguide
 		StepSize = 1e-7;
 		Height = 1;				% Int for stepped, [m] for fanout.
 		VerticalPosition = 1;	% Int for stepped, [m] for fanout.
+		WaistPosition	% How far through xtal, pump waist occurs [m]
 	end
 	properties (Transient)
 		OptSim
@@ -102,10 +103,31 @@ classdef NonlinearCrystal < Waveguide
 										 obj.Uncertainty,...
 										 obj.DutyCycleOffset);
 
-			obj.Polarisation = xtal.P .* 2 .* obj.Chi2;
+			obj.Polarisation = xtal.P .* 1 .* obj.Chi2;
 			obj.DomainWidths = xtal.domains;
 			obj.DomainWallPositions = xtal.walls;
 			obj.Periods = xtal.periods;
+		end
+
+		function [zR,focusParam,polScale] = scalePolarisation(obj,r0,beamWaist)
+			arguments
+				obj NonlinearCrystal
+				r0			% Beam radius entering crystal [m]
+				% waistPos = obj.Length/2	% How far along crystal waist occurs [m]
+				beamWaist = obj.ModeFieldDiameter	% Beam waist size in crystal [m]
+			end
+			waistPos = obj.WaistPosition;
+			linearDiv = -(beamWaist - r0) ./ waistPos;	% Linear approximation of spot size divergence
+			zR = abs((beamWaist.*(sqrt(2)-1)./linearDiv) + waistPos); % Rayleigh range
+			focusParam = obj.Length ./ (2 * zR);
+
+			rz = @(z) linearDiv.*abs(z-waistPos) + beamWaist; % Beam radius as a function of position
+
+			% polScale = rz(obj.Z) ./ beamWaist; % Scaling factor to apply to crystal polarisation
+			% obj.Polarisation = obj.Polarisation .* polScale;
+			polScale =  beamWaist ./ rz(obj.Z); % Scaling factor to apply to crystal polarisation
+			% obj.Polarisation = obj.Polarisation .* polScale.^2;
+			obj.Polarisation = obj.Polarisation .* polScale;
 		end
 
 		function grating = fanout(obj)
@@ -131,7 +153,7 @@ classdef NonlinearCrystal < Waveguide
 		%% Plotting
 		function scanplot(obj,sigrange,n_pos,beam_str,axs)
 			arguments
-				obj
+				obj	NonlinearCrystal
 				sigrange
 				n_pos
 				beam_str = "Signal";
@@ -155,7 +177,7 @@ classdef NonlinearCrystal < Waveguide
 			for n = 1:n_pos
 				obj.VerticalPosition = ys(n);
 				obj.pole;
-
+				obj.scalePolarisation(obj.OptSim.PumpRadiusXtalIn,obj.OptSim.PumpPulse.Source.Waist);
 				[gain] = qpmgain(obj,obj.OptSim.PumpPulse,sigrange);
 				gain_sum(n,:) = sum(gain,2);
 				disp(['Step ', num2str(n) ,' complete'])
@@ -253,6 +275,7 @@ classdef NonlinearCrystal < Waveguide
 			else
 				titleStr = obj.Name + ", Pos = " + num2str(obj.VerticalPosition*1e3,'%.2f') + "mm";
 			end
+			titleStr = titleStr + ", Av. Period = " + num2str(mean(obj.Periods(2:end-1))*1e6,'%.2fum');
 			title(tl,titleStr,"Interpreter","none");
 			
 			nexttile

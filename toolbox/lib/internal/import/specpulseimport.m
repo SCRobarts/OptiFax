@@ -53,7 +53,9 @@ end
 			phi = interp1(w, phi, w_sim, 'makima','extrap');
 		end
 
-		E_ft = E_ft  .* exp(1i*phi);
+		% E_ft = E_ft  .* exp(1i*phi);
+		E_ft = E_ft  .* exp(-1i*phi);
+		
 		% E_ft = ifftshift(E_ft);
 
 	elseif isstring(phase_str)
@@ -82,8 +84,8 @@ end
 	
 	%% Temporal pulse
 	% E = fftshift(ifft(ifftshift(E_ft)));	% Shift to preserve shape, transform, and shift back
-	% E = (ifft(ifftshift(E_ft)));	% Shift to preserve shape, transform, and shift back
-	  E = ((ifft(E_ft)));
+	E = (ifft(ifftshift(E_ft)));	% Shift to preserve shape, transform
+	  % E = ((ifft(E_ft)));
 	% E = fftshift(ifft((E_ft)));		% Shift to preserve shape, transform, and shift back
 	% E = (ifft((E_ft),"symmetric"));		% Shift to preserve shape, transform, and shift back
 	

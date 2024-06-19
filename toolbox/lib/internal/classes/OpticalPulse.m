@@ -63,6 +63,8 @@ classdef OpticalPulse < matlab.mixin.Copyable
 				else
 					[~,obj.SpectralField] = specpulseimport(str,t,t_off,...
 										simWin.Omegas,laser.PhaseString);
+					% obj.TemporalField = specpulseimport(str,t,t_off,...
+									% 	simWin.Omegas,laser.PhaseString);
 				end
 				
 				if laser.PulseDuration < obj.DurationTL
@@ -72,10 +74,9 @@ classdef OpticalPulse < matlab.mixin.Copyable
 				end
 				[~,indexMax] = max(obj.TemporalIntensity);
 				tmax = obj.SimWin.Times(indexMax);
-				obj.applyGD(-tmax);
-				% obj.TemporalField = ifftshift(obj.TemporalField);
+				obj.applyGD(tmax); % Centre on max temporal component
 				% Shift the pulse by simWin.TimeOffset
-				obj.timeShift;
+				obj.applyGD(obj.SimWin.TimeOffset); % obj.timeShift;
 				% Apply calculated GDD to alter duration
 				if obj.DurationCheck < obj.Duration
 					obj.applyGDD(obj.RequiredGDD);
@@ -168,7 +169,8 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			wOld = 2*pi*c / obj.PeakWavelength;
 			t = obj.SimWin.Times;
 			Et = obj.TemporalField;
-			Et = Et .* exp(1i*(wNew-wOld)*t);
+			% Et = Et .* exp(1i*(wNew-wOld)*t);
+			Et = Et .* exp(-1i*(wNew-wOld)*t);
 			obj.TemporalField = Et;
 		end
 
@@ -183,23 +185,71 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			Ek = obj.SpectralField;
 			wPeak = 2*pi*c./obj.PeakWavelength;
 			chirpArg = 0.5.*gdd.*(obj.SimWin.Omegas - wPeak).^2;
-			Ek = Ek .* exp(-1i.*chirpArg);
-			% Ek = Ek .* exp(1i.*chirpArg);
+			% chirpArg = 0.5.*gdd.*(obj.SimWin.RelativeOmegas).^2;
+			% Ek = Ek .* exp(-1i.*chirpArg);
+			Ek = Ek .* exp(1i.*chirpArg);
 			obj.k2t(Ek);
 			obj.AppliedGDD = obj.AppliedGDD + gdd;
 		end
 
 		%% Analysis
-		function gf = get.GFit(obj)
-			sigmaIntensity = std(obj.SimWin.Times,obj.TemporalIntensity);
+		function Ek = get.SpectralField(obj)
+			n = obj.SimWin.NumberOfPoints;
+			n = 2*n;
+			% Ek = fftshift(fft(obj.TemporalField,n,2),2);
+			%%% Shifting *before* the fft moves zero-shifted phase to the
+			%%% centre of the window rather than the edge. Still a valid
+			%%% transform due to the Fourier shift theorem.
+			Ek = fftshift(fft(fftshift(obj.TemporalField,2),n,2),2);
+			% Ek = fftshift(ifft(fftshift(obj.TemporalField,2),n,2),2);
+			% Ek = Ek.*n;
+			if n > obj.SimWin.NumberOfPoints
+				Ek = Ek(:,1:2:end,:);
+			end
+		end
 
-			% sigmaField = std(obj.SimWin.Times,obj.TemporalIntensity.^0.5);
-			% fwhmField = findfwhm(obj.SimWin.Times,obj.TemporalIntensity.^0.5);
-			% fwhmIntensity = obj.DurationCheck;
-			% ratioField =  fwhmField ./ sigmaField ;
-			% ratioIntensity = fwhmIntensity ./ sigmaIntensity;
-			% gf = ratioField ./ ratioIntensity;
-			gf = obj.DurationCheck ./ sigmaIntensity ./ (2*sqrt(2*log(2)));
+		function set.SpectralField(obj,Ek)
+			obj.k2t(Ek);
+		end
+
+		function k2t(obj,Ek)
+			n = obj.SimWin.NumberOfPoints;
+			n = 2*n;
+			% Et = ifftshift(ifft(Ek,n,2),2);
+			%%% Shifting *before* the fft moves zero-shifted phase to the
+			%%% centre of the window rather than the edge. Still a valid
+			%%% transform due to the Fourier shift theorem.
+			Et = ifftshift(ifft(ifftshift(Ek,2),n,2),2);
+			% Et = ifftshift(fft(ifftshift(Ek,2),n,2),2);
+			% Et = Et./n;
+			if n > obj.SimWin.NumberOfPoints
+				Et = 2*Et(:,1:2:end,:);
+			end
+			obj.TemporalField = Et;
+		end
+
+		function sp = get.SpectralPhase(obj)
+			sp = unwrap(angle(obj.SpectralField),[],2);
+			sp = gather(sp);
+			% sp = sp - min(sp(obj.SimWin.Lambdanm>obj.SimWin.SpectralLimits(1)));
+		end
+
+		function set.SpectralPhase(obj,phi)
+			EkMag = abs(obj.SpectralField);
+			Ek = EkMag.*exp(1i*phi);
+			obj.k2t(Ek);
+		end
+
+		function tp = get.TemporalPhase(obj)
+			tp = unwrap(angle(obj.TemporalField),[],2);
+			tp = gather(tp);
+		end
+		
+		function set.TemporalPhase(obj,phi)
+			EtMag = abs(obj.TemporalField);
+			% Et = EtMag.*exp(-1i*phi);
+			Et = EtMag.*exp(1i*phi);
+			obj.TemporalField = Et;
 		end
 
 		function lam_max = get.PeakWavelength(obj)
@@ -220,15 +270,12 @@ classdef OpticalPulse < matlab.mixin.Copyable
 
 		function gdd = get.CalculatedGDD(obj)
 			chrp = sqrt( (obj.DurationCheck .^ 2 ./ obj.DurationTL .^ 2) - 1);
-
 			%%% will need to update to work as a function of pulse profile
 			%%% Gaussian would use 2*sqrt(log(2)), 
 			% gdd = abs(chrp .* ((obj.DurationTL./(2*sqrt(log(2)))).^2));
 			%%% Sech uses 1 + sqrt(2) = 2.4142
 			gdd = abs(chrp .* ((obj.DurationTL./(2*sqrt(log(2.4142)))).^2));
-
 		end
-
 
 		function EtTL = get.TemporalFieldTL(obj)
 			Ek = obj.SpectralField;
@@ -236,6 +283,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			n = obj.SimWin.NumberOfPoints;
 			n = 2*n;
 			Et = ifft(ifftshift(EkMag,2),n,2);
+			% Et = fft(ifftshift(EkMag,2),n,2);
 			if n > obj.SimWin.NumberOfPoints
 				EtTL = 2*Et(:,1:2:end,:);
 			end
@@ -324,43 +372,6 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			esd = gather(y);
 		end
 
-		function sp = get.SpectralPhase(obj)
-			sp = unwrap(angle(obj.SpectralField),[],2);
-			sp = gather(sp);
-			% sp = sp - min(sp(obj.SimWin.Lambdanm>obj.SimWin.SpectralLimits(1)));
-		end
-
-		function set.SpectralPhase(obj,phi)
-			EkMag = abs(obj.SpectralField);
-			Ek = EkMag.*exp(1i*phi);
-			obj.k2t(Ek);
-		end
-
-		function tp = get.TemporalPhase(obj)
-			tp = unwrap(angle(obj.TemporalField),[],2);
-			tp = gather(tp);
-		end
-		
-		function set.TemporalPhase(obj,phi)
-			EtMag = abs(obj.TemporalField);
-			% Et = EtMag.*exp(-1i*phi);
-			Et = EtMag.*exp(1i*phi);
-			obj.TemporalField = Et;
-		end
-
-		function Ek = get.SpectralField(obj)
-			n = obj.SimWin.NumberOfPoints;
-			n = 2*n;
-			Ek = fftshift(fft(obj.TemporalField,n,2),2);
-			if n > obj.SimWin.NumberOfPoints
-				Ek = Ek(:,1:2:end,:);
-			end
-		end
-
-		function set.SpectralField(obj,Ek)
-			obj.k2t(Ek);
-		end
-
 		function a = get.Area(obj)
 			a = pi * (obj.Radius .^ 2);
 		end
@@ -404,14 +415,16 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			obj.SpectralField = Ek;
 		end
 
-		function k2t(obj,Ek)
-			n = obj.SimWin.NumberOfPoints;
-			n = 2*n;
-			Et = ifft(ifftshift(Ek,2),n,2);
-			if n > obj.SimWin.NumberOfPoints
-				Et = 2*Et(:,1:2:end,:);
-			end
-			obj.TemporalField = Et;
+		function gf = get.GFit(obj)
+			sigmaIntensity = std(obj.SimWin.Times,obj.TemporalIntensity);
+
+			% sigmaField = std(obj.SimWin.Times,obj.TemporalIntensity.^0.5);
+			% fwhmField = findfwhm(obj.SimWin.Times,obj.TemporalIntensity.^0.5);
+			% fwhmIntensity = obj.DurationCheck;
+			% ratioField =  fwhmField ./ sigmaField ;
+			% ratioIntensity = fwhmIntensity ./ sigmaIntensity;
+			% gf = ratioField ./ ratioIntensity;
+			gf = obj.DurationCheck ./ sigmaIntensity ./ (2*sqrt(2*log(2)));
 		end
 
 		%% Combining Pulses
@@ -534,11 +547,13 @@ classdef OpticalPulse < matlab.mixin.Copyable
 				figure
 				tlh = tiledlayout(2,1);
 			end
-			nexttile(tlh,1)
+			% nexttile(tlh,1)
+			nexttile(tlh)
 			hold on
 			obj.lplot(lamLims,pulseN);
 			hold off
-			nexttile(tlh,2)
+			% nexttile(tlh,2)
+			nexttile(tlh)
 			hold on
 			obj.tplot(pulseN);
 			hold off

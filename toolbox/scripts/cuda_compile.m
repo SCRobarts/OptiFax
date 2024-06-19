@@ -1,17 +1,18 @@
 %% cuda_compile
 
-clear all;
+% clear all;
 % cd('D:\Seb Robarts\OneDrive - Heriot-Watt University\Heriot Watt\Summer 2021\MATLABThings')
-cd('C:\Users\Seb Robarts\Dropbox (Heriot-Watt University Team)\RES_EPS_McCracken_Lab\Seb\OptiFax\toolbox\lib\MEXlib\src')
+cd('C:\Users\Seb Robarts\Heriot-Watt University Team Dropbox\RES_EPS_McCracken_Lab\Seb\OptiFax\toolbox\lib\MEXlib\src')
 
 mexcuda -dynamic -g  -O...
-	-output OPOmexbatchDynamic ... % -output OPOmexbatch ...
-	OPO_CUDA_DYNAMIC_BATCH_OP.cu ... % OPO_CUDA_BATCH_OP.cu ...
+	-output OPOmexbatch512TPB ... % -output OPOmexbatchDynamic ...
+	OPO_CUDA_BATCH_OP.cu ... % OPO_CUDA_DYNAMIC_BATCH_OP.cu ... 
 	OPO_mex_BATCH.cpp...
 	'-LC:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.2\lib' -lcufft
 
 % copyfile OPOmexbatch.mexw64 ../OPOmexbatch.mexw64
-copyfile OPOmexbatchDynamic.mexw64 ../OPOmexbatchDynamic.mexw64
+copyfile OPOmexbatch512TPB.mexw64 ../OPOmexbatch512TPB.mexw64
+% copyfile OPOmexbatchDynamic.mexw64 ../OPOmexbatchDynamic.mexw64
 
 
 % 	-output OPO_mex_test ...

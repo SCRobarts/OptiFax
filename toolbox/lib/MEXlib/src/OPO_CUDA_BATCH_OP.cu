@@ -12,6 +12,7 @@
 
 /*Define block size.*/
 #define threadsPerBlock	128
+//#define threadsPerBlock	512
 
 /* Define imaginary constant */
 #define I make_float2(0.0,1.0)
