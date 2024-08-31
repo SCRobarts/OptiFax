@@ -7,7 +7,7 @@ close all
 clear
 
 batchRun = 1;
-pathstr	  = 'C:\Users\Seb Robarts\Dropbox (Heriot-Watt University Team)\RES_EPS_McCracken_Lab\Seb\PGR\Sim Data\Plots\waveguideDelayChirp\';
+pathstr	  = 'C:\Users\Seb Robarts\Heriot-Watt University Team Dropbox\RES_EPS_McCracken_Lab\Seb\PGR\Sim Data\Plots\waveguideDelayChirp\';
 folderstr = 'SimInProgress';
 % vidname = 'FixedGrating_';
 uncertainty_m = 1 * 0.1e-6;
@@ -124,14 +124,16 @@ hold on
 plot(tplot*1e12,fridge*1e-12,'r')
 hold off
 
-return
+% return
 %%
 if batchRun
 	% delay = [-450:10:-250] .* 1e-15;
 	delay = [-500:10:100] .* 1e-15;
 	% delay = [-425:25:300] .* 1e-15;
-	pumpChirp = -2500e-30:100e-30:-1000e-30;
-	pulseChirps = 1440e-30:20e-30:1480e-30;
+	% pumpChirp = -2500e-30:100e-30:-1000e-30;
+	% pulseChirps = 1440e-30:20e-30:1480e-30;
+	pumpChirp = -2500e-30:500e-30:-1000e-30;
+	pulseChirps = 1440e-30:40e-30:1480e-30;
 	% periods = P2:0.2e-6:P1;
 	% as = 0.25:0.25:2.75;
 	% as = [0.3, 0.5, 0.75, 1, 1.5, 2.5, 5, 10];
@@ -235,7 +237,8 @@ for n = 1:length(pulseChirps)
 
 		merMax(n) = max(cMerit,[],"all"); %#ok<*SAGROW>
 		cd(pathstr);
-		if exist(folderstr,'dir') ~= 7
+		% if exist(folderstr,'dir') ~= 7
+		if isfolder(folderstr) ~= 1
 			mkdir(folderstr);
 		end
 		cd(folderstr);

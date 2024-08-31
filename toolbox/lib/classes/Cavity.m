@@ -129,7 +129,8 @@ classdef Cavity < handle
 			nexttile
 			wavplot(obj.SimWin.Lambdanm,obj.Transmission)
 			xlim(lims)
-			ylabel('Power Transmission')
+			% ylabel('Power Transmission')
+			ylabel('Relative Net Power')
 
 			nexttile
 			wavplot(obj.SimWin.Lambdanm,obj.Dispersion)

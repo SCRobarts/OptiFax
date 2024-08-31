@@ -24,11 +24,14 @@ classdef OpticalSim < matlab.mixin.Copyable
 		SpectralPlotLimits = [350 4500];
 		StoredPulses	OpticalPulse	% Pulse object with multiple fields, storing desired pulse each trip (currently XOut)
 		TripNumber = 0;
-		PumpRadiusXtalIn	% The radius of the pump beam on entering the crystal [m]
+		PumpRadiusXtalIn = 50e-6;	% The radius of the pump beam on entering the crystal [m]
 		ESDPumpDepAverage
+		CombinedESDPumpDep	% Combines annuli; equivalent to ESDPumpDepAverage for a single annulus.
 		ESDOutAverage
-		ESDIdlerAverage
+		CombinedESDOut		% Combines annuli; equivalent to ESDOutAverage for a single annulus.
+		ESDIdlerICAverage	% Run averaged intracavity idler ESD exiting the crystal.
 		PowerOutAverage
+		CombinedPowerOut	% Combines annuli; equivalent to PowerOutAverage for a single annulus.
 		PowerIdlerAverage
 		AnnularDivergence = 0;
 	end
@@ -115,24 +118,36 @@ classdef OpticalSim < matlab.mixin.Copyable
 			
 			obj.PumpPulse.applyGDD(obj.System.PumpChirp);
 			
+			refresh(obj);
+
 			obj.InputPulse = obj.PumpPulse.writeto;
 			obj.InputPulse.Name = "Simulation-In Pulse";
-			obj.XInPulse = obj.PumpPulse.writeto;
-			obj.XInPulse.Name = "Xtal-In Pulse";
-			obj.XOutPulse = obj.PumpPulse.writeto;
-			obj.XOutPulse.Name = "Xtal-Out Pulse";
 
-			refresh(obj);
 		end
 
 		function refresh(obj) % Ideally take varargin to allow changing properties?
 			airOpt = obj.PumpPulse.Medium;
 			obj.PumpPulse.refract(obj.System.Xtal);
-
 			obj.System.Xtal.ppole(obj);
+			obj.PumpPulse.refract(airOpt);
+
+			if length(obj.Delay) > (obj.PumpPulse.NumberOfPulses)
+				obj.PumpPulse.addDims([length(obj.Delay),1])
+				obj.Pulse.addDims([length(obj.Delay),1])
+			end
+			if length(obj.Delay(:)) > 1 && length(obj.Delay(:)) < obj.NumOfParRuns
+				obj.Delay = repmat(obj.Delay,obj.PumpPulse.Annuli,1);
+				% obj.AnnularDivergence = repmat(obj.AnnularDivergence,obj.PumpPulse.NumberOfPulses,1);
+			end
+
+			obj.XInPulse = obj.PumpPulse.writeto;
+			obj.XInPulse.Name = "Xtal-In Pulse";
+			obj.XOutPulse = obj.PumpPulse.writeto;
+			obj.XOutPulse.Name = "Xtal-Out Pulse";	
+
 			obj.SpectralProgressShift = repmat(fft(fftshift(obj.PumpPulse.TemporalField(1,:),2)).',1,obj.ProgressPlots,obj.NumOfParRuns);
-			% obj.SpectralProgressShift = repmat(ifft(fftshift(obj.PumpPulse.TemporalField(1,:),2)).',1,obj.ProgressPlots,obj.NumOfParRuns).*obj.SimWin.NumberOfPoints;
-			if obj.RoundTrips > 1
+
+			if obj.RoundTrips > 1 && obj.NumOfParRuns < 2
 				obj.FinalPlotter = SimPlotter(obj,obj.TripNumber + (1:obj.RoundTrips),"Round Trip Number",obj.SpectralPlotLimits);
 			end
 			if obj.ProgressPlotting % || obj.RoundTrips == 1
@@ -141,15 +156,12 @@ classdef OpticalSim < matlab.mixin.Copyable
 				obj.ProgressPlotter = SimPlotter(obj,ydat,ylab,obj.SpectralPlotLimits);
 			end
 			obj.StepSizeModifiers = obj.convArr(zeros(obj.RoundTrips,obj.System.Xtal.NSteps));
-			obj.PumpPulse.refract(airOpt);
 			% obj.StoredPulses = obj.Pulse.writeto;
-			if length(obj.Delay) > (obj.PumpPulse.NumberOfPulses/length(obj.PumpPulse.Radius))
-				obj.PumpPulse.addDims([length(obj.Delay),1])
-			end
+
 			obj.StoredPulses = obj.PumpPulse.writeto;
 			obj.StoredPulses.Name = "Stored XOut Pulses";
 			if obj.NumOfParRuns > 1	
-				obj.StoredPulses.addDims([obj.NumOfParRuns/obj.PumpPulse.NumberOfPulses,1,obj.RoundTrips]);
+				obj.StoredPulses.addDims([obj.NumOfParRuns/obj.PumpPulse.NumberOfPulses/obj.PumpPulse.Annuli,1,obj.RoundTrips]);
 			else
 				obj.StoredPulses.addDims([obj.RoundTrips,1]);
 			end
@@ -165,8 +177,8 @@ classdef OpticalSim < matlab.mixin.Copyable
 			end
 			obj.ESDOutAverage = zeros(size(obj.OutputPulse.ESD_pJ_THz));
 			obj.ESDPumpDepAverage = obj.ESDOutAverage;
-			obj.ESDIdlerAverage = obj.ESDOutAverage;
-			obj.PowerOutAverage = zeros(size(obj.OutputPulse.Power));
+			obj.ESDIdlerICAverage = obj.ESDOutAverage;
+			obj.PowerOutAverage = zeros(obj.Pulse.Annuli,obj.Pulse.NumberOfPulses);
 			obj.PowerIdlerAverage = obj.PowerOutAverage;
 		end
 
@@ -182,7 +194,6 @@ classdef OpticalSim < matlab.mixin.Copyable
 		%	will need to generalise this for different waveguides.
 			
 			xtal = obj.System.Xtal;
-			% sel = (round(xtal.NSteps/(obj.ProgressPlots - 1)));
 			sel = (ceil(xtal.NSteps/(obj.ProgressPlots - 1)));
 			n0 = xtal.Bulk.RefractiveIndex(obj.SimWin.ReferenceIndex);
 			w0 = obj.convArr(obj.SimWin.ReferenceOmega);
@@ -205,7 +216,6 @@ classdef OpticalSim < matlab.mixin.Copyable
 				
 				EtShift = fftshift(obj.Pulse.TemporalField,2).';
 				obj.SpectralProgressShift(:,1,:) = fft(EtShift);
-				% obj.SpectralProgressShift(:,1,:) = ifft(EtShift).*obj.SimWin.NumberOfPoints;
 
 				[EtShift,obj.SpectralProgressShift(:,2:obj.ProgressPlots,:),obj.StepSizeModifiers(obj.SimTripNumber,:)] =...
 										obj.Solver(	EtShift,...
@@ -251,8 +261,8 @@ classdef OpticalSim < matlab.mixin.Copyable
 				if obj.DetectorPosition < width(obj.System.Optics)
 					obj.Pulse.propagate(obj.System.Optics(:,obj.DetectorPosition+1:end));
 				end
-				% obj.Pulse.applyGD(obj.Delay(:));
-				obj.Pulse.applyGD(random('Normal',obj.Delay(:),2*obj.SimWin.DeltaTime));
+				obj.Pulse.applyGD(obj.Delay(:));
+				% obj.Pulse.applyGD(random('Normal',obj.Delay(:),2*obj.SimWin.DeltaTime));
 
 				obj.annularDivergence;
 			end
@@ -265,23 +275,31 @@ classdef OpticalSim < matlab.mixin.Copyable
 				end
 			end
 
+			obj.combineAnnuli;
+
 		end
 
 		function averageSimPulses(obj)
 			obj.ESDPumpDepAverage = obj.ESDPumpDepAverage + gather(obj.XOutPulse.ESD_pJ_THz./obj.RoundTrips);
 			pumpLim = (obj.Source.Wavelength + 5*obj.Source.LineWidth)*1e9;
-			obj.ESDPumpDepAverage(obj.SimWin.LambdanmPlot>pumpLim) = 0;
+			obj.ESDPumpDepAverage(:,obj.SimWin.LambdanmPlot>pumpLim(1),:) = 0;
 
 			obj.ESDOutAverage = obj.ESDOutAverage + gather(obj.OutputPulse.ESD_pJ_THz./obj.RoundTrips);
-			obj.PowerOutAverage = obj.PowerOutAverage + gather(obj.OutputPulse.Power./obj.RoundTrips);
+			obj.PowerOutAverage = obj.PowerOutAverage + reshape(gather(obj.OutputPulse.Power./obj.RoundTrips),obj.Pulse.Annuli,obj.Pulse.NumberOfPulses);
 
-			obj.ESDIdlerAverage = obj.ESDIdlerAverage + gather(obj.XOutPulse.ESD_pJ_THz./obj.RoundTrips);
+			obj.ESDIdlerICAverage = obj.ESDIdlerICAverage + gather(obj.XOutPulse.ESD_pJ_THz./obj.RoundTrips);
 			idlerLim = 2100;
-			obj.ESDIdlerAverage(obj.SimWin.LambdanmPlot<idlerLim) = 0;
+			obj.ESDIdlerICAverage(:,obj.SimWin.LambdanmPlot<idlerLim,:) = 0;
+		end
+
+		function combineAnnuli(obj)
+			obj.CombinedESDPumpDep = squeeze(sum(obj.ESDPumpDepAverage,1)).';
+			obj.CombinedESDOut = squeeze(sum(obj.ESDOutAverage,1)).';
+			obj.CombinedPowerOut = sum(obj.PowerOutAverage,1).';
 		end
 
 		function annularDivergence(obj)
-			nAnnuli = length(obj.PumpPulse.Radius);
+			nAnnuli = obj.PumpPulse.Annuli;
 			if nAnnuli > 1
 				% DivergentPulse = optSim.OutputPulse.writeto;
 				% obj.Pulse.TemporalRootPower(end-1,:) = obj.Pulse.TemporalRootPower(end-1,:) + obj.Pulse.TemporalRootPower(end,:);
@@ -295,9 +313,11 @@ classdef OpticalSim < matlab.mixin.Copyable
 			
 				% divScale = [0.2955    0.2190    0.0895]'; 
 				% divScale = 0.2;
-				divScale = obj.AnnularDivergence; 
-				obj.Pulse.TemporalRootPower(end,:) = sum(divScale.*obj.Pulse.TemporalRootPower(1:end-1,:),1) + obj.Pulse.TemporalRootPower(end,:);
-				obj.Pulse.TemporalRootPower(1:end-1,:) = (1-divScale).*obj.Pulse.TemporalRootPower(1:end-1,:);
+				% divScale = obj.AnnularDivergence; 
+				% obj.Pulse.TemporalRootPower(end,:) = sum(divScale.*obj.Pulse.TemporalRootPower(1:end-1,:),1) + obj.Pulse.TemporalRootPower(end,:);
+				% obj.Pulse.TemporalRootPower(1:end-1,:) = (1-divScale).*obj.Pulse.TemporalRootPower(1:end-1,:);
+				
+				obj.Pulse.diverge(obj.AnnularDivergence);
 			end
 		end
 
@@ -352,15 +372,19 @@ classdef OpticalSim < matlab.mixin.Copyable
 		end
 
 		function Ik = get.IkEvoData(obj)
-			Eks = ifftshift(obj.SpectralProgressShift(:,:,1).',2);
-			% Eks = fftshift(Eks,2);
+			nAnnuli = obj.Pulse.Annuli;
+			% Eks = ifftshift(obj.SpectralProgressShift(:,:,1).',2);
+			Eks = ifftshift(sum(obj.SpectralProgressShift(:,:,1:nAnnuli),3).',2);
 			Ik = abs(Eks(:,obj.SimWin.IsNumIndex));
+			Ik = 10*log10(Ik);
+			Ik(Ik<max(Ik,[],"all")/2) = max(Ik,[],"all")/2;
 			Ik = gather(Ik);
 		end
 
 		function It = get.ItEvoData(obj)
-			Ets = (ifft(obj.SpectralProgressShift(:,:,1).',[],2));
-			% Ets = (fft(obj.SpectralProgressShift(:,:,1).',[],2));
+			nAnnuli = obj.Pulse.Annuli;
+			% Ets = (ifft(obj.SpectralProgressShift(:,:,1).',[],2));
+			Ets = ifft(sum(obj.SpectralProgressShift(:,:,1:nAnnuli),3).',[],2);
 			It = abs(fftshift(Ets,2));
 			It = It(:,1:obj.SimWin.Granularity:end);
 			It = gather(It);

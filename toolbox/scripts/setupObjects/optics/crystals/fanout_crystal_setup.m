@@ -15,21 +15,21 @@ close all
 %%% If only one surface is specified, it's assumed that the same coating
 %%% exists on each surface.
 
-% coating_str = "HCP_PPLN_Fanout_AR" ; % To be extracted from the HCP pdf as supplied by Chromacity
-coating_str = 'AR';	% Idealised 100% anti-reflection across all wavelengths
-% material_str = "PPLN";
-material_str = "OP-GaP";
-L = 1e-3;
-% name = "HCP_PPLN_fanout_Chromacity";
-name = "OP_GaP_fanout_test";
+coating_str = "HCP_PPLN_Fanout_AR" ; % To be extracted from the HCP pdf as supplied by Chromacity
+% coating_str = 'AR';	% Idealised 100% anti-reflection across all wavelengths
+material_str = "PPLN";
+% material_str = "OP-GaP";
+L = 5e-3;
+name = "HCP_PPLN_fanout_Auskerry";
+% name = "OP_GaP_fanout_test";
 
 %% Crystal specific arguments
 temp_C = 34;
 %%% Fanout grating function arguments:
-% P1 = 27.5e-6;	% Starting grating period [m]
-% P2 = 32.5e-6;	% Finishing grating period [m]
-P1 = 21e-6 - 0e-6;	% Starting grating period [m]
-P2 = 35e-6 + 0e-6;	% Finishing grating period [m]
+P1 = 27.5e-6;	% Starting grating period [m]
+P2 = 32.5e-6;	% Finishing grating period [m]
+% P1 = 21e-6 - 0e-6;	% Starting grating period [m]
+% P2 = 35e-6 + 0e-6;	% Finishing grating period [m]
 xtal_height = 6e-3;	% Quoted y dimension [m], fanout poling may not extend this full distance?	
 % a = 0.48;		% Exponent for rate of chirp
 
@@ -37,7 +37,7 @@ uncertainty_m = 0.0e-6;	% Small perturbation in domain wall locations [m]
 dutyOff = 0.0;	% Systematic offset of duty cycle within each period (not currently implemented for chirped)
 grating_m = [P1; P2];
 y = 0.9e-3;
-mfd = 36.5e-6;	% Mode Field Diameter [m]
+mfd = 35.5e-6;	% Mode Field Diameter [m]
 
 xtalArgs = {grating_m, uncertainty_m, dutyOff};
 
@@ -45,6 +45,7 @@ xtal = NonlinearCrystal(xtalArgs{:},coating_str,material_str,L);
 xtal.Height = xtal_height;
 xtal.VerticalPosition = y;
 xtal.ModeFieldDiameter = mfd;
+% xtal.WaistPosition = 4.3e-3;
 xtal.Bulk.Temperature = temp_C;
 
 

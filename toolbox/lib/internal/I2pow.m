@@ -10,8 +10,8 @@ arguments
 	x  = [0 1]
 	xs = [min(x) max(x)]
 end
-	%c 	 	=	299792458;
-	% eps0	=	8.854E-12;
+	%%% c 	 	=	299792458;
+	%%% eps0	=	8.854E-12;
 	Esq2I	=	c.*nr.*eps0./2;
 
 	I = splitspec(I,x,xs);

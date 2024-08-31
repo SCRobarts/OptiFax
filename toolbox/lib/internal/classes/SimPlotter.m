@@ -171,15 +171,24 @@ classdef SimPlotter < matlab.mixin.Copyable
 			ylim(obj.TemporalEvoAxes,obj.YLimits);
 		end
 
-		function ioplots(obj,n,pulse)
-			pn = 1;
-			obj.SpectralMagPlot(n).YData = pulse.ESD_pJ_THz(pn,:);
+		function ioplots(obj,n,pulse,pn)
+			arguments
+				obj		SimPlotter
+				n
+				pulse	OpticalPulse
+				% pn = pulse.NumberOfPulses;
+				pn = 1;
+			end
+			% obj.SpectralMagPlot(n).YData = pulse.ESD_pJ_THz(pn,:);
+			obj.SpectralMagPlot(n).YData = pulse.CombinedESD_pJ_THz(pn,:);
 			obj.SpectralPhiPlot(n).YData = pulse.SpectralPhase(pn,:);
 			updatepeaks(obj.SpectralMagPlot(n));
-			obj.TemporalMagPlot(n).YData = gather(pulse.TemporalIntensity(pn,:));
+			% obj.TemporalMagPlot(n).YData = gather(pulse.TemporalIntensity(pn,:));
+			obj.TemporalMagPlot(n).YData = pulse.CombinedTemporalIntensity(pn,:);
 			obj.TemporalPhiPlot(n).YData = pulse.TemporalPhase(pn,:);
 
-			tstr = {['Energy = ', num2str(pulse.Energy(pn,:)*1e9,3), ' nJ'],...
+			% tstr = {['Energy = ', num2str(pulse.Energy(pn,:)*1e9,3), ' nJ'],...
+			tstr = {['Power = ', num2str(pulse.CombinedPower(pn,:),3), ' W'],...
 					['FWHM = ', num2str(pulse.DurationCheck(pn)*1e15,3), ' fs']};
 
 			obj.TemporalText(n).String = tstr;
@@ -202,8 +211,10 @@ classdef SimPlotter < matlab.mixin.Copyable
 			roundstr = ['Evolution over ', int2str(trip), ' round trips'];
 			obj.ProgressFigure.Name = roundstr;
 			obj.EvoTiles.Title.String = roundstr;
-			obj.SpectralEvoPlot.ZData = optSim.StoredPulses.ESD_pJ_THz;
-			obj.TemporalEvoPlot.ZData = optSim.StoredPulses.TemporalIntensity(:,1:optSim.SimWin.Granularity:end);
+			% obj.SpectralEvoPlot.ZData = optSim.StoredPulses.ESD_pJ_THz;
+			% obj.TemporalEvoPlot.ZData = optSim.StoredPulses.TemporalIntensity(:,1:optSim.SimWin.Granularity:end);
+			obj.SpectralEvoPlot.ZData = optSim.StoredPulses.CombinedESD_pJ_THz;
+			obj.TemporalEvoPlot.ZData = optSim.StoredPulses.CombinedTemporalIntensity(:,1:optSim.SimWin.Granularity:end);
 
 			outPulse = optSim.OutputPulse;
 			obj.ioplots(1,outPulse);

@@ -5,14 +5,15 @@ classdef OpticalPulse < matlab.mixin.Copyable
 		TemporalField		% E(t) / (V/m) complex array
 		Source		Laser
 		Duration
-		Radius	= 1;	% 1/e Intensity radius (m)
 		AppliedGDD = 0;
 	end
 	properties (Transient)
 		SimWin		SimWindow
+		Radius	= 1;	% 1/e Intensity radius (m)
 		Medium = Optic("T","AR","air");
 	end
 	properties (Dependent)
+		AverageIntensity
 		Area
 		SpectralField
 		SpectralPhase
@@ -21,9 +22,11 @@ classdef OpticalPulse < matlab.mixin.Copyable
 		Energy
 		EnergySpectralDensity
 		ESD_pJ_THz
+		CombinedESD_pJ_THz	% Sum over annuli
 		FrequencyFWHM
 		WavelengthFWHM
 		TemporalIntensity
+		CombinedTemporalIntensity	% Sum over annuli
 		TemporalRootPower
 		DurationTL		% Transform limited current pulse duration (I fwhm)
 		DurationCheck	% Current pulse duration (I fwhm)
@@ -32,10 +35,13 @@ classdef OpticalPulse < matlab.mixin.Copyable
 		RequiredGDD				% GroupDelayDispersion (s^2)
 		CalculatedGDD
 		PeakWavelength	% Max intensity wavelength (m)
-		Power
+		CombinedPeakWavelength	% Max intensity wavelength based on CombinedESD_pJ_THz (m) 
+		Power			% Pulse power [W]
+		CombinedPower	% Sum over annuli
 		PeakPowerCoefficient
 		PeakPower
 		GFit			% An attempt to quantify how Gaussian a pulse is?
+		Annuli
 		NumberOfPulses
 	end
 
@@ -86,11 +92,22 @@ classdef OpticalPulse < matlab.mixin.Copyable
 		end
 
 		function addDims(obj,sz)
-			obj.TemporalField = repmat(obj.TemporalField,sz);
+			% if obj.Annuli > 1
+			% 	r = repmat(obj.Radius,sz);
+			% 	obj.Radius = sum(obj.Radius);
+			% 	obj.TemporalField = repmat(obj.TemporalField,sz);
+			% 	obj.Radius = r;
+			% else
+				obj.TemporalField = repmat(obj.TemporalField,sz);
+			% end
+		end
+
+		function nAnn = get.Annuli(obj)
+			nAnn = length(obj.Source.Waist);
 		end
 
 		function nP = get.NumberOfPulses(obj)
-			nP = length(obj.TemporalField(:,1));
+			nP = length(obj.TemporalField(:,1)) ./obj.Annuli;
 		end
 		
 		%% Propagation
@@ -156,6 +173,45 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			obj.k2t(Ek);
 		end
 
+		function diverge(obj,annDiv)
+			pStart = obj.CombinedPower;
+			pScale = ones(length(annDiv),obj.NumberOfPulses);
+			% initialProfile = obj.Power./sum(obj.Power);
+			P = reshape(obj.Power,obj.Annuli,obj.NumberOfPulses);
+			TRP = reshape(obj.TemporalRootPower,obj.Annuli,obj.NumberOfPulses,[]);
+			initialProfile = P./obj.CombinedPower';
+			profileDeltas = initialProfile - annDiv;
+			relWeights = profileDeltas./initialProfile;
+
+			posID = (relWeights >= 0);
+			posDiv = relWeights.*posID;
+			% posDiv = reshape(posDiv,[],obj.NumberOfPulses);
+			negDiv = relWeights.*~posID;
+			% negDiv = reshape(negDiv,[],obj.NumberOfPulses);
+			negWeights = negDiv./sum(negDiv,1);
+
+			% NID = length(innerDiv);
+			% totalP = sum(obj.Power);
+			deficitP = P.*~posID;
+			transferP = negWeights .* sum(posDiv.*(P.*posID));
+			newP = deficitP+transferP;
+			TRPtransfers = posDiv.*TRP;
+			TRPtransfer = (sum(TRPtransfers,1));
+
+			TRPtransfer = repmat(TRPtransfer,obj.Annuli,1);
+
+			wTRPtransfer = reshape((negWeights.*TRPtransfer),[],obj.SimWin.NumberOfPoints);
+
+			obj.TemporalRootPower(~posID,:) = wTRPtransfer(~posID,:) + obj.TemporalRootPower(~posID,:);
+
+			pScale(posID) = (1 - posDiv(posID));
+			pScale(~posID) = newP(~posID)./obj.Power(~posID);
+ 			obj.kscale(pScale.^0.5);
+
+			pEnd = obj.CombinedPower;
+
+		end
+
 		%% Transformation
 		function timeShift(obj)
 			Ek = obj.SpectralField;
@@ -166,11 +222,11 @@ classdef OpticalPulse < matlab.mixin.Copyable
 		
 		function spectralShift(obj,lam)
 			wNew = 2*pi*c / lam;
-			wOld = 2*pi*c / obj.PeakWavelength;
+			wOld = 2*pi*c / obj.PeakWavelength(1);
 			t = obj.SimWin.Times;
 			Et = obj.TemporalField;
-			% Et = Et .* exp(1i*(wNew-wOld)*t);
-			Et = Et .* exp(-1i*(wNew-wOld)*t);
+			Et = Et .* exp(1i*(wNew-wOld)*t);
+			% Et = Et .* exp(-1i*(wNew-wOld)*t);
 			obj.TemporalField = Et;
 		end
 
@@ -193,6 +249,10 @@ classdef OpticalPulse < matlab.mixin.Copyable
 		end
 
 		%% Analysis
+		function I = get.AverageIntensity(obj)
+			I = obj.Energy ./ obj.Area ./ obj.DurationCheck ./2;
+		end
+
 		function Ek = get.SpectralField(obj)
 			n = obj.SimWin.NumberOfPoints;
 			n = 2*n;
@@ -290,14 +350,14 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			EtTL = fftshift(EtTL,2);
 			% EtTL = (fftshift(ifft(ifftshift(EkMag))));
 		end
-
+		
 		function It = get.TemporalIntensity(obj)
 			nr = obj.Medium.Bulk.RefractiveIndex(obj.SimWin.ReferenceIndex); 
 			% nr = 1;
 			Esq2I = abs(nr).*c.*eps0 / 2;
 			It = Esq2I .* (abs(obj.TemporalField)).^2;
 		end
-
+		
 		function tRootP = get.TemporalRootPower(obj)
 			rootPmag = sqrt(obj.TemporalIntensity .* obj.Area);
 			tRootP = rootPmag .* exp(1i.*obj.TemporalPhase);
@@ -365,15 +425,9 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			tbp = obj.FrequencyFWHM .* obj.DurationCheck;
 		end
 
-		function esd = get.ESD_pJ_THz(obj)
-			y = abs(obj.EnergySpectralDensity*1e24);
-			ids = obj.SimWin.IsNumIndex;
-			y = y(:,ids);
-			esd = gather(y);
-		end
-
 		function a = get.Area(obj)
 			a = pi * (obj.Radius .^ 2);
+			a = repmat(a,obj.NumberOfPulses,1);
 		end
 
 		function set.Medium(obj,mat)
@@ -393,6 +447,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			x = obj.Radius./r;
 			obj.Radius = r;
 			if length(x) > 1
+				x = repmat(x,obj.NumberOfPulses,1);
 				obj.kscale(x);
 			else
 				obj.tscale(x);
@@ -409,7 +464,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 
 		function kscale(obj,x)
 			EkMag = abs(obj.SpectralField);
-			EkMag = EkMag.*x;
+			EkMag = EkMag.*x(:);
 			phi = obj.SpectralPhase;
 			Ek = EkMag.*exp(1i*phi);
 			obj.SpectralField = Ek;
@@ -467,6 +522,39 @@ classdef OpticalPulse < matlab.mixin.Copyable
 
 
 		%% Plotting
+		function esd = get.ESD_pJ_THz(obj)
+			y = abs(obj.EnergySpectralDensity*1e24);
+			ids = obj.SimWin.IsNumIndex;
+			y = y(:,ids);
+
+			esd = gather(y);
+			esd = permute(reshape(esd',length(y(1,:)),obj.Annuli,obj.NumberOfPulses),[2 1 3]);
+		end
+
+		function cesd = get.CombinedESD_pJ_THz(obj)
+			cesd = sum(obj.ESD_pJ_THz,1);
+			cesd = permute(cesd,[3 2 1]);
+			% cesd = squeeze(cesd);
+			% cesd = cesd.';
+		end
+
+		function cIt = get.CombinedTemporalIntensity(obj)
+			cIt = gather(obj.TemporalIntensity);
+			cIt = permute(reshape(cIt',[],obj.Annuli,obj.NumberOfPulses),[3 1 2]);
+			cIt = sum(cIt,3); 
+		end
+
+		function clam_max = get.CombinedPeakWavelength(obj)
+			[~,lam_index] = max(obj.CombinedESD_pJ_THz,[],2);
+			clam_max = obj.SimWin.LambdanmPlot(lam_index)' * 1e-9;
+		end
+
+		function cP = get.CombinedPower(obj)
+			P = gather(obj.Power);
+			P = reshape(P,obj.Annuli,obj.NumberOfPulses);
+			cP = sum(P,1)';
+		end
+
 		function [lmagPH,lphiPH,lTextH] = lplot(obj,lims,pulseN)
 			arguments
 				obj
@@ -475,7 +563,9 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			end
 	
 			yyaxis left
-			lmagPH = plot(obj.SimWin.LambdanmPlot,obj.ESD_pJ_THz(pulseN,:));
+			% lmagPH = plot(obj.SimWin.LambdanmPlot,obj.ESD_pJ_THz(pulseN,:));
+			% lmagPH = plot(obj.SimWin.LambdanmPlot,obj.ESD_pJ_THz(:,:,pulseN));
+			lmagPH = plot(obj.SimWin.LambdanmPlot,obj.CombinedESD_pJ_THz(pulseN,:));
 			hold on
 			xlabel('Wavelength / (nm)')
 			ylabel('ESD / (pJ/THz)')
@@ -500,18 +590,19 @@ classdef OpticalPulse < matlab.mixin.Copyable
 				pulseN = 1;
 				lims = 4e15*[-obj.DurationCheck(pulseN) obj.DurationCheck(pulseN)];
 			end
-			[IMax,indexMax] = max(obj.TemporalIntensity(pulseN,:));
-			% [IHMax,indexHMax] = findnearest(obj.TemporalIntensity,IMax/2,2);
+			% [~,indexMax] = max(obj.TemporalIntensity(pulseN,:));
+			[~,indexMax] = max(obj.CombinedTemporalIntensity(pulseN,:));
 			tmax = obj.SimWin.Timesfs(indexMax);
-			% phase = unwrap(angle(obj.TemporalField));
 			yyaxis left
-			tmagPH = plot(obj.SimWin.Timesfs,obj.TemporalIntensity(pulseN,:));
+			% tmagPH = plot(obj.SimWin.Timesfs,obj.TemporalIntensity(pulseN,:));
+			tmagPH = plot(obj.SimWin.Timesfs,obj.CombinedTemporalIntensity(pulseN,:));
 			hold on
 			% plot(obj.SimWin.Times(indexHMax),IHMax,'-+');
 			% text(obj.SimWin.Timesfs(indexHMax(end)),IMax/2,['  FWHM = ', num2str(obj.DurationCheck*1e15,3), ' fs'])
 			% text(tmax,IMax*1.05,['IMax = ', num2str(IMax/1e9/1e4,3), ' GWcm^{-2}'],'HorizontalAlignment','center')
 			% istr = {['IMax = ', num2str(IMax/1e9/1e4,3), ' GWcm^{-2}'],...
-			istr = {['Energy = ', num2str(obj.Energy(pulseN)*1e9,3), ' nJ'],...
+			% istr = {['Energy = ', num2str(obj.Energy(pulseN)*1e9,3), ' nJ'],...
+			istr = {['Power = ', num2str(obj.CombinedPower(pulseN),3), ' W'],...
 					['FWHM = ', num2str(obj.DurationCheck(pulseN)*1e15,3), ' fs']};
 			tTextH = text(0.69,0.85,istr,'Units','Normalized','FontSize',8,...
 				'EdgeColor',"k","BackgroundColor","w","Margin",1,"Clipping","on");
@@ -567,9 +658,10 @@ classdef OpticalPulse < matlab.mixin.Copyable
 				tlims = [min(obj.SimWin.Timesfs) max(obj.SimWin.Timesfs)];
 			end
 			x = obj.TemporalField(pulseN,:); % Input signal for spectrogram
-			win_size = 2^7;			    % Segment size for each STFT
-			num_olap = 1.5*2^6;			% Points of overlap between segments
-			nfft = 2^15;				% Number of DFT points
+			win_size = 2 * 2^7;			    % Segment size for each STFT
+			num_olap = 2 * 1.5*2^6;			% Points of overlap between segments
+			% nfft = 2^15;				% Number of DFT points
+			nfft = 2^14;				% Number of DFT points
 			fs = 1/obj.SimWin.DeltaTime;% Sampling rate
 
 			f0 = obj.SimWin.Frequencies(obj.SimWin.ReferenceIndex);
@@ -588,7 +680,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 
 			[~,freqs,times,powerSpec] = spectrogram(x,win_size,num_olap,nfft,fs,"reassigned",'centered','yaxis','MinThreshold',-30);
 			powerSpec = 10*log10(powerSpec+eps);	% Convert to spectral density in dB/Hz;
-			% powerSpec(powerSpec<-40) = -40;	% Remove -Infs 
+			powerSpec(powerSpec<-20) = -20;	% Remove -Infs 
 
 			freqs = freqs + f0;
 			lambdas = (c./freqs).*1e9;
@@ -598,7 +690,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 			tID = and(times>tlims(1),times<tlims(2));
 			tfs = times(tID);
 			pSplot = powerSpec(lID,tID);
-			pSplot = smoothdata(gather(pSplot),"movmedian",5);
+			pSplot = smoothdata(gather(pSplot),"movmedian",7);
 
 			% figure
 			pcolor(tfs,lnm,pSplot);

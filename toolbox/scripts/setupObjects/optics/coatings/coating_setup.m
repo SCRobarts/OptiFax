@@ -7,15 +7,16 @@ clear
 close all
 
 %% General Optic arguments
-coating_str = "Layertec_126761_T" ; % To be extracted?
+coating_str = "Layertec_135111_T" ; % To be extracted
 % coating_str = 'AR';	% Idealised 100% anti-reflection across all wavelengths
 % coating_str = 0;	% Idealised 100% anti-reflection across all wavelengths
 material = "FS";	% Placeholder, can be replaced when applied to optic
 theta = 0;	% Base angle of incidence
 order = 1;	% Placeholder
 parent = []; % Placeholder
-gdd_str = "Layertec_Proposed_GDD";
-name = "Layertec_Proposed";
+% gdd_str = "Layertec_Proposed_GDD";
+gdd_str = "Layertec_135111_GDD" ;
+name = "Layertec_135111" ;
 
 coating = OpticalSurface(coating_str,material,theta,order,parent,gdd_str);
 coating.store(name,1);

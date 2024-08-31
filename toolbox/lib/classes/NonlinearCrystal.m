@@ -12,7 +12,7 @@ classdef NonlinearCrystal < Waveguide
 		StepSize = 1e-7;
 		Height = 1;				% Int for stepped, [m] for fanout.
 		VerticalPosition = 1;	% Int for stepped, [m] for fanout.
-		WaistPosition	% How far through xtal, pump waist occurs [m]
+		WaistPosition = 0;	% How far through xtal, pump waist occurs [m]
 	end
 	properties (Transient)
 		OptSim
@@ -63,6 +63,7 @@ classdef NonlinearCrystal < Waveguide
 			obj.GratingPeriod = grating_m;
 			obj.Uncertainty = uncertainty_m;
 			obj.DutyCycleOffset = dutyOff;
+			obj.WaistPosition = obj.Length./2;
 		end
 
 		function simulate(obj,simWin)
@@ -123,11 +124,9 @@ classdef NonlinearCrystal < Waveguide
 
 			rz = @(z) linearDiv.*abs(z-waistPos) + beamWaist; % Beam radius as a function of position
 
-			% polScale = rz(obj.Z) ./ beamWaist; % Scaling factor to apply to crystal polarisation
-			% obj.Polarisation = obj.Polarisation .* polScale;
 			polScale =  beamWaist ./ rz(obj.Z); % Scaling factor to apply to crystal polarisation
-			% obj.Polarisation = obj.Polarisation .* polScale.^2;
-			obj.Polarisation = obj.Polarisation .* polScale;
+			obj.Polarisation = obj.Polarisation .* polScale.^2;
+			% obj.Polarisation = obj.Polarisation .* polScale;
 		end
 
 		function grating = fanout(obj)
@@ -160,7 +159,7 @@ classdef NonlinearCrystal < Waveguide
 				axs = 0;
 			end
 			% n_pos = 5;
-			[gain,~,signal,idler] = qpmgain(obj,obj.OptSim.PumpPulse,sigrange);
+			[gain,~,signal,idler,~,~] = qpmgain(obj,obj.OptSim.PumpPulse,sigrange);
 			if strcmp(beam_str,"Signal")
 				sig_unique = signal(:,1);
 			elseif strcmp(beam_str,"Idler")
@@ -177,11 +176,12 @@ classdef NonlinearCrystal < Waveguide
 			for n = 1:n_pos
 				obj.VerticalPosition = ys(n);
 				obj.pole;
-				obj.scalePolarisation(obj.OptSim.PumpRadiusXtalIn,obj.OptSim.PumpPulse.Source.Waist);
-				[gain] = qpmgain(obj,obj.OptSim.PumpPulse,sigrange);
-				gain_sum(n,:) = sum(gain,2);
+				% obj.scalePolarisation(obj.OptSim.PumpRadiusXtalIn,obj.OptSim.PumpPulse.Source.Waist);
+				[gain,~,~,~,~,p_mask] = qpmgain(obj,obj.OptSim.PumpPulse,sigrange);
+					gain_sum(n,:) = sum(gain,2)./sum(p_mask);
 				disp(['Step ', num2str(n) ,' complete'])
 			end
+			% sig_unique = signal(:,1);
 
 			if isinteger(obj.Height)
 				ys = obj.GratingPeriod;
@@ -192,7 +192,7 @@ classdef NonlinearCrystal < Waveguide
 				axs = axes(fh);
 			end
 			if isinteger(obj.Height)
-				p = waterfall(axs,sig_unique,ys,gain_sum);
+				p = waterfall(axs,sig_unique*1e6,ys,gain_sum);
 					view(-0.01,30);
 					p.EdgeColor ='k';
 					p.LineWidth = 1.25;
@@ -206,7 +206,8 @@ classdef NonlinearCrystal < Waveguide
 
 					ylabel('Grating Period / m')
 			else
-				imagesc(axs,sig_unique,ys*1e3,gain_sum)
+				% imagesc(axs,sig_unique*1e6,ys*1e3,gain_sum)
+				pcolor(axs,sig_unique*1e6,ys*1e3,gain_sum)
 					axs.YAxis.Direction = 'normal';
 					colormap(axs,"turbo")
 					axs.Color = [0 0 0];
@@ -221,7 +222,7 @@ classdef NonlinearCrystal < Waveguide
 					% ytls = yticklabels;
 
 			end
-			titleStr    = "Full Temporal Overlap QPM, " ...
+			titleStr    = "Pulse-Crystal Phase-Mapping, " ...
 						+ "\chi^{(2)} = " + num2str(obj.Chi2*1e12,'%i') + "pVm^{-1}";
 
 			subtitleStr = "L = " + num2str(obj.Length*1e3,'%.1f') + "mm, " ...
@@ -231,9 +232,9 @@ classdef NonlinearCrystal < Waveguide
 			
 			title(titleStr,subtitleStr)
 			if strcmp(beam_str,"Signal")
-				xlabel('Signal Wavelength / m')
+				xlabel('Signal Wavelength / \mum')
 			elseif strcmp(beam_str,"Idler")
-				xlabel('Idler Wavelength / m')
+				xlabel('Idler Wavelength / \mum')
 			end
 		end
 
@@ -261,15 +262,16 @@ classdef NonlinearCrystal < Waveguide
 					obj.OptSim.PumpPulse.refract(pump_optic);
 					obj.OptSim.Pulse.refract(pulse_optic);
 				else
-					[gain,pump,signal] = qpmgain(obj,obj.OptSim.PumpPulse,sigrange);
+					[gain,pump,signal,~,~,p_mask] = qpmgain(obj,obj.OptSim.PumpPulse,sigrange);
 					sig_unique = signal(:,1);
-					gain_sum = sum(gain,2);
+					gain_sum = sum(gain,2)./sum(p_mask);
 				end
 				tl = tiledlayout(fh,2,2);
 			else
 				fh.Position(4) = fh.Position(4)./2;
 				tl = tiledlayout(fh,1,2);
 			end
+			
 			if isinteger(obj.Height)
 				titleStr = obj.Name + ", Pos = " + num2str(obj.VerticalPosition,'%i');
 			else
@@ -293,7 +295,7 @@ classdef NonlinearCrystal < Waveguide
 
 			if isa(obj.OptSim,"OpticalSim")
 				axs = nexttile;
-				surf(axs,pump,signal,gain)
+				surf(axs,pump.*1e6,signal.*1e6,gain)
 				axs.YAxis.Direction = 'reverse';
 				if sigrange(2)*1e-9 < max(pump,[],"all")
 					zlim(axs,[0 max(gain,[],"all")]./2)
@@ -307,15 +309,16 @@ classdef NonlinearCrystal < Waveguide
 				axs.MinorGridColor = [1 1 1];
 				shading("interp")
 				title('Numerical Phasematching')
-				xlabel('Pump Wavelength')
-				ylabel('Signal Wavelength')
+				xlabel('Pump Wavelength / \mum')
+				ylabel('Signal Wavelength / \mum')
+				colorbar
 
 				nexttile
 				% plot(signal,sum(gain,2))
-				plot(sig_unique,gain_sum)
-				title('Full Temporal Overlap')
-				xlabel('Signal Wavelength')
-				ylabel('Gain, units tbc')
+				plot(sig_unique.*1e6,gain_sum)
+				title('Grating Phase-Map')
+				xlabel('Signal Wavelength / \mum')
+				ylabel('Gain Rel. to Pump')
 			end
 		end
 
