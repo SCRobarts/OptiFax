@@ -1,3 +1,6 @@
+
+![Optifax_named_logo_simplified_narrowed](https://github.com/user-attachments/assets/30cbe256-11d2-46e3-b5ee-1ac76fece5a7)
+
 # OptiFaχ - Optical Facsimilie Toolkit - Introduction
 # An object-oriented digital optical bench for MATLAB  
 
@@ -74,7 +77,7 @@ We can use these principles to create digital versions of the elements in a real
 
 ##  2. Creating an optical source object with OptiFaχ
 
-Let's use the [**'Laser'**](Laser.m) object class to create an optical source for our system. The following code is taken from a script which is included in the toolbox: [laser_setup_Taccor800](..\..\OptiFax\toolbox\scripts\setupObjects\lasers\laser_setup_Taccor800.m)
+Let's use the [**'Laser'**](toolbox/lib/classes/Laser.m) object class to create an optical source for our system. The following code is taken from a script which is included in the toolbox: [laser_setup_Taccor800](toolbox/scripts/setupObjects/lasers/laser_setup_Taccor800.m)
 
 ```matlab:Code(Display)
 open("laser_setup_Taccor800.m")
@@ -101,13 +104,13 @@ laser = Laser(lambdaC,waistR,fRep,power,spectralString,dtau,dlam);
 
 Object methods are called using the` 'object.method(args)' `syntax, allowing the same function to be implemented differently for different objects. 
 
-Many OptiFa`χ` objects implement` '.store' `for saving in a format compatible with the rest of the toolkit.
+Many OptiFaχ objects implement` '.store' `for saving in a format compatible with the rest of the toolkit.
 
 ```matlab:Code
 laser.store(name,devFlag)
 ```
 
-To test our new laser, we need to give it a coordinate system to exist in, and there's an object for that too! The [**'SimWindow'**](SimWindow.m)** **object class.
+To test our new laser, we need to give it a coordinate system to exist in, and there's an object for that too! The [**'SimWindow'**](toolbox/lib/classes/SimWindow.m) object class.
 
 ```matlab:Code(Display)
 load("simWin.mat")
@@ -133,7 +136,7 @@ laser.Pulse.plot;
 
 ![figure_1.png](OptiFaxIntro_media/figure_1.png)
 
-If we have an experimentally retrieved spectrum, we can use that file to generate a more representative pulse. If the file is the result of a full pulse retrieval, then we can incorporate real phase data too. A [live script](formatSpectrum.mlx) is included to aid in formatting spectral data for use with OptiFa`χ.`
+If we have an experimentally retrieved spectrum, we can use that file to generate a more representative pulse. If the file is the result of a full pulse retrieval, then we can incorporate real phase data too. A [live script](toolbox/formatSpectrum.mlx) is included to aid in formatting spectral data for use with OptiFaχ.
 
 ```matlab:Code(Display)
 load Chromacity1040.mat
@@ -151,7 +154,7 @@ This also means that the saved laser doesn't have to store any bulky arrays:
 
 ##  3. Adding components of an optical system
 
-Most linear optical components can be implemented by direct use of the [**'Optic'**](Optic.m) class.
+Most linear optical components can be implemented by direct use of the [**'Optic'**](toolbox/lib/classes/Optic.m) class.
 
 The simplest example is a mirror with a theoretically uniform transmission across all wavelengths:
 
@@ -292,7 +295,7 @@ CPLN.plot; CPLN.xtalplot;
 
 ![figure_8.png](OptiFaxIntro_media/figure_8.png)
 
-##  4. Combining optical components with [**'Cavity'**](Cavity.m) objects
+##  4. Combining optical components with [**'Cavity'**](toolbox/lib/classes/Cavity.m) objects
 
 Cavity class dependency:
 
@@ -350,7 +353,7 @@ In just a few lines of code, and loading only a couple of MB of data, we can pul
 
 ##  5. Bringing everything together into a simulation
 
-We continue the theme by utilising yet another custom object to manage the physical interactions between an optical source and our newly created cavity. The computational processing goes on inside an instance of the [**'OpticalSim'**](OpticalSim.m) class.
+We continue the theme by utilising yet another custom object to manage the physical interactions between an optical source and our newly created cavity. The computational processing goes on inside an instance of the [**'OpticalSim'**](toolbox/lib/classes/OpticalSim.m) class.
 
 To run a simulation with default parameters, we need only three things: an optical source; a cavity; and a simulation window. Let's clear the workspace again to demonstrate:
 
