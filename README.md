@@ -72,7 +72,7 @@ The ***methods*** required to redraw the line on screen are also part of the lin
 
 We can use these principles to create digital versions of the elements in a real optical system!
 
-##  2. Creating an optical source object with OptiFa`χ`
+##  2. Creating an optical source object with OptiFaχ
 
 Let's use the [**'Laser'**](Laser.m) object class to create an optical source for our system. The following code is taken from a script which is included in the toolbox: [laser_setup_Taccor800](..\..\OptiFax\toolbox\scripts\setupObjects\lasers\laser_setup_Taccor800.m)
 
