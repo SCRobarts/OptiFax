@@ -1,4 +1,4 @@
-# OptiFa`χ` - Optical Facsimilie Toolkit - Introduction
+# OptiFaχ - Optical Facsimilie Toolkit - Introduction
 # An object-oriented digital optical bench for MATLAB  
 
 [https://github.com/McCrackenLab/OptiFax](https://github.com/McCrackenLab/OptiFax)
