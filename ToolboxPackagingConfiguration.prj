@@ -1,13 +1,13 @@
 <deployment-project plugin="plugin.toolbox" plugin-version="1.0">
-  <configuration file="C:\Users\Seb Robarts\Heriot-Watt University Team Dropbox\RES_EPS_McCracken_Lab\Seb\OptiFax\ToolboxPackagingConfiguration.prj" location="C:\Users\Seb Robarts\Heriot-Watt University Team Dropbox\RES_EPS_McCracken_Lab\Seb\OptiFax" name="ToolboxPackagingConfiguration" target="target.toolbox" target-name="Package Toolbox">
+  <configuration build-checksum="3232975869" file="C:\Users\Seb Robarts\Heriot-Watt University Team Dropbox\RES_EPS_McCracken_Lab\Seb\OptiFax\ToolboxPackagingConfiguration.prj" location="C:\Users\Seb Robarts\Heriot-Watt University Team Dropbox\RES_EPS_McCracken_Lab\Seb\OptiFax" name="ToolboxPackagingConfiguration" target="target.toolbox" target-name="Package Toolbox">
     <param.appname>OptiFax</param.appname>
     <param.authnamewatermark>Sebastian C. Robarts</param.authnamewatermark>
     <param.email>sebrobarts@gmail.com</param.email>
     <param.company>McCracken Lab, Heriot-Watt University</param.company>
     <param.summary>GPU accelerated modelling of nonlinear optical systems.</param.summary>
     <param.description />
-    <param.screenshot>C:\Users\Seb Robarts\Heriot-Watt University Team Dropbox\RES_EPS_McCracken_Lab\Seb\PGR\Writing\Images\Optifax_named_logo_background.png</param.screenshot>
-    <param.version>0.5.0</param.version>
+    <param.screenshot>C:\Users\Seb Robarts\Heriot-Watt University Team Dropbox\RES_EPS_McCracken_Lab\Seb\PGR\Writing\Images\Optifax_named_logo_background_full.png</param.screenshot>
+    <param.version>0.5.1</param.version>
     <param.output>${PROJECT_ROOT}\OptiFax.mltbx</param.output>
     <param.products.name />
     <param.products.id />

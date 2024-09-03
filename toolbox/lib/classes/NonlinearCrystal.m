@@ -51,9 +51,9 @@ classdef NonlinearCrystal < Waveguide
 
 			switch obj.Bulk.Material
 				case {"PPLN","LN_e","LN_o"}
-					obj.Chi2 = 27e-12;
+					obj.Chi2 = 2*27e-12;
 				case {"OP-GaP","OPGaP"}
-					obj.Chi2 = 70e-12;
+					obj.Chi2 = 2*70e-12;
 				otherwise
 					obj.Chi2 = 0e-12;
 			end
