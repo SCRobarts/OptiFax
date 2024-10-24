@@ -1,4 +1,4 @@
-function l_i = sfg_lambda(l_p,l_s)
+function l_i = idler_lambda(l_p,l_s)
 
 % c = 299792458;				% Speed of light [m/s]
 
