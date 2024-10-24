@@ -377,7 +377,8 @@ classdef OpticalSim < matlab.mixin.Copyable
 			Eks = ifftshift(sum(obj.SpectralProgressShift(:,:,1:nAnnuli),3).',2);
 			Ik = abs(Eks(:,obj.SimWin.IsNumIndex));
 			Ik = 10*log10(Ik);
-			Ik(Ik<max(Ik,[],"all")/2) = max(Ik,[],"all")/2;
+			% Ik(Ik<max(Ik,[],"all")/2) = max(Ik,[],"all")/2;
+			Ik(Ik<max(Ik,[],"all")/1.3) = max(Ik,[],"all")/1.3;
 			Ik = gather(Ik);
 		end
 

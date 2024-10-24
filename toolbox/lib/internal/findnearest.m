@@ -1,10 +1,14 @@
-function [vals,ids] = findnearest(xs,target,n)
+function [vals,ids] = findnearest(xs,targets,n)
 arguments
 	xs
-	target
+	targets
 	n = 1
 end
-	
+	[~,ids] = sort(abs(xs-targets'),2);
+	ids = ids(:,1:n)';
+	vals = xs(ids);
+
+	%% Alternative approach
 	% finite_index = isfinite(xs);
 	% finite_start = find(finite_index,1,"first");
 	% finite_end   = find(finite_index,1,"last");
@@ -13,10 +17,6 @@ end
 	% idx = find(xs == val);
 
 	%% Another alternative approach
-	[~,ids] = sort(abs(xs-target));
-	ids = ids(1:n);
-	vals = xs(ids);
-
 	% % Set a tolerance based on largest difference between elements
 	% dx1 = max(abs(diff(xs))+eps(target))/2;
 	% idx1 = find(abs(xs-target) < dx1);

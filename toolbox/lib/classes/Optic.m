@@ -5,12 +5,12 @@ classdef Optic < matlab.mixin.Copyable
 	%
 	%	Sebastian C. Robarts 2023 - sebrobarts@gmail.com
 	properties
-		Name		string
-		Regime		string
-		S1			OpticalSurface
-		Bulk		Dielectric
-		S2			OpticalSurface
-		Parent		% Cavity
+		Name	string	=	"Optic";		
+		Regime	string
+		S1		OpticalSurface
+		Bulk	Dielectric
+		S2		OpticalSurface
+		Parent	% Cavity
 	end
 	properties (Transient)
 		SimWin		SimWindow
@@ -26,6 +26,7 @@ classdef Optic < matlab.mixin.Copyable
 		GroupDelay
 		RelativeGD
 		GDD
+		Material
 	end
 
 	methods(Access = protected)
@@ -37,6 +38,7 @@ classdef Optic < matlab.mixin.Copyable
          cpObj.S1 = copy(obj.S1);
 		 cpObj.Bulk = copy(obj.Bulk);
 		 cpObj.S2 = copy(obj.S2);
+		 cpObj.adopt;
 	  end
 	end	
 
@@ -80,9 +82,7 @@ classdef Optic < matlab.mixin.Copyable
 
 		function simulate(obj,simWin)
 			obj.SimWin = simWin;
-			obj.S1.Parent = obj;
-			obj.S2.Parent = obj;
-				obj.Bulk.Parent = obj;
+			obj.adopt;
 				obj.Bulk.simulate;
 			obj.Transmission = obj.S1.Transmission;
 			obj.Reflection = obj.S1.Reflection;		% Counting only the first surface reflection as other reflections form separate "pulses"
@@ -100,6 +100,12 @@ classdef Optic < matlab.mixin.Copyable
 			else
 				% obj.Transmission = 1 - obj.Transmission;
 			end
+		end
+
+		function adopt(obj)
+			obj.S1.Parent = obj;
+			obj.Bulk.Parent = obj;
+			obj.S2.Parent = obj;
 		end
 
 		function scaleT(obj,lamOCnm,target,lamLimsnm)
@@ -161,6 +167,10 @@ classdef Optic < matlab.mixin.Copyable
 				nr = 0;
 			end
 			opl = obj.Length .* nr;
+		end
+
+		function bulkMat = get.Material(obj)
+			bulkMat = obj.Bulk.Material;
 		end
 
 		function plot(obj,lims)

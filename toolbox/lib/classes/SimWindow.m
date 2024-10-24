@@ -1,4 +1,4 @@
-classdef SimWindow < handle
+classdef SimWindow < matlab.mixin.Copyable
 	%
 	%	Sebastian C. Robarts 2023 - sebrobarts@gmail.com
 	properties
@@ -86,8 +86,8 @@ classdef SimWindow < handle
 			f0 = c./obj.ReferenceWave;
 			f_max = (c ./ obj.SpectralLimits(1) ./1e-9) - f0;
 			f_min = (c ./ obj.SpectralLimits(2) ./1e-9) - f0;
-			% f_axis = 2 * max(abs(f_min),abs(f_max));
-			f_axis = 4 * max(abs(f_min),abs(f_max)); % avoid spectral aliasing?
+			f_axis = 2 * max(abs(f_min),abs(f_max));
+			% f_axis = 4 * max(abs(f_min),abs(f_max)); % avoid spectral aliasing?
 			f_rel = (-np/2:np/2-1)/np*f_axis;	% relative frequency array [Hz]
 			end
 		end
@@ -144,7 +144,7 @@ classdef SimWindow < handle
 
 		function l = get.Lambdanm(obj)
 			l = obj.Wavelengths*1e9;
-			l(or(l<obj.SpectralLimits(1), l>obj.SpectralLimits(2))) = NaN;
+			l(or(l<obj.SpectralLimits(1)-1, l>obj.SpectralLimits(2)+1)) = NaN;
 		end
 
 		function ini = get.IsNumIndex(obj)
@@ -158,7 +158,15 @@ classdef SimWindow < handle
 		end
 
 		function cidx = get.ReferenceIndex(obj)
-			cidx = obj.NumberOfPoints/2 + 1;
+			cidx = floor(obj.NumberOfPoints/2) + 1;
+		end
+
+		function ref2max(obj)
+			lamlims = obj.SpectralLimits.*1e-9;
+			nulims = c./lamlims;
+			numid = mean(nulims);
+			lammid = c./numid;
+			obj.ReferenceWave = lammid;
 		end
 	end
 

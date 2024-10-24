@@ -31,6 +31,9 @@ classdef Laser < matlab.mixin.Copyable
          cpObj = copyElement@matlab.mixin.Copyable(obj);
          % Make a deep copy of the Deep object
          cpObj.Pulse = copy(obj.Pulse);
+		 if ~isempty(cpObj.Pulse)
+			cpObj.Pulse.Source = cpObj;
+		 end
 	  end
 	end
 

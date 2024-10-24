@@ -2,42 +2,44 @@ classdef OpticalPulse < matlab.mixin.Copyable
 	%	Sebastian C. Robarts 2023 - sebrobarts@gmail.com
 	properties
 		Name = "Pulse";
-		TemporalField		% E(t) / (V/m) complex array
-		Source		Laser
+		Source	Laser
 		Duration
 		AppliedGDD = 0;
+		TemporalField		% E(t) / (V/m) complex array
 	end
 	properties (Transient)
-		SimWin		SimWindow
+		SimWin	SimWindow
 		Radius	= 1;	% 1/e Intensity radius (m)
-		Medium = Optic("T","AR","air");
+		Medium	Optic = Optic("T","AR","air");
+		% Medium	Optic 
 	end
 	properties (Dependent)
 		AverageIntensity
 		Area
+		Energy
+		FrequencyFWHM
+		WavelengthFWHM
+		WavelengthFWTM	% Full-Width Tenth Maxium
+		DurationTL		% Transform limited current pulse duration (I fwhm)
+		DurationCheck	% Current pulse duration (I fwhm)
+		CombinedPower	% Sum over annuli
 		SpectralField
 		SpectralPhase
 		TemporalPhase
 		TemporalFieldTL		% Transform limited version of TemporalField
-		Energy
 		EnergySpectralDensity
 		ESD_pJ_THz
 		CombinedESD_pJ_THz	% Sum over annuli
-		FrequencyFWHM
-		WavelengthFWHM
 		TemporalIntensity
 		CombinedTemporalIntensity	% Sum over annuli
 		TemporalRootPower
-		DurationTL		% Transform limited current pulse duration (I fwhm)
-		DurationCheck	% Current pulse duration (I fwhm)
 		TBPTL			% TimeBandwidthProduct Transform Limited
 		TBP				% TimeBandwidthProduct
-		RequiredGDD				% GroupDelayDispersion (s^2)
+		RequiredGDD		% GroupDelayDispersion (s^2)
 		CalculatedGDD
 		PeakWavelength	% Max intensity wavelength (m)
 		CombinedPeakWavelength	% Max intensity wavelength based on CombinedESD_pJ_THz (m) 
 		Power			% Pulse power [W]
-		CombinedPower	% Sum over annuli
 		PeakPowerCoefficient
 		PeakPower
 		GFit			% An attempt to quantify how Gaussian a pulse is?
@@ -45,38 +47,48 @@ classdef OpticalPulse < matlab.mixin.Copyable
 		NumberOfPulses
 	end
 
+	methods(Access = protected)
+      % Override copyElement method:
+      function cpObj = copyElement(obj)
+         % Make a shallow copy of all properties
+         cpObj = copyElement@matlab.mixin.Copyable(obj);
+         % Make a deep copy of the Deep object
+         cpObj.Medium = copy(obj.Medium);
+	  end
+	end
+
 	methods
 		%% Construction
-		function obj = OpticalPulse(laser,simWin)
+		function obj = OpticalPulse(lasersrc,simWin)
 			if nargin > 0
-				obj.Name = laser.Name + ' ' + obj.Name;
-				obj.Medium.simulate(simWin);
+				obj.Source = lasersrc;
 				obj.SimWin = simWin;
-				obj.Source = laser;
+				obj.Name = lasersrc.Name + ' ' + obj.Name;
+				obj.Medium = Optic("T","AR","air");
+				obj.Medium.Name = obj.Name + ' ' + obj.Medium.Name;
+				obj.Medium.simulate(simWin);
 				% obj.Radius = laser.Waist;
 				t = simWin.Times;
 				t_off = simWin.TimeOffset;
-				str = laser.SourceString;
-				wPump = 2*pi*c / laser.Wavelength;
+				str = lasersrc.SourceString;
+				wPump = 2*pi*c / lasersrc.Wavelength;
 				if strcmp(str,"Gauss")				
-					obj.TemporalField = gaussPulse(t,laser.Wavelength,laser.LineWidth);
+					obj.TemporalField = gaussPulse(t,lasersrc.Wavelength,lasersrc.LineWidth);
 					% Shift spectrum from reference to pump wavelength
 					obj.TemporalField = obj.TemporalField .* exp(1i*(wPump-simWin.ReferenceOmega)*t);
 				elseif strcmp(str,"Sech")
-					obj.TemporalField = sechPulse(t,laser.Wavelength,laser.LineWidth);
+					obj.TemporalField = sechPulse(t,lasersrc.Wavelength,lasersrc.LineWidth);
 					% Shift spectrum from reference to pump wavelength
 					obj.TemporalField = obj.TemporalField .* exp(1i*(wPump-simWin.ReferenceOmega)*t);
 				else
 					[~,obj.SpectralField] = specpulseimport(str,t,t_off,...
-										simWin.Omegas,laser.PhaseString);
-					% obj.TemporalField = specpulseimport(str,t,t_off,...
-									% 	simWin.Omegas,laser.PhaseString);
+										simWin.Omegas,lasersrc.PhaseString);
 				end
 				
-				if laser.PulseDuration < obj.DurationTL
+				if lasersrc.PulseDuration < obj.DurationTL
 					obj.Duration = obj.DurationTL;
 				else
-					obj.Duration = laser.PulseDuration;
+					obj.Duration = lasersrc.PulseDuration;
 				end
 				[~,indexMax] = max(obj.TemporalIntensity);
 				tmax = obj.SimWin.Times(indexMax);
@@ -87,7 +99,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 				if obj.DurationCheck < obj.Duration
 					obj.applyGDD(obj.RequiredGDD);
 				end
-				obj.Radius = laser.Waist;
+				obj.Radius = lasersrc.Waist;
 			end
 		end
 
@@ -406,7 +418,11 @@ classdef OpticalPulse < matlab.mixin.Copyable
 		end
 
 		function dLambda = get.WavelengthFWHM(obj)
-			dLambda = findfwhm(obj.SimWin.Wavelengths,obj.EnergySpectralDensity);
+			dLambda = findfwnm(obj.SimWin.Wavelengths,obj.EnergySpectralDensity,0.5);
+		end
+
+		function dtLambda = get.WavelengthFWTM(obj)
+			dtLambda = findfwnm(obj.SimWin.Wavelengths,obj.EnergySpectralDensity,0.1);
 		end
 
 		function dtTL = get.DurationTL(obj)

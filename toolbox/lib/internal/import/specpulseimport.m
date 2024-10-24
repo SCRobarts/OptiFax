@@ -38,7 +38,8 @@ end
 		E_ft = [0 E_ft 0];				% Set spectral field to zero at the limits
 		E_ft = interp1(w, E_ft, w_sim, 'makima',0);	% Expand field to meet sim requirements
 		E_ft((E_ft) < 0) = 0;	% Remove the large negative components which arise during extrapolation
-	elseif length(w) > length(w_sim)
+	% elseif length(w) > length(w_sim)
+	else
 		E_ft = interp1(w, E_ft, w_sim, 'makima',0);	% Expand field to meet sim requirements
 		E_ft((E_ft) < 0) = 0;	% Remove the large negative components which arise during extrapolation
 	end

@@ -7,8 +7,8 @@ classdef Waveguide < Optic
 	%	Sebastian C. Robarts 2024 - sebrobarts@gmail.com
 
 	properties
-		Chi2	% Second order optical nonlinearity [V/m]
-		Chi3	% Todo: Implement conversion of gamma [W/m] to Chi3 [V/m]
+		Chi2	% Second order optical nonlinearity [m/V]
+		Chi3	% Todo: Implement conversion of gamma [W/m] to Chi3 [m/V]^2
 		RamanFraction
 		ResponseTimes	% [Inverse average phonon frequency, Characteristic phonon dampening time] [s]
 		ModeFieldDiameter	% Waveguide confinement [m]
