@@ -54,6 +54,7 @@ classdef SimPlotter < matlab.mixin.Copyable
 				kplotlims = [350 2000];
 			end
 		%SIMPLOTTER Construct an instance of this class
+			set(groot(), 'DefaultFigureUnits','pixels');
 			obj.Parent = optSim;
 			obj.YData = ydat;
 			obj.YLabel = ylab;

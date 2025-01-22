@@ -57,9 +57,6 @@ classdef NonlinearCrystal < Waveguide
 				otherwise
 					obj.Chi2 = 0e-12;
 			end
-			% if strcmp(obj.Bulk.Material,"PPLN")
-			% 	obj.Chi2 = 2*26e-12;
-			% end
 			obj.GratingPeriod = grating_m;
 			obj.Uncertainty = uncertainty_m;
 			obj.DutyCycleOffset = dutyOff;
