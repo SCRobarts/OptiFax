@@ -5,9 +5,7 @@
 clear all;
 close all;
 
-% name = "Chromacity_230042_9A_2";
-% name = "Chromacity_220037_5A_narrow";
-name = "Chromacity_Stretched_14um_10m";
+name = "Stretched_14um_10m";
 lambdaC = 1040e-9;
 waistR = 36.3e-6;
 fRep = 100.035e6;
