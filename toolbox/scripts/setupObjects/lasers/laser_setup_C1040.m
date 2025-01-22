@@ -1,4 +1,4 @@
-%% laser_setup_Chromacity1040.m
+%% laser_setup_C1040.m
 % An example script illustrating the configuration of a
 % laser object for future use.
 %
@@ -6,7 +6,7 @@
 clear;
 close all;
 
-name = "Chromacity1040";
+name = "C1040";
 lambdaC = 1033e-9;
 waistR = 14e-6;
 fRep = 49.163e6;
