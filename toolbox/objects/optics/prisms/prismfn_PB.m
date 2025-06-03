@@ -1,6 +1,9 @@
-function pL = prismfn_PB(n)
+function pL = prismfn_PB(n,L1)
+arguments
+	n
+	L1 = 19;
+end
 a = deg2rad(78 + 26/60);
-L1 = 19;
 % z = 1.81633728628046 + 1;
 
 % theta_B = deg2rad(56.5);

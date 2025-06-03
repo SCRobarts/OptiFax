@@ -11,8 +11,13 @@ switch material
 		n = n_mgoppln_gayer(lam,1,T_celsius);
 	case "LN_o"
 		n = n_mgoppln_gayer(lam,2,T_celsius);
+	case {"PPLN_undoped"}
+		n = n_mgoppln_gayer(lam,4,T_celsius);
 	case {"OP-GaP","OPGaP"}
 		n = n_opgap_wei(lam,T_celsius);
+	case {"KTP","PPKTP"}
+		% n = n_ktp_kato(lam,'a',T_celsius);
+		n = n_ktp_zhao(lam,T_celsius);
 	otherwise
 		% selldat = readtable('Sellmeier_Coefficients.xlsx','ReadRowNames',true);
 		selldat = readtable('Materials.csv','ReadRowNames',true);

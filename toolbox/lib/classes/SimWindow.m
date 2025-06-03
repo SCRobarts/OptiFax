@@ -8,6 +8,7 @@ classdef SimWindow < matlab.mixin.Copyable
 		TimeOffset
 		SpectralLimits = [300 6000]	% Wavelength cutoffs [nm]
 		Constraint = "time";
+		SignalLimits = [];
 	end
 	properties (Dependent)
 		ReferenceOmega

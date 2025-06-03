@@ -54,8 +54,10 @@ classdef NonlinearCrystal < Waveguide
 					obj.Chi2 = 2*27e-12;
 				case {"OP-GaP","OPGaP"}
 					obj.Chi2 = 2*70e-12;
+				case {"KTP","PPKTP"}
+					obj.Chi2 = 2*16.9e-12;
 				otherwise
-					obj.Chi2 = 0e-12;
+					obj.Chi2 = 2*1e-12;
 			end
 			obj.GratingPeriod = grating_m;
 			obj.Uncertainty = uncertainty_m;
@@ -90,7 +92,7 @@ classdef NonlinearCrystal < Waveguide
 						grating = obj.fanout;
 					otherwise
 						obj.Height = uint8(n);
-						obj.VerticalPosition = uint8(obj.VerticalPosition);
+						obj.VerticalPosition = uint8(ceil(obj.VerticalPosition));
 						grating = obj.GratingPeriod(obj.VerticalPosition);
 				end
 			else
@@ -219,7 +221,7 @@ classdef NonlinearCrystal < Waveguide
 					% ytls = yticklabels;
 
 			end
-			titleStr    = "Pulse-Crystal Phase-Mapping, " ...
+			titleStr    = "Spectral-Crystal Efficiency-Mapping, " ...
 						+ "\chi^{(2)} = " + num2str(obj.Chi2*1e12,'%i') + "pVm^{-1}";
 
 			subtitleStr = "L = " + num2str(obj.Length*1e3,'%.1f') + "mm, " ...
@@ -278,7 +280,7 @@ classdef NonlinearCrystal < Waveguide
 			title(tl,titleStr,"Interpreter","none");
 			
 			nexttile
-			plot(obj.DomainWallPositions,obj.DomainWidths);
+			plot(obj.DomainWallPositions(1:end-1),obj.DomainWidths);
 			title('Poling Function')
 			xlabel('z Position / m')
 			ylabel('Domain Width / m')

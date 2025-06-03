@@ -46,7 +46,7 @@ classdef OpticalSurface < matlab.mixin.Copyable
 			lam = obj.Parent.SimWin.Wavelengths;
 			if isnumeric(obj.Coating)
 				T = ones(size(lam));
-				if length(obj.Coating) == 1
+				if isscalar(obj.Coating)
 					T = T .* obj.Coating;
 				else
 					Tvals = obj.Coating(:,1);

@@ -30,7 +30,7 @@ function [gain,pump,signal,idler,weights,p_mask,i_mask] = qpmgain(crystal,ppulse
 
 	d_eff = max(P);	% Polarisation already scaled by QPM so only need this scaling?
 	% d_eff = max(P)/pi;	% Polarisation already scaled to Chi2 so only need this scaling?
-	P = double(P)./max(P);
+	P = double(P')./max(P);
 	
 	%% Pump
 	pumprange = ppulse.WavelengthFWHM * [-3 3] + ppulse.PeakWavelength;
@@ -74,11 +74,11 @@ function [gain,pump,signal,idler,weights,p_mask,i_mask] = qpmgain(crystal,ppulse
 				idlerrange(2) = pumprange(2);
 			end
 		elseif sigrange(1) > pumprange(2)	% DFG regime
-			if idlerrange(1) < dfg_lambda(pumprange(2),sigrange(2))
-				idlerrange(1) = dfg_lambda(pumprange(2),sigrange(2));
+			if idlerrange(1) < dfg_lambda(pumprange(1),sigrange(2))
+				idlerrange(1) = dfg_lambda(pumprange(1),sigrange(2));
 			end
-			if idlerrange(2) > dfg_lambda(pumprange(1),sigrange(1))
-				idlerrange(2) = dfg_lambda(pumprange(1),sigrange(1));
+			if idlerrange(2) > dfg_lambda(pumprange(2),sigrange(1)) || idlerrange(2) < idlerrange(1)
+				idlerrange(2) = dfg_lambda(pumprange(2),sigrange(1));
 			end
 		end
 		iid = and(simWin.Wavelengths > idlerrange(1), simWin.Wavelengths < idlerrange(2));

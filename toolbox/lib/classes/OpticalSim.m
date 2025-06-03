@@ -22,6 +22,7 @@ classdef OpticalSim < matlab.mixin.Copyable
 		ProgressPlotting = 1;
 		ProgressPlots = 5;
 		SpectralPlotLimits = [350 4500];
+		SpectrogramPlotting = [0 0];	% Provide limits to invoke spectrogram plotting
 		StoredPulses	OpticalPulse	% Pulse object with multiple fields, storing desired pulse each trip (currently XOut)
 		TripNumber = 0;
 		PumpRadiusXtalIn = 50e-6;	% The radius of the pump beam on entering the crystal [m]
@@ -46,12 +47,17 @@ classdef OpticalSim < matlab.mixin.Copyable
 		StepSizeModifiers
 		SpectralProgressShift
 		ProgressPlotter		SimPlotter
+		SpectrogramPlotter  SimPlotter
 		FinalPlotter		SimPlotter
 	end
 	properties (Dependent)
 		NumOfParRuns
+		PumpLimsnm
+		SignalLimsnm
+		IdlerLimsnm
 		IkEvoData
 		ItEvoData
+		XDiffPulse  OpticalPulse	% Pulse object for crystal GD corrected trip difference
 	end
 
 	methods
@@ -66,6 +72,9 @@ classdef OpticalSim < matlab.mixin.Copyable
 			%OPTICALSIM Construct an instance of this class
 			%   Detailed explanation goes here
 			obj.Source = src;
+			if isa(src,"Laser")
+				obj.PumpRadiusXtalIn = src.Waist;
+			end
 			obj.System = cav;
 			obj.SimWin = simWin;
 			obj.StepSize = stepSize;
@@ -147,8 +156,13 @@ classdef OpticalSim < matlab.mixin.Copyable
 
 			obj.SpectralProgressShift = repmat(fft(fftshift(obj.PumpPulse.TemporalField(1,:),2)).',1,obj.ProgressPlots,obj.NumOfParRuns);
 
-			if obj.RoundTrips > 1 && obj.NumOfParRuns < 2
-				obj.FinalPlotter = SimPlotter(obj,obj.TripNumber + (1:obj.RoundTrips),"Round Trip Number",obj.SpectralPlotLimits);
+			if obj.RoundTrips > 1 
+				if obj.NumOfParRuns < 2
+					obj.FinalPlotter = SimPlotter(obj,obj.TripNumber + (1:obj.RoundTrips),"Round Trip Number",obj.SpectralPlotLimits);
+				elseif length(obj.Delay(:)) > 1
+					obj.FinalPlotter = SimPlotter(obj,obj.Delay(:).*1e12,"Delay / (ps)",obj.SpectralPlotLimits,"DelayScan");
+					colormap(obj.FinalPlotter.ProgressFigure,"hot");
+				end
 			end
 			if obj.ProgressPlotting % || obj.RoundTrips == 1
 				ydat = linspace(0,obj.System.Xtal.Length*1e3,obj.ProgressPlots);
@@ -180,11 +194,14 @@ classdef OpticalSim < matlab.mixin.Copyable
 			obj.ESDIdlerICAverage = obj.ESDOutAverage;
 			obj.PowerOutAverage = zeros(obj.Pulse.Annuli,obj.Pulse.NumberOfPulses);
 			obj.PowerIdlerAverage = obj.PowerOutAverage;
+			if obj.SpectrogramPlotting
+				ydat = obj.SpectrogramPlotting;
+				obj.SpectrogramPlotter = SimPlotter(obj,ydat,[],obj.SpectrogramPlotting,"Spectrogram");
+			end
 		end
 
 		function reseed(obj)
 			obj.Source.simulate(obj.SimWin);
-			
 		end
 
 		function run(obj)
@@ -242,6 +259,9 @@ classdef OpticalSim < matlab.mixin.Copyable
 					t_trip = string(datetime('now','Format','HH:mm:ss.SSS'));
 					disp("Completed trip " + num2str(obj.SimTripNumber) + " at " + t_trip);
 				end
+				if obj.SpectrogramPlotting
+					obj.SpectrogramPlotter.updateplots;
+				end
 				pause(0.01)
 				
 				obj.Pulse.refract(airOpt);
@@ -267,15 +287,16 @@ classdef OpticalSim < matlab.mixin.Copyable
 				obj.annularDivergence;
 			end
 			
-			if obj.RoundTrips > 1
-				
-				if obj.NumOfParRuns < 2
-					obj.FinalPlotter.updateYData((obj.TripNumber-obj.RoundTrips) + (1:obj.RoundTrips));
-					obj.FinalPlotter.roundtripplots;
-				end
+			if obj.RoundTrips > 1 && obj.NumOfParRuns < 2
+				obj.FinalPlotter.updateYData((obj.TripNumber-obj.RoundTrips) + (1:obj.RoundTrips));
+				obj.FinalPlotter.roundtripplots;
 			end
 
 			obj.combineAnnuli;
+
+			if length(obj.Delay) > 1
+				obj.FinalPlotter.updateplots;
+			end
 
 		end
 
@@ -288,7 +309,8 @@ classdef OpticalSim < matlab.mixin.Copyable
 			obj.PowerOutAverage = obj.PowerOutAverage + reshape(gather(obj.OutputPulse.Power./obj.RoundTrips),obj.Pulse.Annuli,obj.Pulse.NumberOfPulses);
 
 			obj.ESDIdlerICAverage = obj.ESDIdlerICAverage + gather(obj.XOutPulse.ESD_pJ_THz./obj.RoundTrips);
-			idlerLim = 2100;
+			% idlerLim = 2100;
+			idlerLim = 2.*pumpLim;
 			obj.ESDIdlerICAverage(:,obj.SimWin.LambdanmPlot<idlerLim,:) = 0;
 		end
 
@@ -371,6 +393,19 @@ classdef OpticalSim < matlab.mixin.Copyable
 			N = max(n_pump,N);
 		end
 
+		function plnm = get.PumpLimsnm(obj)
+			plnm = obj.Source.SpectralLimits.*1e9;
+		end
+
+		function slnm = get.SignalLimsnm(obj)
+			slnm = [obj.PumpLimsnm(2) obj.IdlerLimsnm(1)];
+		end
+
+		function ilnm = get.IdlerLimsnm(obj)
+			lnm = obj.SimWin.LambdanmPlot;
+			ilnm = [2*obj.PumpLimsnm(2) max(lnm)];
+		end
+
 		function Ik = get.IkEvoData(obj)
 			nAnnuli = obj.Pulse.Annuli;
 			% Eks = ifftshift(obj.SpectralProgressShift(:,:,1).',2);
@@ -389,6 +424,13 @@ classdef OpticalSim < matlab.mixin.Copyable
 			It = abs(fftshift(Ets,2));
 			It = It(:,1:obj.SimWin.Granularity:end);
 			It = gather(It);
+		end
+
+		function xDiff = get.XDiffPulse(obj)
+			xDiff = obj.XOutPulse.writeto;
+			xDiff.Name = "Xtal Difference Pulse";
+			xDiff.applyGD(-obj.System.Xtal.RelativeGD);
+			xDiff.minus(obj.XInPulse);
 		end
 
 	end

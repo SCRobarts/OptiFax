@@ -15,21 +15,28 @@ close all
 %%% If only one surface is specified, it's assumed that the same coating
 %%% exists on each surface.
 
-coating_str = "HCP_PPLN_Fanout_AR" ; % To be extracted from the HCP pdf as supplied by Chromacity
-% coating_str = 'AR';	% Idealised 100% anti-reflection across all wavelengths
+% coating_str = "HCP_PPLN_Fanout_AR" ; % To be extracted from the HCP pdf as supplied by Chromacity
+coating_str = 'AR';	% Idealised 100% anti-reflection across all wavelengths
+
 material_str = "PPLN";
 % material_str = "OP-GaP";
-L = 5e-3;
-name = "HCP_PPLN_fanout_Auskerry";
+% material_str = "PPKTP";
+
+L = 1e-3;
+
+% name = "HCP_PPLN_fanout_Auskerry";
 % name = "OP_GaP_fanout_test";
+% name = "PPKTP_fanout_test";
+name = "PPLN_Fanout_1mm";
 
 %% Crystal specific arguments
-temp_C = 34;
+temp_C = 150;
+
 %%% Fanout grating function arguments:
-P1 = 27.5e-6;	% Starting grating period [m]
-P2 = 32.5e-6;	% Finishing grating period [m]
-% P1 = 21e-6 - 0e-6;	% Starting grating period [m]
-% P2 = 35e-6 + 0e-6;	% Finishing grating period [m]
+% P1 = 21.5e-6;	% Starting grating period [m]
+% P2 = 29.5e-6;	% Finishing grating period [m]
+P1 = 21e-6 - 0e-6;	% Starting grating period [m]
+P2 = 35e-6 + 0e-6;	% Finishing grating period [m]
 xtal_height = 6e-3;	% Quoted y dimension [m], fanout poling may not extend this full distance?	
 % a = 0.48;		% Exponent for rate of chirp
 
@@ -60,7 +67,8 @@ tOff =  1 * -1.25e-12;
 lamWin = SimWindow(lam0,points,wavelims,tOff,"wavelims");
 
 %% Initialise Laser / Input Pulse
-load("Chromacity_230042_9A_2.mat");
+% load("C_230042_9A_2.mat");
+load("Taccor800.mat");
 
 % laser.SourceString = 'Sech';
 
@@ -73,9 +81,10 @@ optSim.ProgressPlots = 3;
 optSim.ProgressPlotting = 0;
 optSim.setup;
 
+xtal.scaleT(2900,0.95,[500,4000]);
 laser.Pulse.plot;
 
 xtal.store(name,1);
 xtal.plot;
 xtal.xtalplot([1350 1800]);
-xtal.scanplot([1350 1800],300);
+% xtal.scanplot([850 1700],300);
