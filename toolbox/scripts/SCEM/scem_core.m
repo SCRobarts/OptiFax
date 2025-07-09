@@ -1,9 +1,6 @@
-% Need to figure out how a single loop in QPM curve space should be
-% weighted when summing over the 'pump' wavelengths. Consider a
-% hypothetical uniform square wave spectrum which spans the loop and beyond
-% - admittedly, the overall efficiency should probably drop for each
-% component which is outside of the loop, so maybe the issue is trying to
-% weight it before the introduction of a pump shape?
+% SCEM_CORE.m
+%
+%	Sebastian C. Robarts 2024 - sebrobarts@gmail.com
 
 %% Setup
 close all; clear all; %#ok<CLALL>
@@ -41,10 +38,8 @@ set(0, 'DefaultLineLineWidth', 1)
 format short g
 
 
-% dbstop if unsuppressed output
-
 %% Options
-% example = 'core';
+example = 'core';
 % example = 'ppktp';
 
 % example = 'tandem1';
@@ -56,7 +51,7 @@ format short g
 
 fignum = 1;
 save_vars = 0;
-pathstr = 'C:\Users\Seb Robarts\Heriot-Watt University Team Dropbox\RES_EPS_McCracken_Lab\Seb\PGR\Writing\PCPM Paper';
+pathstr = 'C:\Users\Seb Robarts\Heriot-Watt University Team Dropbox\RES_EPS_McCracken_Lab\Seb\PGR\Writing\SCEM Paper';
 
 n_points = 2^13;
 % n_points = 2^14;
@@ -222,12 +217,12 @@ if d_sample < 1
 	d_sample = 1;
 end
 
-pcpmWin = SimWindow(lambda_pump_central.*1e-6,n_points,[0.35,6].*1e3,0,"spec"); % PPKTP
-% pcpmWin = SimWindow(lambda_pump_central*1e-6,n_points,[0.5,4.7].*1e3,0,"spec");
-% pcpmWin = SimWindow(1.035*1e-6,n_points,[0.5,10].*1e3,0,"spec"); % OP-GaP
-pcpmWin.ref2max;
-lam_um = (fliplr(pcpmWin.LambdanmPlot.*1e-3));	% [um]  Ascending
-laser.simulate(pcpmWin);
+scemWin = SimWindow(lambda_pump_central.*1e-6,n_points,[0.35,6].*1e3,0,"spec"); % PPKTP
+% scemWin = SimWindow(lambda_pump_central*1e-6,n_points,[0.5,4.7].*1e3,0,"spec");
+% scemWin = SimWindow(1.035*1e-6,n_points,[0.5,10].*1e3,0,"spec"); % OP-GaP
+scemWin.ref2max;
+lam_um = (fliplr(scemWin.LambdanmPlot.*1e-3));	% [um]  Ascending
+laser.simulate(scemWin);
 
 if strcmp(example,'core')
 	%%% Pulse length for Auskerry
@@ -245,7 +240,7 @@ lims2 = [1.6,6];
 
 laser.Pulse.plot;
 
-return
+% return
 p_ESD = fliplr(laser.Pulse.ESD_pJ_THz) .* 1e-24;
 % p_ISD = p_ESD ./ laser.WaistArea ./ laser.PulseDuration;
 p_ISD = p_ESD ./ laser.WaistArea ./ laser.Pulse.DurationCheck;
@@ -266,7 +261,7 @@ if exist('scem_full','var')
 	% end
 end
 p_env(p_env<1e-3) = 0;
-Ip = sum(p_env) .* pcpmWin.DeltaNu;
+Ip = sum(p_env) .* scemWin.DeltaNu;
 p_Energy = Ip .* laser.WaistArea .* laser.Pulse.DurationCheck;
 p_Power = p_Energy .* laser.RepetitionRate;
 opo_Power = p_Power - laser.AveragePower
@@ -280,8 +275,8 @@ end
 %% Wave Grids
 dlam_nm = diff(lam_um.*1e3);
 dlam_nm = [dlam_nm(1) dlam_nm];
-f_THz = fliplr(pcpmWin.Frequencies.*1e-12);		% [THz] Descending
-dnu = pcpmWin.DeltaNu;
+f_THz = fliplr(scemWin.Frequencies.*1e-12);		% [THz] Descending
+dnu = scemWin.DeltaNu;
 dnu_THz = dnu.*1e-12;
 [~,pID] = findnearest(lam_um,lambda_pump_central);
 
@@ -353,7 +348,7 @@ end
 % dfgids = dfgids + shiftdim(uint16(0:n_points:((nx_pos-1)*n_points)),-1);
 % sfgids = sfgids + shiftdim(uint16(0:n_points:((nx_pos-1)*n_points)),-1);
 
-%% SCPM Demo - Delta Pump
+%% SCEM Demo - Delta Pump
 opo_delta_gain = qpm2scem(Q_dfg,1,pID);
 
 % tlh = dualplot(lam_um,opo_delta_gain(:,sampID));
@@ -373,7 +368,7 @@ ylabel(tlh,"sinc^{2}(\Deltak_QL/2)")
 % figure
 % plot(delta_k/2,(sinc(delta_k/2)).^2)
 
-return
+% return
 if save_vars
 	if ~exist(filestr,'file')
 		save(filestr,'lam_um','grating_um','sampID','opo_delta_gain','-v7.3');
@@ -383,7 +378,7 @@ if save_vars
 end
 
 % return
-%% SCPM Demo - Pumpwidth
+%% SCEM Demo - Pumpwidth
 pump_linewidth_FWHM = 0.001 * 10 * 2; % [um]
 pump_lims = pump_linewidth_FWHM.* 2.* [-1,1] + lambda_pump_central;
 
@@ -409,7 +404,7 @@ saveplotdat;
 
 % return
 
-%% SCPM Demo - Weighted Pump
+%% SCEM Demo - Weighted Pump
 % Define 'idler' ISD as a fraction of pump ISD since any idler formed will have
 % the same bandwidth as the pump, meaning the relationship between Ip and
 % Ii will be conserved. - Not so sure about this...
@@ -541,7 +536,7 @@ pshg_Power = pshg_out_Energy .* laser.RepetitionRate;
 if iscell(PQ_dfg)
 	spdc_weights = cell(1,nx_pos);
 	for pos = 1:nx_pos
-		% spdc_weights(pos) = { sparse((p_env + pcpm_pshg(:,pos)).*ISDi) };
+		% spdc_weights(pos) = { sparse((p_env + scem_pshg(:,pos)).*ISDi) };
 		% spdc_weights(pos) = { sparse((p_env).*ISDi) };
 	end
 else	
@@ -582,18 +577,18 @@ rowfig;
 if iscell(PQ_dfg)
 	opg_weights = cell(1,nx_pos);
 	for pos = 1:nx_pos
-		% % opg_weights(pos) = {sparse(pcpm_opg(:,pos) .* (0.*pcpm_opg(:,pos)' +  ISDi))};
-		% % opg_weights(pos) = {sparse( (pcpm_opg(:,pos) + (0*ISDi.^2)) .* (pcpm_opg(:,pos)') )};
-		% % opg_weights(pos) = {sparse(pcpm_opg(:,pos) .* pcpm_opg(:,pos)').^0.65};
-		% % opg_weights(pos) = {sparse(pcpm_opg(:,pos) .* pcpm_opg(:,pos)')};
-		% % opg_weights(pos) = {opg_weights{pos} + pcpm_sfg(:,pos)};
+		% % opg_weights(pos) = {sparse(scem_opg(:,pos) .* (0.*scem_opg(:,pos)' +  ISDi))};
+		% % opg_weights(pos) = {sparse( (scem_opg(:,pos) + (0*ISDi.^2)) .* (scem_opg(:,pos)') )};
+		% % opg_weights(pos) = {sparse(scem_opg(:,pos) .* scem_opg(:,pos)').^0.65};
+		% % opg_weights(pos) = {sparse(scem_opg(:,pos) .* scem_opg(:,pos)')};
+		% % opg_weights(pos) = {opg_weights{pos} + scem_sfg(:,pos)};
 		% % opg_weights(pos) = {opg_weights{pos} + spdc_weights{pos} + sfg_weights{pos}};
 		% % opg_weights(pos) = {opg_weights{pos} + spdc_weights{pos}};
 		% 
-		% % opg_weights(pos) = {sparse(pcpm_opg(:,pos)) + spdc_weights{pos}};
-		% % opg_weights(pos) = {opg_weights{pos} .* (1 + sparse(pcpm_opg(:,pos)).'./ISDi)};
+		% % opg_weights(pos) = {sparse(scem_opg(:,pos)) + spdc_weights{pos}};
+		% % opg_weights(pos) = {opg_weights{pos} .* (1 + sparse(scem_opg(:,pos)).'./ISDi)};
 		% 
-		% opg_weights(pos) = {sparse(pcpm_opg(:,pos) + p_env)};
+		% opg_weights(pos) = {sparse(scem_opg(:,pos) + p_env)};
 		% opg_weights(pos) = {opg_weights{pos} .* opg_weights{pos}.' + spdc_weights{pos}} ;
 
 	end
@@ -628,10 +623,10 @@ dsi_Power = out_Energy .* laser.RepetitionRate;
 if iscell(PQ_sfg)
 	sfg_weights = cell(1,nx_pos);
 	for pos = 1:nx_pos
-		% % sfg_weights{pos} = sparse(pcpm_opg(:,pos) + p_env);
-		% % sfg_weights{pos} = sparse(((0.5+lam_um).^3)'.*pcpm_opg(:,pos) + p_env);
+		% % sfg_weights{pos} = sparse(scem_opg(:,pos) + p_env);
+		% % sfg_weights{pos} = sparse(((0.5+lam_um).^3)'.*scem_opg(:,pos) + p_env);
 		% % sfg_weights{pos} = sfg_weights{pos} .* (sfg_weights{pos}');
-		% sfg_weights{pos} = sparse( (pcpm_opg(:,pos) + 0) .* pcpm_opg(:,pos)');
+		% sfg_weights{pos} = sparse( (scem_opg(:,pos) + 0) .* scem_opg(:,pos)');
 		% sfg_weights{pos} = sfg_weights{pos} + pshg_weights;
 	end
 else
@@ -649,8 +644,8 @@ sfg_Power_in = energy_in .* laser.RepetitionRate;
 
 % [~,scpm_sfg,curves_sfg,conv_sfg] = rowplot("SFG",lam_um,sfgids,qpm_sfg,p_eff_sfg,d_sample,grating_um,dsi_w,dsi_w');
 [~,scem_sfg,curves_sfg,conv_sfg] = scem("SFG",lam_um,sfgids,PQ_sfg,P_eff_sfg,sampID,grating_um,L,dsi_w,dsi_w');
-% pcpm_sfg = pcpm_opg + pcpm_sfg;
-% pcpm_opg = pcpm_opg + pcpm_sfg;
+% scem_sfg = scem_opg + scem_sfg;
+% scem_opg = scem_opg + scem_sfg;
 
 saveplotdat;
 clear dsi_w;
@@ -659,13 +654,13 @@ I_out = sum(scem_sfg,1) .* dnu;
 out_Energy = I_out .* laser.WaistArea .* laser.Pulse.DurationCheck;
 sfg_Power = out_Energy .* laser.RepetitionRate;
 
-%% Combined Full PCPM
+%% Combined Full SCEM
 % figure
-% pcpmplot(f_THz,grating_um,pcpm_sfg'+pcpm_dsi')
+% scemplot(f_THz,grating_um,scem_sfg'+scem_dsi')
 % xtls_lam = xticklabels;
 % xts_lam = xticks;
 
-% pcpm_full = pcpm_sfg'+pcpm_dsi' + p_env';
+% scem_full = scem_sfg'+scem_dsi' + p_env';
 if exist('scem_full','var')
 	scem_in = scem_full;
 	scem_full = scem_in + scem_sfg'+scem_opg'+scem_dsi';
@@ -743,7 +738,7 @@ if ~isscalar(scem_in)
 end
 
 end % example loop
-
+return
 %%
 
 T_filt = smoothedTopHat(lam_um,2.1,2.5,0.03);
@@ -754,78 +749,7 @@ figure
 plot(lam_um,scem_out(6:end,:))
 legend('Grating F','Grating G');
 
-%% Previous PCPM
 return
-%% DFG Signal + Idler PCPM
-% qpm_dsi = rowplot("DFG",lam_um,lam_dfg,dfgids,qpm_dfg,conv_eff_dfg,d_sample,grating_um,opg_weights.*Ii);
-% drawnow
-% return
-
-%% DFG Combined PCPM
-% % Figure Setup
-% rowfig;
-% 
-% if iscell(qpm_dfg)
-% 	opg_weights = cell(1,nx_pos);
-% 	for pos = 1:nx_pos
-% 		opg_weights(pos) = {sparse(pcpm_opg(:,pos) .* (pcpm_opg(:,pos)' +  ISDi))};
-% 		opg_weights(pos) = {opg_weights{pos} + spdc_weights{pos}};
-% 	end
-% else
-% 	pcpm_opg = full(pcpm_opg);
-% 	pcpm_opg = shiftdim(pcpm_opg,-1);
-% 	opg_weights = permute(pcpm_opg,[2,1,3]);
-% 	opg_weights = opg_weights .* (pcpm_opg + ISDi);
-% 	opg_weights = opg_weights + spdc_weights;
-% 	pcpm_opg = ndSparse(pcpm_opg);
-% end
-% [~,pcpm_dsi] = rowplot("DFG",lam_um,dfgids,qpm_dfg,conv_eff_dfg,d_sample,grating_um,opg_weights);
-% return   
-
-%% SFG Pump + DSI
-% if iscell(qpm_sfg)
-% 	dsi_weights = cell(1,nx_pos);
-% 	for pos = 1:nx_pos
-% 		dsi_weights{pos} = sparse(pcpm_dsi(:,pos) + p_env);
-% 		dsi_weights{pos} = dsi_weights{pos} .* dsi_weights{pos}';
-% 	end
-% else
-% 	pcpm_dsi = full(pcpm_dsi);
-% 	pcpm_dsi = shiftdim(pcpm_dsi,-1) + (p_env');
-% 	dsi_weights = permute(pcpm_dsi,[2,1,3]);
-% 	dsi_weights = dsi_weights .* pcpm_dsi;
-% 	pcpm_dsi = squeeze(ndSparse(pcpm_dsi));             
-% end
-% [~,pcpm_sfg] = rowplot("SFG",lam_um,sfgids,qpm_sfg,conv_eff_sfg,d_sample,grating_um,dsi_weights);
-% drawnow
-
-%%
-scem_opg = full(scem_opg);
-opg_weights = permute(scem_opg,[2 1 3]).*scem_opg(dfgids);
-
-pcpm_dfg = sum(PQ_dfg.*opg_weights);
-pcpm_dfg = scem_opg + pcpm_dfg;
-pcpm_dfg_norm = sum(p_env);
-pcpm_dfg_norm(pcpm_dfg_norm==0) = 1;
-pcpm_dfg = squeeze(pcpm_dfg)./ pcpm_dfg_norm;
-
-% qpm_dfg_curves = qpm_dfg.*opg_weights;
-% qpm_dfg_curves = sum(qpm_dfg_curves(:,:,1:d_sample:end),3);
-
-% pcpm_dfg = pcpm_dfg + sum(qpm_dfg.*pcpm_dfg);
-% pcpm_dfg = sum(qpm_dfg);
-% pcpm_dfg_norm = 1;
-% pcpm_dfg_norm = sum(lam_dfg ~= 0)';
-% pcpm_dfg_norm = full(squeeze((sum(qpm_dfg ~= 0))));
-% pcpm_dfg_norm = max(full(pcpm_dfg),[],'all');
-
-pcpm_sfg_norm = 1;
-% pcpm_sfg_norm = sum(lam_sfg ~= 0)';
-% pcpm_sfg_norm = full(squeeze((sum(qpm_sfg ~= 0))));
-% pcpm_sfg_norm = max(full(pcpm_sfg),[],'all');
-pcpm_sfg_norm(pcpm_sfg_norm==0) = 1;
-scem_sfg = scem_sfg./ pcpm_sfg_norm;
-
 %% Temp Plots
 figure
 if iscell(opg_weights)
@@ -838,7 +762,7 @@ if size(squeeze(opg_weights),3) > 1 || size(squeeze(opg_weights),2) == n_points
 	colorbar
 else
 	plot(opg_weights(:,:,nx_plot),lam_um)
-	% plot(movmean(opg_weights,5*pcpmWin.DeltaNu,"SamplePoints",(pcpmWin.Frequencies)),lam_um)
+	% plot(movmean(opg_weights,5*scemWin.DeltaNu,"SamplePoints",(scemWin.Frequencies)),lam_um)
 end
 
 %%
@@ -943,16 +867,16 @@ else
 	qpm_curves = sparse(sum(reshape(full([qpm_curves{:}]),sz_plot), 3));
 end
 
-%% SCPM
+%% SCEM
 if ~iscell(qpm_plot)
 	scpm = squeeze(sum(qpm_plot)) .* dnu;
 else
-	% pcpm = sparse(shiftdim(sum(reshape(full([qpm_plot{:}]),sz), 1)));
-	% pcpm = pcpm .* dnu;
+	% scem = sparse(shiftdim(sum(reshape(full([qpm_plot{:}]),sz), 1)));
+	% scem = scem .* dnu;
 	scpm = cellfun(@(q) {sum(q.*dnu,1)},qpm_plot);
 	scpm = cell2mat(scpm')';
 end
-% pcpm(pcpm<1e-3) = 0;
+% scem(scem<1e-3) = 0;
 scpm(scpm<1e-7) = 0;
 
 %% Wave Plots
@@ -974,10 +898,10 @@ else
 	% xlim(lims)
 end
 
-%% SCPM Plots
+%% SCEM Plots
 scemplot(lam_um,grating,scpm');
 
-title([regimestr " SCPM"])
+title([regimestr " SCEM"])
 if strcmpi(regimestr,"SFG")
 	% xlim(lims)
 end
@@ -1015,45 +939,6 @@ end
 	end
 	plot(ax,lx,y)
 end
-
-% function [ax] = pcolour(lx,y,Z,ax)
-% arguments
-% 	lx
-% 	y
-% 	Z
-% 	ax = [];
-% end
-% 
-% 	if isempty(ax)
-% 		ax = nexttile;
-% 	end
-% 
-% 	nx = length(lx); ny = length(y);
-% 	colids = ~any(Z,1);
-% 	rowids = ~any(Z,2);
-% 	colids = [1:find(~colids,1) find(~colids,1,"last"):length(colids)];
-% 	rowids = [1:find(~rowids,1) find(~rowids,1,"last"):length(rowids)];
-% 	lx(colids) = [];
-% 	Z(:,colids) = [];	% Remove columns of all zero
-% 	y(rowids)= [];
-% 	Z(rowids,:) = [];	% Remove rows of all zero
-% 	xl = [min(lx),max(lx)];
-% 	yl = [min(y),max(y)];
-% 	if ~isempty(Z)
-% 		if nx == ny
-% 			xq = linspace(xl(1),xl(2),min(2^10,nx));
-% 			yq = linspace(yl(1),yl(2),min(2^10,ny));
-% 			Zq = interp2(lx',y,full(Z),xq',yq,"linear",0);
-% 			Zq(Zq<0) = 0;
-% 			imagesc(ax,'XData',xq','YData',yq,'CData',Zq)
-% 		else
-% 			pcolor(ax,lx',y,Z)
-% 			shading interp
-% 		end
-% 		xlim(xl); ylim(yl);
-% 		colorbar
-% 	end
-% end
 
 function saveplotdat
 	save_vars = evalin('base','save_vars');
@@ -1157,17 +1042,4 @@ total = zeros(size(cellarr{1}));
 	end
 end
 
-%% Wave Surfs		
-% nexttile
-% surf(lam_um',lam_um,lam_dfg)
-% shading interp
-% title("DFG Wavelengths")
-% ylabel("Pump Wavelength /\mum")
-% 
-% % figure
-% nexttile
-% surf(lam_um',lam_um,lam_sfg)
-% shading interp
-% title("SFG Wavelengths")
-% ylabel("Pump Wavelength /\mum")
 

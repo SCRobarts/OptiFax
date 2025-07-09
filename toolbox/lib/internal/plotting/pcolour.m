@@ -1,4 +1,4 @@
-function ax = pcolour(lx,y,Z,ax,coarse,reduce)
+function [ax,srfh] = pcolour(lx,y,Z,ax,coarse,reduce)
 arguments
 	lx
 	y
@@ -38,12 +38,12 @@ if ~isempty(Z)
 		yq = linspace(yl(1),yl(2),min(2^10,ny));
 		Zq = interp2(lx',y,full(Z),xq',yq,"linear",0);
 		Zq(Zq<0) = 0;
-		imagesc(ax,'XData',xq','YData',yq,'CData',Zq)
+		srfh = imagesc(ax,'XData',xq','YData',yq,'CData',Zq);
 	elseif min(size(Z)) > 1
-		pcolor(ax,lx',y,Z)
-		shading(ax,'interp')
+		srfh = pcolor(ax,lx',y,Z);
+		shading(ax,'interp');
 	else
-		plot(ax,lx',Z)
+		srfh = plot(ax,lx',Z);
 		yl = [min(Z),max(Z)];
 	end
 	if ~isempty(xl)

@@ -115,7 +115,7 @@ else
 	axh = nexttile(1);
 end
 lgd = legend(axh, num2str(grating_um(:,sampID)','%.1f'),'Location','best');
-lgd.Title.String = '\Lambda_{G}/\mum';
+lgd.Title.String = '\Lambda/\mum';
 lgd.ItemTokenSize(1) = 10;
 ylabel(tlh,"sinc^{2}(\Deltak_QL/2)")
 fignum = savefignum(gcf,fignum,prestr,sf_flag);
@@ -166,7 +166,7 @@ if fdisp
 	[tlh,ax_nu,ax_lam] = fplot(f_lims,'SPDC');
 	axh = ax_nu;
 	plot(axh,f_THz,scem_opo_pumpwidth(:,sampID))
-	ylim([0 0.6]);
+	ylim([0 0.4]);
 	tlhA{4} = tlh;
 else
 	tlh = dualplot(lam_um,scem_opo_pumpwidth(:,sampID)); 
@@ -174,9 +174,10 @@ else
 	axh = nexttile(1);
 end
 lgd = legend(axh, num2str(grating_um(:,sampID)','%.1f'),'Location','best');
-lgd.Title.String = '\Lambda_{G}/\mum';
+lgd.Title.String = '\Lambda/\mum';
 lgd.ItemTokenSize(1) = 10;
-ylabel(tlh,"\Sigmasinc^{2}(\DeltakL/2)/N_{\lambda_p}")
+% ylabel(tlh,"\Sigmasinc^{2}(\DeltakL/2)/N_{\lambda_p}")
+ylabel(tlh,"\Sigmasinc^{2}(\DeltakL/2)/N(\lambda_p)")
 fignum = savefignum(gcf,fignum,prestr,sf_flag);
 
 %% Figs 1+4 combined
@@ -353,7 +354,6 @@ end
 
 labelaxes(convAx,qpmAx,scemAx,fdisp,cols)
 
-% title(tlh,'SFG			DFG'); % Probably just add them after...
 % return
 
 % Baseline Full Crystal DFG - Fig 10.2
@@ -655,12 +655,6 @@ figure;
 		tlh.Padding = "compact";
 		% tlh.Padding = "tight";
 		tlh.TileSpacing = "tight";
-
-		% convTlh = tiledlayout(tlh,'Padding','Compact','TileSpacing','Tight');
-		% qpmTlh = tiledlayout(tlh,'Padding','Compact','TileSpacing','Tight');
-		% qpmTlh.Layout.Tile = 2;
-		% scpmTlh = tiledlayout(tlh,'Padding','Compact','TileSpacing','Tight');
-		% scpmTlh.Layout.Tile = 3;
 end
 
 function [convAx,qpmAx,scemAx] = scem_evo_plot(regimestr,lam_um,grating_um,conv,curves,scem,coarse,fdisp,cols)
@@ -766,6 +760,7 @@ function labelaxes(convAx,qpmAx,scemAx,fdisp,cols)
 		ylabel(convAx{1},"Pump Wavelength / \mum")
 	else
 		xlp = [0.5 -0.07];
+		ylabel(scemAx{1},'Grating Period / \mum');
 	end
 
 	if ~(~cols && fdisp)

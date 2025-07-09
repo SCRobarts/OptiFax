@@ -16,7 +16,10 @@ function [SPQ,scem,SPQ_curves,SP,S_plot] = scem(regimestr,lam_um,lam_ids,PQ,P_ef
 	dnu = ((c/lam_um(1)) - (c/lam_um(2))) * 1e6;
 	
 	nx_pos = length(grating);
+	nx_L = length(L_xtal);
 	nx_plot = length(id_plot);
+	Ls = repmat(L_xtal,nx_pos,1);
+	Ls = Ls(:);
 	
 	I1 = sum(w1.*dnu,1);	% ISD to Intensity available at each grating
 	I2 = sum(w2.*dnu,2);
@@ -31,31 +34,38 @@ function [SPQ,scem,SPQ_curves,SP,S_plot] = scem(regimestr,lam_um,lam_ids,PQ,P_ef
 		% weights = cell(1,nx_pos);
 		% weight_cap = weights;
 		S_plot = cell(1,nx_plot);
-		for pos = 1:nx_pos
-			if size(w2,2) < 2
-				weights = {sparse(w1(:,pos) * w2)};
-			else
-				weights = {sparse(w1(:,pos) * w2(pos,:))};	% ISD.^2 in [W^2]/[m^4][Hz^2]
+		for nL = 1:nx_L
+			for pos = 1:nx_pos
+				pos_L = pos + (nx_pos.*(nL-1));
+				if size(w2,2) < 2
+					weights = {sparse(w1(:,pos_L) * w2)};
+				else
+					weights = {sparse(w1(:,pos_L) * w2(pos_L,:))};	% ISD.^2 in [W^2]/[m^4][Hz^2]
+				end
+				pos_plot = pos_L == id_plot;
+				if any(pos_plot)
+					S_plot{pos_plot} = weights{:} .* L_xtal(nL).^2;
+				end
+				weight_cap = sparse(weights{:}./I_min(pos_L));	% [W]/[m^2][Hz^2] max cap
+				% weight_cap = sparse(weights{:}./I_max(pos));	% [W]/[m^2][Hz^2] min cap
+				SPQ{pos_L} = PQ{pos_L} .* weights{:} .* L_xtal(nL).^2;	% [W]/[m^2][Hz^2]
+				SPQ{pos_L} = min(SPQ{pos_L},weight_cap);
 			end
-			pos_plot = pos == id_plot;
-			if any(pos_plot)
-				S_plot{pos_plot} = weights{:} .* L_xtal.^2;
-			end
-			weight_cap = sparse(weights{:}./I_min(pos));	% [W]/[m^2][Hz^2] max cap
-			% weight_cap = sparse(weights{:}./I_max(pos));	% [W]/[m^2][Hz^2] min cap
-			SPQ{pos} = PQ{pos} .* weights{:} .* L_xtal.^2;	% [W]/[m^2][Hz^2]
-			SPQ{pos} = min(SPQ{pos},weight_cap);
 		end
 		clear PQ
 	else
 		weights = w1 .* w2;
-		SPQ = cellfun(@(q) spcelltimes(q,weights .* L_xtal.^2), PQ);
+		% SPQ = cellfun(@(q) spcelltimes(q,weights .* L_xtal.^2), PQ);
+		for pos = 1:length(Ls)
+				SPQ{pos} = PQ{pos} .* weights .* Ls(pos).^2;	% [W]/[m^2][Hz^2]
+		end
 		clear PQ
 	end
 	
 	
 	if ~iscell(weights)
-		SP = P_eff .* weights .* L_xtal.^2;
+		% SP = P_eff .* weights .* L_xtal.^2;
+		SP = P_eff .* weights .* shiftdim(Ls.^2,-2);
 		clear P_eff
 		if size(SP,3) > 1
 			SP = max(SP(:,:,id_plot),[],3);
@@ -68,7 +78,7 @@ function [SPQ,scem,SPQ_curves,SP,S_plot] = scem(regimestr,lam_um,lam_ids,PQ,P_ef
 		end
 	else
 		% conv_cell = cellfun(@(w) spcelltimes(w,conv_eff), weights(1:d_sample:end));
-		SP_cell = cellfun(@(w) spcelltimes(w,P_eff), S_plot);
+		SP_cell = cellfun(@(w) spcelltimes(w,double(P_eff)), S_plot);
 		clear P_eff
 		SP = SP_cell{1};
 		for pos = 2:nx_plot
@@ -121,9 +131,14 @@ function [SPQ,scem,SPQ_curves,SP,S_plot] = scem(regimestr,lam_um,lam_ids,PQ,P_ef
 	end
 	
 	%% SCPM Plots
+	if length(Ls) == nx_plot
+	% grating = repmat(grating,1,nx_L);
+		grating = 1:nx_plot+1;
+		scem = [scem, scem(:,end)];
+	end
 	scemplot(lam_um,grating,scem',[],coarse,reduce);
 	
-	title([regimestr " SCPM"])
+	title([regimestr " SCEM"])
 	if strcmpi(regimestr,"SFG")
 		% xlim(lims)
 	end
@@ -141,6 +156,7 @@ arguments
 end
 	if length(y) > 1
 		pcolour(lx,y,Z,ax,coarse,reduce);
+		colorbar
 	else
 		lplot(lx,Z,ax)
 	end

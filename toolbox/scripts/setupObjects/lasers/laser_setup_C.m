@@ -1,5 +1,5 @@
-%% laser_setup_Chromacity.m
-% Template for configuration of Chromacity ps fibre lasers
+%% laser_setup_C.m
+% Template for configuration of C ps fibre lasers
 %
 %	Sebastian C. Robarts 2024 - sebrobarts@gmail.com
 clear all;

@@ -1,4 +1,4 @@
-function [Q,grating_um,P_eff] = sincgain_sparse(regimestr,crystal,lam_p,lam_s,lam_i,nx_pos,m)
+function [Q,grating_um,P_eff,PQ] = sincgain_sparse(regimestr,crystal,lam_p,lam_s,lam_i,nx_pos,m)
 %
 %	Sebastian C. Robarts 2024 - sebrobarts@gmail.com
 arguments
@@ -18,6 +18,7 @@ end
 grating_shift_um = shiftdim(grating_um,-1);	% shift to 3rd dim [pumps;sigs;gratings]
 grating_shift = grating_shift_um .* 1e-6;
 L_xtal = single(crystal.Length);
+nx_L = length(L_xtal);
 
 [k_pump,n_pump,~] = kcalc(lam_p,crystal); % pump angular wavenumber	[rad/m], & ref. index
 [k_signal,n_signal,w_signal] = kcalc(lam_s,crystal); % signal angular wavenumber [rad/m], & ref. index
@@ -46,22 +47,27 @@ if gpuDeviceCount
 	L_xtal = gpuArray(L_xtal);
 end
 
-Q = cell(1,nx_pos);
+Q = cell(1,nx_pos.*nx_L);
+PQ = Q;
 
-for pos = 1:nx_pos
-	dkqpm = delta_k_qpm - k_crystal(pos);	% [rad/m]
-	g_pos = abs((sinc(dkqpm.*L_xtal./2)).^2);	% [rad^-2] mismatch dependent term in narrowband SVEA
-	%%% Inclusion of higher order terms, there may be issues here with addition, since the sinc function should be bounded?
-	for mi = 2:length(m)
-		dm = m(mi) - m(mi-1);
-		dkqpm = dkqpm - (dm.*k_crystal(pos));
-		g_pos = g_pos + abs((sinc(dkqpm.*L_xtal./2)./m(mi)).^2);	% mismatch dependent term in narrowband SVEA
+for nL = 1:nx_L
+	for pos = 1:nx_pos
+		dkqpm = delta_k_qpm - k_crystal(pos);	% [rad/m]
+		g_pos = abs((sinc(dkqpm.*L_xtal(nL)./2)).^2);	% [rad^-2] mismatch dependent term in narrowband SVEA
+		%%% Inclusion of higher order terms, there may be issues here with addition, since the sinc function should be bounded?
+		for mi = 2:length(m)
+			dm = m(mi) - m(mi-1);
+			dkqpm = dkqpm - (dm.*k_crystal(pos));
+			g_pos = g_pos + abs((sinc(dkqpm.*L_xtal(nL)./2)./m(mi)).^2);	% mismatch dependent term in narrowband SVEA
+		end
+		%%% Filtering out low gain components for sparse efficiency - be careful with this.
+		g_pos(g_pos<1e-4) = 0;
+		% g_pos(g_pos<1e-10) = 0;
+		g_pos(isnan(g_pos)) = 0;
+
+		Q(pos + (nx_pos.*(nL-1))) = {gather(sparse(double(g_pos)))};	% [rad^-2]
+		PQ(pos + (nx_pos.*(nL-1))) =  {gather(sparse(double(g_pos.* P_eff)))};
 	end
-	%%% Filtering out low gain components for sparse efficiency - be careful with this.
-	g_pos(g_pos<1e-4) = 0;
-	% g_pos(g_pos<1e-10) = 0;
-	g_pos(isnan(g_pos)) = 0;
-	Q(pos) = {gather(sparse(double(g_pos)))};	% [rad^-2]
 end
 
 return
