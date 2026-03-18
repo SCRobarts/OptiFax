@@ -20,9 +20,10 @@ a = 0.48;		% Exponent for rate of chirp
 % P2 = 2*1e-6;	% Finishing grating period [m]
 % a = 0.9;		% Exponent for rate of chirp
 
-uncertainty_m = 0.1e-6;	% Small perturbation in domain wall locations [m]
+uncertainty_m = 1*0.1e-6;	% Small perturbation in domain wall locations [m]
 dutyOff = 0;	% Systematic offset of duty cycle within each period (not currently implemented for chirped)
-grating_m = @(z) chirpedgrating(z,P1,P2,a,uncertainty_m);
+% grating_m = @(z) chirpedgrating(z,P1,P2,a,uncertainty_m);
+grating_m = @(z) chirpedgrating(z,P1,P2,a,uncertainty_m,1.5e-6);
 
 mfd = 5e-6;	% Mode Field Diameter [m]
 
@@ -46,6 +47,7 @@ wavelims = [220 2500];
 tOff =  4 * -1.25e-12;
 
 lamWin = SimWindow(lam0,points,wavelims,tOff,"wavelims");
+CPLN.simulate(lamWin);
 
 %% Initialise Laser / Input Pulse
 load("Taccor800.mat");
@@ -59,15 +61,15 @@ fibreOut.AveragePower = 0.117;
 cav = Cavity(CPLN,0);
 errorBounds = [5e-2,1e0];	% Percentage error tolerance
 minStep = 0.20e-6;		% Minimum step size
-optSim = OpticalSim(laser,cav,lamWin,errorBounds,minStep);
-optSim.Pulse = fibreOut;
-optSim.RoundTrips = 1;
-optSim.ProgressPlots = 3;
-optSim.ProgressPlotting = 0;
-optSim.setup;
+% optSim = OpticalSim(laser,cav,lamWin,errorBounds,minStep);
+% optSim.Pulse = fibreOut;
+% optSim.RoundTrips = 1;
+% optSim.ProgressPlots = 3;
+% optSim.ProgressPlotting = 0;
+% optSim.setup;
 % optSim.System.Xtal.Polarisation = fliplr(optSim.System.Xtal.Polarisation); 
 % optSim.System.Xtal.DomainWidths = fliplr(optSim.System.Xtal.DomainWidths); 
 
-% CPLN.store(name,1);
-% CPLN.plot;
+CPLN.store(name,1);
+CPLN.plot;
 CPLN.xtalplot([350 500]);

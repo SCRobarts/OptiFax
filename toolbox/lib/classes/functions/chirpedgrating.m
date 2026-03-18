@@ -1,10 +1,11 @@
-function domain_widths = chirpedgrating(z,P1,P2,a,tol)
+function domain_widths = chirpedgrating(z,P1,P2,a,tol,featuresize)
 arguments
 	z
 	P1 = 6.3*1e-6;
 	P2 = 2.2*1e-6;
 	a = 0.48;
 	tol = 0.1e-6;
+	featuresize = [];
 end
 	% PSteps = round(((P1 - P2) ./ tol) + 1);
 	P1 = P1 + tol;
@@ -13,6 +14,7 @@ end
 	gratings = P1 + (P2-P1).*(zfrac.^a);
 	gratings = gratings - (P2 + tol/2);
 	% Discretise according to a smallest difference in period sizes
+	
 	domains = round(gratings/tol).*tol./2;
 	domains = domains + (P2/2);
 
@@ -46,6 +48,11 @@ end
 		end
 	end
 	
+	if ~isempty(featuresize)
+			domain_widths(1:2:end) = 2*domain_widths(1:2:end) - featuresize;
+			domain_widths(2:2:end-1) = featuresize;
+	end
+
 	% domain_widths(2:2:nDomains-1) = 2*domain_widths(1:2:nDomains-2)...
 	% 	- movmean(domain_widths(1:2:nDomains),2,"Endpoints","discard");
 end

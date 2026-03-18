@@ -20,6 +20,7 @@ classdef Optic < matlab.mixin.Copyable
 		Dispersion
 	end
 	properties (Dependent)
+		TransferMatrix
 		IncidentAngle	% Degrees
 		Length
 		OpticalPath
@@ -27,6 +28,7 @@ classdef Optic < matlab.mixin.Copyable
 		RelativeGD
 		GDD
 		Material
+		RefractiveIndex
 	end
 
 	methods(Access = protected)
@@ -60,22 +62,26 @@ classdef Optic < matlab.mixin.Copyable
 			if nargin > 0
 				obj.Parent = parent;
 				obj.SimWin = SimWindow.empty;
+				obj.Regime = regimeStr;
+			
+				if class(material) ~= "Dielectric"
+					material = Dielectric(material,length_m,celsius,obj);
+				end
+				obj.Bulk = material;
+
 				if class(s1) ~= "OpticalSurface"
 					s1 = OpticalSurface(s1,material,theta,1,obj);
 				else
 					% s1 = OpticalSurface(s1.Coating,material,theta,1,obj,s1.GDD);
 				end
-				obj.Regime = regimeStr;
 				obj.S1 = s1;
-				if class(material) ~= "Dielectric"
-					material = Dielectric(material,length_m,celsius,obj);
-				end
+				
 				if class(s2) ~= "OpticalSurface"
 					s2 = OpticalSurface(s2,material,theta,2,obj);
-				else
-					s2 = OpticalSurface(s2.Coating,material,theta,2,obj,s2.GDD);
+				elseif s2 == s1
+					s2 = copy(s1);
+					% s2 = OpticalSurface(s2.Coating,material,theta,2,obj,s2.GDD);
 				end
-				obj.Bulk = material;
 				obj.S2 = s2;
 			end
 		end
@@ -84,21 +90,23 @@ classdef Optic < matlab.mixin.Copyable
 			obj.SimWin = simWin;
 			obj.adopt;
 				obj.Bulk.simulate;
-			obj.Transmission = obj.S1.Transmission;
-			obj.Reflection = obj.S1.Reflection;		% Counting only the first surface reflection as other reflections form separate "pulses"
-			obj.Absorption = obj.Bulk.Absorption;
-			obj.Dispersion = obj.S1.Dispersion;
-
-				obj.Transmission = obj.Transmission...
-								.* obj.Bulk.Transmission...
-								.* obj.S2.Transmission;
-
-			if obj.Regime == "T"
-				obj.Dispersion = obj.Dispersion...
-							   + obj.Bulk.Dispersion...
-							   + obj.S2.Dispersion;
-			else
-				% obj.Transmission = 1 - obj.Transmission;
+			if obj.SimWin.NumberOfPoints > 1
+				obj.Transmission = obj.S1.Transmission;
+				obj.Reflection = obj.S1.Reflection;		% Counting only the first surface reflection as other reflections form separate "pulses"
+				obj.Absorption = obj.Bulk.Absorption;
+				obj.Dispersion = obj.S1.Dispersion;
+	
+					obj.Transmission = obj.Transmission...
+									.* obj.Bulk.Transmission...
+									.* obj.S2.Transmission;
+	
+				if obj.Regime == "T"
+					obj.Dispersion = obj.Dispersion...
+							   	+ obj.Bulk.Dispersion...
+							   	+ obj.S2.Dispersion;
+				else
+					% obj.Transmission = 1 - obj.Transmission;
+				end
 			end
 		end
 
@@ -125,6 +133,41 @@ classdef Optic < matlab.mixin.Copyable
 
 			obj.Transmission(limIDs) = obj.Transmission(limIDs) .^ powOC;
 			obj.Reflection(limIDs) = 1 - obj.Transmission(limIDs);
+		end
+
+		function invert(obj)
+			s1 = obj.S1;
+			s2 = obj.S2;
+
+			s1.Order = 2;
+			s2.Order = 1;
+			s1.ROC = -s1.ROC;
+			s2.ROC = -s2.ROC;
+
+			obj.S1 = s2;
+			obj.S2 = s1;
+		end
+
+		function M = get.TransferMatrix(obj)
+			M = @(lam) obj.createTransferMatrix(lam);
+		end
+
+		function M = createTransferMatrix(obj,lam)
+			R1 = obj.S1.ROC;
+			if obj.Regime ~= "T"
+				theta = obj.S1.IncidentAngle;
+				R_eff = R1.*cosd(theta); % Tangential effective ROC
+				M = [1 0; -2./R_eff 1];
+			else
+				L = obj.Length;
+				S1M = obj.S1.TransferMatrix(lam);
+				S2M = obj.S2.TransferMatrix(lam);
+				DM = [1 L; 0 1];
+				% DM = repmat(DM,1,1,length(lam));
+				M = pagemtimes(DM,S1M);
+				M = pagemtimes(S2M,M);
+				% M = S2M*DM*S1M;
+			end
 		end
 
 		function GD = get.GroupDelay(obj)
@@ -160,6 +203,23 @@ classdef Optic < matlab.mixin.Copyable
 			obj.Bulk.Length = l;
 		end
 
+		function set.S1(obj,optsurf)
+			obj.S1 = optsurf;
+			obj.S1.Parent = obj;
+			obj.S1.Order = 1;
+		end
+
+		function set.S2(obj,optsurf)
+			obj.S2 = optsurf;
+			obj.S2.Parent = obj;
+			obj.S2.Order = 2;
+		end
+
+		function set.Bulk(obj,optdielectric)
+			obj.Bulk = optdielectric;
+			obj.Bulk.Parent = obj;
+		end
+
 		function opl = get.OpticalPath(obj)
 			if strcmp(obj.Regime,"T")
 				nr = obj.Bulk.RefractiveIndex;
@@ -171,6 +231,27 @@ classdef Optic < matlab.mixin.Copyable
 
 		function bulkMat = get.Material(obj)
 			bulkMat = obj.Bulk.Material;
+		end
+
+		function nr = get.RefractiveIndex(obj)
+			if isempty(obj.Bulk.RefractiveIndex)
+				nr = @(lam) sellmeier_OF(lam.*1e6,obj.Material,obj.Bulk.Temperature);
+			elseif isscalar(obj.Bulk.RefractiveIndex)
+				nr = @(lam) obj.Bulk.RefractiveIndex;
+			else
+				nr = @(lam) obj.nrlookup(lam);
+			end
+		end
+
+		function nr = nrlookup(obj,lam)
+			if length(lam) == length(obj.SimWin.Wavelengths)
+				nr = obj.Bulk.RefractiveIndex';
+				% nr = obj.Bulk.RefractiveIndex;
+			else
+				[~,lamid] = findnearest(obj.SimWin.Wavelengths,lam);
+				nr = obj.Bulk.RefractiveIndex(lamid)';
+				% nr = obj.Bulk.RefractiveIndex(lamid);
+			end
 		end
 
 		function plot(obj,lims)

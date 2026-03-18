@@ -7,7 +7,7 @@ arguments
 	extstr = '.png';
 end
 
-	r_now=char(datetime('now'), 'yyyy_MM_dd__HH_mm');
+	r_now=char(datetime('now'), 'yyyy_MM_dd__HH_mm_ss');
 	folderpath = [pathstr,'\',folderstr];
 	filename = [folderpath,'\',r_now,'_',filestr,extstr];
 	

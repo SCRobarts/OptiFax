@@ -53,8 +53,9 @@ fignum = 1;
 save_vars = 0;
 pathstr = 'C:\Users\Seb Robarts\Heriot-Watt University Team Dropbox\RES_EPS_McCracken_Lab\Seb\PGR\Writing\SCEM Paper';
 
-n_points = 2^13;
-% n_points = 2^14;
+n_points = 2^12;
+% n_points = 2^13;
+% n_points = 2^16;
 nx_pos = 201;
 % nx_pos = 1;
 
@@ -187,11 +188,12 @@ end
 % laser.AveragePower = 3.76;
 % laser.SourceString = "Sech";
 % laser.Wavelength = 845e-9;
-% laser.PulseDuration = 150e-15;
+laser.PulseDuration = 595e-15;
+% laser.PulseDuration = 800e-15;
 % laser.RepetitionRate = 106e6;
 % laser.LineWidth = 9e-9;
 % laser.Waist = 40e-6;
-laser.Waist = 30e-6;
+laser.SpotRadius = 30e-6;
 
 % load OP_GaP_fanout_test.mat
 
@@ -217,17 +219,20 @@ if d_sample < 1
 	d_sample = 1;
 end
 
-scemWin = SimWindow(lambda_pump_central.*1e-6,n_points,[0.35,6].*1e3,0,"spec"); % PPKTP
-% scemWin = SimWindow(lambda_pump_central*1e-6,n_points,[0.5,4.7].*1e3,0,"spec");
+% scemWin = SimWindow(lambda_pump_central.*1e-6,n_points,[0.35,6].*1e3,0,"spec"); % PPKTP
+scemWin = SimWindow(lambda_pump_central*1e-6,n_points,[0.5,4.7].*1e3,0,"spec");
 % scemWin = SimWindow(1.035*1e-6,n_points,[0.5,10].*1e3,0,"spec"); % OP-GaP
 scemWin.ref2max;
+% scemWin.TimeOffset = -1e-12;
 lam_um = (fliplr(scemWin.LambdanmPlot.*1e-3));	% [um]  Ascending
 laser.simulate(scemWin);
 
 if strcmp(example,'core')
 	%%% Pulse length for Auskerry
-	laser.Pulse.applyGDD(5e-26);	% Shorten to ~0.5ps
-	% laser.Pulse.applyGDD(3e-26);	% Shorten to ~1.75ps
+	if laser.Pulse.DurationCheck > 2*laser.PulseDuration
+		laser.Pulse.applyGDD(-5e-26);	% Shorten to ~0.5ps
+		% laser.Pulse.applyGDD(3e-26);	% Shorten to ~1.75ps
+	end
 	sampID = 21:d_sample:nx_pos;
 else
 	sampID = 1:d_sample:nx_pos;
@@ -263,6 +268,7 @@ end
 p_env(p_env<1e-3) = 0;
 Ip = sum(p_env) .* scemWin.DeltaNu;
 p_Energy = Ip .* laser.WaistArea .* laser.Pulse.DurationCheck;
+% p_Energy = Ip .* laser.WaistArea .* laser.Pulse.Duration;
 p_Power = p_Energy .* laser.RepetitionRate;
 opo_Power = p_Power - laser.AveragePower
 n_points = length(p_env);
@@ -282,12 +288,6 @@ dnu_THz = dnu.*1e-12;
 
 fwtm = findfwnm(lam_um*1e3,p_env,0.1);
 fwhm = findfwnm(lam_um*1e3,p_env,0.5);
-
-figure
-plot(lam_um,p_env,lam_um,T_filt)
-xlim(plims)
-xlabel("Wavelength / (\mum)")
-ylabel("Intensity Spectral Density / (W/m^2Hz)")
 
 % return
 % figure
@@ -385,6 +385,14 @@ pump_lims = pump_linewidth_FWHM.* 2.* [-1,1] + lambda_pump_central;
 [~,pIDs] = findnearest(lam_um,pump_lims);
 pIDs = pIDs(1):pIDs(2);
 lambda_pump = lam_um(pIDs);
+
+figure
+plot(lambda_pump ,p_env(pIDs), 'b', 'LineWidth', 1)
+xlabel('Pump Wavelength / \mum');
+ylabel("Intensity Spectral Density / Wm^{-2}Hz^{-1}")
+
+% return
+
 conv_eff = P_eff_dfg(pID,:);
 conv_eff = conv_eff./max(conv_eff,[],"all");
 
@@ -423,7 +431,8 @@ saveplotdat;
 Ii = ISDi*n_points*dnu;
 
 envelope = p_env(pIDs);
-weights = p_env .* ISDi;
+% weights = p_env .* ISDi;
+weights = p_env;
 prefactor = P_eff_dfg.*weights(:,end);
 % prefactor = P_eff_dfg.*weights';
 
@@ -475,13 +484,14 @@ prefactor = P_eff_dfg.*weights(:,end);
 % ylabel(axp,"L^2I_pP_\etaQ")
 
 %%
-tlh = dualpcolor(lam_um,lam_um,prefactor,lims1,lims2);
+tlh = dualpcolor(lam_um,lam_um,prefactor.*L.^2,lims1,lims2);
 ylabel(tlh,"Pump Wavelength / \mum")
 
 % return
 %%
-scem_opo_weighted = qpm2scem(Q_dfg,dnu,dfgids,P_eff_dfg.*L.^2,p_env(:,end).*ISDi,1);
-
+% scem_opo_weighted = qpm2scem(Q_dfg,dnu,dfgids,P_eff_dfg.*L.^2,p_env(:,end).*ISDi,1);
+% scem_opo_weighted = qpm2scem(Q_dfg,dnu,dfgids,P_eff_dfg.*L.^2,ISDi,1);
+scem_opo_weighted = qpm2scem(Q_dfg,dnu,dfgids,P_eff_dfg.*L.^2,p_env,1);
 
 tlh = dualpcolor(lam_um(1,:), grating_um, scem_opo_weighted',lims1,lims2,coarse,reduce);
 ylabel(tlh,"Grating Period / \mum")
@@ -500,13 +510,22 @@ rowfig;
 % [~,scpm_base_sfg,curves_all_sfg,conv_all_sfg] = rowplot("SFG",lam_um,sfgids,PQ_sfg,P_eff_sfg,d_sample,grating_um);
 % [~,scpm_base_dfg,curves_all_dfg,conv_all_dfg] = rowplot("DFG",lam_um,dfgids,PQ_dfg,P_eff_dfg,d_sample,grating_um);
 
-[~,scem_base_sfg,curves_all_sfg,conv_all_sfg] = scem("SFG",lam_um,sfgids,PQ_sfg,P_eff_sfg,sampID,grating_um,L);
-[~,scem_base_dfg,curves_all_dfg,conv_all_dfg] = scem("DFG",lam_um,dfgids,PQ_dfg,P_eff_dfg,sampID,grating_um,L);
+% [~,scem_base_sfg,curves_all_sfg,conv_all_sfg] = scem("SFG",lam_um,sfgids,PQ_sfg,P_eff_sfg,sampID,grating_um,L);
+% [~,scem_base_dfg,curves_all_dfg,conv_all_dfg] = scem("DFG",lam_um,dfgids,PQ_dfg,P_eff_dfg,sampID,grating_um,L);
+
+[~,scem_base_sfg,curves_all_sfg,conv_all_sfg] = scem("SFG",lam_um,sfgids,PQ_sfg,P_eff_sfg,sampID,grating_um,1,1/dnu,1,0);
+[~,scem_base_dfg,curves_all_dfg,conv_all_dfg] = scem("DFG",lam_um,dfgids,PQ_dfg,P_eff_dfg,sampID,grating_um,1,1/dnu,1,0);
+
+return
+
+figure
+% pcolour(f_THz(1,:),lam_um, conv_all_dfg ./(L.^2));
+pcolour(f_THz(1,:),lam_um, conv_all_dfg);
 
 saveplotdat;
 
 % drawnow
-% return
+
 %% Further PCPM
 
 %% Pump SHG

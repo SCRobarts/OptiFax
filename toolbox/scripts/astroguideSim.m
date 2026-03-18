@@ -6,7 +6,7 @@
 close all
 clear
 
-batchRun = 1;
+batchRun = 0;
 pathstr	  = 'C:\Users\Seb Robarts\Heriot-Watt University Team Dropbox\RES_EPS_McCracken_Lab\Seb\PGR\Sim Data\Plots\waveguideDelayChirp\';
 folderstr = 'SimInProgress';
 % vidname = 'FixedGrating_';
@@ -17,43 +17,50 @@ dutyoff = 0 * 0.05;
 load("Taccor800.mat");
 % laser.AveragePower = 0.4;
 laser.AveragePower = 0.15;
+% laser.AveragePower = 0.2;
 fibreOut = copy(laser);
 
 fibreOut.Name = "FibreOut";
 % fibreOut.SourceString = "FWCARS3cm_Sim_Spectrum.txt";
 % fibreOut.SourceString = "FWCARS3cm_Sim_Spectrum_147mW.txt";
 % fibreOut.SourceString = "FWCARS12cm_Sim_Spectrum_40mW.txt";
-fibreOut.SourceString = "FWCARS12cm_Sim_Spectrum_117mW.txt";
+% fibreOut.SourceString = "FWCARS12cm_Sim_Spectrum_117mW.txt";
 % fibreOut.AveragePower = 0.75;
 % fibreOut.AveragePower = 0.15;
 % fibreOut.AveragePower = 0.117;
+fibreOut.AveragePower = 0.4;
 % fibreOut.PulseDuration = 164e-15;
 
 %% Initialise Simulation Window
 lambda_ref = laser.Wavelength;
-npts = 2^16;
+npts = 2^18;
 tAxis = 1 * 30e-12;
-wavelims = [215 6500];
-tOff =  0 * 5 * -1.0e-12;
+% wavelims = [215 6500];
+wavelims = [215 2000];
+tOff = 1 * 5 * -1.0e-12;
 
 % simWin = SimWindow(lambda_ref,npts,tAxis,tOff);
-% simWin.SpectralLimits = wavelims;
 simWin = SimWindow(lambda_ref,npts,wavelims,tOff,"wavelims");
-% fibreOut.simulate(simWin);
-% fibreOut.Pulse.plot;
+fibreOut.simulate(simWin);
+fibreOut.Pulse.plot;
 % return
 
 %% Generate fibre supercontinuum
-% load("FemtoWHITE_CARS_12cm.mat");
-load("FemtoWHITE_CARS.mat");
+load("FemtoWHITE_CARS_12cm.mat");
+% load("FemtoWHITE_CARS.mat");
 
-% [~] = gnlsefibsim(fibreOut,simWin,fibre);
-% fibreOut.Pulse.tscale(sqrt(0.5));
-% fibreOut.Pulse.plot;
+[~] = gnlsefibsim(fibreOut,simWin,fibre);
+% fibreOut.Pulse.tscale(sqrt(0.5)); % Why?
+fibreOut.Pulse.plot;
+% fibreOut.Pulse.tscale(20);
+% figure
+% fibreOut.Pulse.spectrogram([500 1200],1,[-2000 2000]);
+% fibreOut.Pulse.tscale(1/20);
 % return
 
 %% Initialise Optical Cavity
 load("ChirpedWaveguideLN.mat")
+% load("ChirpedWG_LN.mat")
 bpf = load("IdealBandPassFilter.mat");
 bpf = bpf.obj;
 bpf.simulate(simWin);
@@ -73,9 +80,10 @@ minStep = 0.1e-6;		% Minimum step size
 errorBounds = [5e-2,1e0];	% Percentage error tolerance
 % minStep = 0.20e-6;		% Minimum step size
 
-optSim = OpticalSim(laser,cav,simWin,errorBounds,minStep);
+% optSim = OpticalSim(laser,cav,simWin,errorBounds,minStep);
+optSim = OpticalSim(laser,cav,simWin);
 % optSim.Delay = delay';
-optSim.Pulse = fibreOut;
+optSim.Pulse = fibreOut.Pulse.copy;
 optSim.RoundTrips = 1;
 optSim.ProgressPlots = 301;
 if batchRun
@@ -83,6 +91,7 @@ if batchRun
 	optSim.ProgressPlots = 3;
 end
 % optSim.Hardware = "CPU";
+optSim.SpectralPlotLimits = wavelims;
 
 crystal.Chi2 = 2 * 25e-12;
 crystal.StepSize = minStep;
@@ -101,16 +110,17 @@ a = 0.48;
 % tol = ((P1-P2) ./ (polsteps-1)) - eps;
 % % tol = tol * (1 + mod(polsteps,2)/2);
 % crystal.GratingPeriod = @(z)chirpedgrating(z,P1,P2,a,tol);
-crystal.GratingPeriod = "ChirpedWGPolarisationDomains.xlsx";
 % % crystal.GratingPeriod = P2;
 % crystal.Uncertainty = uncertainty_m;
 % crystal.DutyCycleOffset = dutyoff;
 
+crystal.GratingPeriod = "ChirpedWGPolarisationDomains.xlsx"; % Used for plots in slides
 optSim.setup;
-% optSim.System.Xtal.xtalplot([350 500]);
 
+% optSim.System.Xtal.xtalplot([350 500]);
 % optSim.Pulse.propagate(bpf);
 
+figure
 [f,t,p] = optSim.Pulse.spectrogram;
 tplot = (simWin.Times(and(simWin.Timesfs>-1000,simWin.Timesfs<1500)) + 1e-12 );
 
@@ -139,10 +149,12 @@ if batchRun
 	% as = [0.3, 0.5, 0.75, 1, 1.5, 2.5, 5, 10];
 	as = a;
 else
-	delay = 1 * -260e-15;
+	% delay = 1 * -260e-15;
+	delay = -1 * 200e-15;
 	% delay = [-500:10:100] .* 1e-15;
-	pumpChirp = 1 * -2000e-30;
+	pumpChirp = 1 * -1200e-30;
 	% pulseChirps = 0.2 * 1000e-30;
+	pulseChirps = 0 * 1000e-30;
 	% periods = 3.3e-6;
 	as = a;
 end
@@ -158,7 +170,7 @@ for n = 1:length(pulseChirps)
 	% P = periods(nP);
 	% a = as(n);
 
-	optSim.Pulse = fibreOut;
+	optSim.Pulse = fibreOut.Pulse.copy;
 	% crystal.GratingPeriod = @(z)chirpedgrating(z,P1,P2,a,tol);
 	% crystal.GratingPeriod = P;
 	optSim.setup;
@@ -168,7 +180,7 @@ for n = 1:length(pulseChirps)
 	optSim.PumpPulse.TemporalField = repmat(optSim.PumpPulse.TemporalField,nDelay,1);
 	optSim.PumpPulse.applyGD(delayrep(:));
 	optSim.Pulse.applyGDD(pulseChirp');
-		optSim.Pulse.propagate(bpf);		% Band pass filter
+		% optSim.Pulse.propagate(bpf);		% Band pass filter
 	continuumFWHM = optSim.Pulse.DurationCheck;
 	optSim.refresh;
 	% crystal.Transmission(simWin.Lambdanm>350) = 0.95;

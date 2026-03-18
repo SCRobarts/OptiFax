@@ -22,8 +22,8 @@ waistR = 15e-6;
 fRep = 49.16e6;
 power = 2.5;
 spectralString = "Sech";
+% spectralString = "Gauss";
 dtau = 4e-12;
-% dlam = 15e-9;
 dlam = 30e-9;
 
 laser = Laser(lambdaC,waistR,fRep,power,spectralString,dtau,dlam);
@@ -54,14 +54,13 @@ optSim.RoundTrips = nTrips;
 optSim.Delay = delay;
 
 optSim.setup;
-
 %% Test Plots
 laser.Pulse.plot;
 figure
 laser.Pulse.spectrogram([980 1080],1,[-1e4 1e4]);
 
 cav.plot;
-
+% return
 %% Run Simulation
 optSim.run;
 

@@ -1,14 +1,16 @@
-function xtal = QPMcrystal(n_steps,L_m,grating_m,uncertainty_m,dutyOff)
+function xtal = QPMcrystal(n_steps,L_m,grating_m,uncertainty_m,dutyOff,L_pol_m)
 arguments
 	n_steps %uint32
 	L_m
 	grating_m
 	uncertainty_m = 0;
 	dutyOff = 0;
+	L_pol_m = L_m;
 end
 
 	rng('default');
 	z = linspace(0,L_m,n_steps);
+	zOff = (L_m - L_pol_m)./2;
 	nXtals = length(grating_m);
 	q = zeros(nXtals,n_steps);
 
@@ -19,7 +21,8 @@ end
 		domains = readtable(grating_m,opts);
 		domain_widths = domains.(1)';
 	else
-		nDomains = floor(2 .* L_m ./ grating_m);
+		% nDomains = floor(2 .* L_m ./ grating_m);
+		nDomains = floor(2 .* L_pol_m ./ grating_m);
 		domain_widths = zeros(nXtals,max(nDomains));
 		poled_m = (grating_m.*(1-(2.*dutyOff)))./2;
 		domain_sigma_m = uncertainty_m./2;
@@ -30,7 +33,11 @@ end
 			domain_widths(nx,2:2:nDs-1) = grating_m(nx) - movmean(domain_widths(nx,1:2:nDs),2,"Endpoints","discard");
 		end
 	end
+	if zOff>0 %#ok<BDSCI>
+		domain_widths = [zOff, domain_widths];
+	end
 	zWalls = [zeros(nXtals,1) cumsum(domain_widths,2)];
+	% zWalls = zWalls + zOff;
 	% q = sin(2*pi*z./grating_m);
 	if any(zWalls(:,end) < L_m)
 		domain_widths = [domain_widths, (L_m-zWalls(:,end))];

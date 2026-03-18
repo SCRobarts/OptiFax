@@ -14,13 +14,22 @@ close all
 % exists on each surface.
 regime = "T";
 % coating_str = " " ; % To be extracted?
-coating_str = 'AR';	% Idealised 100% anti-reflection across all wavelengths
+% coating = 'AR';	% Idealised 100% anti-reflection across all wavelengths
+load Thorlabs_AR_C_1050_1700.mat % Load OpticalSurface object 
+
 material = "N-BK7";
-L = 3e-3;
-name = "Qioptic_Pump_Lens";
+% L = 3e-3;
+% L = 2.6e-3;
+L = 2.4e-3;
+% name = "Qioptic_Pump_Lens";
+% name = "Thorlabs_LA1986C_Lens";
+% name = "Thorlabs_LA1461C_Lens";
+name = "Thorlabs_LA1172C_Lens";
 
-lens = Optic(regime,coating_str,material,L);
-
+lens = Optic(regime,coating,material,L);
+% lens.S1.ROC = 0.0644;
+% lens.S1.ROC = 0.1288;
+lens.S1.ROC = 0.2060;
 
 % Create a simulation window object using a default time window since we're
 % only interested in spectral information here
@@ -32,7 +41,7 @@ tOff =  1 * -1.25e-12;
 lamWin = SimWindow(lam0,points,wavelims,tOff,"wavelims");
 
 %% Initialise Laser / Input Pulse
-load("Chromacity_230042_9A.mat");
+load("C_9A.mat");
 % laser.SourceString = 'Sech';
 
 cav = Cavity(lens,0);

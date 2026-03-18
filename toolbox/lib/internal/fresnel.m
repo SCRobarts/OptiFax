@@ -8,11 +8,11 @@ function [Tp,Ts] = fresnel(n1,n2,theta_i,l_sim,exit)
 	end
 
 if isstring(n1)
-	n1 = sellmeier(l_sim*1E6,n1);
+	n1 = sellmeier_OF(l_sim*1E6,n1);
 end
 
 if isstring(n2)
-	n2 = sellmeier(l_sim*1E6,n2);
+	n2 = sellmeier_OF(l_sim*1E6,n2);
 end
 
 theta_i = deg2rad(theta_i);

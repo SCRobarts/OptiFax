@@ -1,4 +1,4 @@
-function [gain,pump,signal,idler,weights,p_mask,i_mask] = qpmgain(crystal,ppulse,sigrange,ipulse)
+function [gain,pump,signal,idler,weights,p_mask,i_mask] = qpmgain(crystal,ppulse,sigrange,ipulse,plotting,pres)
 	%
 	%	Sebastian C. Robarts 2023 - sebrobarts@gmail.com
 	arguments
@@ -6,6 +6,8 @@ function [gain,pump,signal,idler,weights,p_mask,i_mask] = qpmgain(crystal,ppulse
 		ppulse OpticalPulse
 		sigrange = [1100 1700];
 		ipulse = OpticalPulse.empty;
+		plotting = 0;
+		pres = 200;		% Maximum number of pump components
 	end
 	% if isa(sigrange,"OpticalPulse")
 	% 	ipulse = sigrange;
@@ -42,8 +44,8 @@ function [gain,pump,signal,idler,weights,p_mask,i_mask] = qpmgain(crystal,ppulse
 			% p_mask = ppulse.AverageIntensity .* (p_mask./max(p_mask));
 			p_mask = double(p_mask(pid));
 			nP = crystal.Bulk.RefractiveIndex(pid);
-			if length(pump) > 100
-				sample_factor = round(length(pump)/100);
+			if length(pump) > pres
+				sample_factor = round(length(pump)/pres);
 				pump = pump(1:sample_factor:end);
 				p_mask = p_mask(1:sample_factor:end);
 				nP = nP(1:sample_factor:end);
@@ -92,7 +94,7 @@ function [gain,pump,signal,idler,weights,p_mask,i_mask] = qpmgain(crystal,ppulse
 		elseif sigrange(1) > pumprange(2)	% DFG regime
 			signal = dfg_lambda(pump,flipud(idler.'));	% for DFG
 		end
-		nS = sellmeier(signal.*1e6,crystal.Bulk.Material,crystal.Bulk.Temperature);
+		nS = sellmeier_OF(signal.*1e6,crystal.Bulk.Material,crystal.Bulk.Temperature);
 		kS = 2 * pi * nS ./ signal;
 
 		idler = repmat(idler',1,size(signal,2));
@@ -108,7 +110,7 @@ function [gain,pump,signal,idler,weights,p_mask,i_mask] = qpmgain(crystal,ppulse
 			nS = nS(1:sample_factor:end);
 		end
 		idler = dfg_lambda(pump,signal.');
-		nI = sellmeier(idler*1e6,crystal.Bulk.Material,crystal.Bulk.Temperature);
+		nI = sellmeier_OF(idler*1e6,crystal.Bulk.Material,crystal.Bulk.Temperature);
 		nI = abs(nI);
 		i_mask = ones(1,length(signal)) .* 1 .* max(p_mask);
 		kI = 2 * pi * nI ./ idler;
@@ -167,5 +169,31 @@ function [gain,pump,signal,idler,weights,p_mask,i_mask] = qpmgain(crystal,ppulse
 	gain = Is./Ip;
 	% gain = abs(As./Ap);
 	% gain = abs(g_coeff .* sum(QPMevo,3)) ./ max(p_mask) ./simWin.NumberOfPoints;
+
+	if plotting
+		fh = figure('Position',[800 300 450 600]);
+		tlh = tiledlayout(fh,"vertical","TileSpacing","compact","Padding","compact");
+		pcolour(signal(:,1).*1e6,pump(1,:).*1e6,gain');
+		cb = colorbar;
+		cb.Layout.Tile = 'east';
+		grid on
+		titlestr = ['QPM: ',crystal.InfoString];
+		title(titlestr,ppulse.Source.InfoString);
+		% xlabel("Signal Wavelength (\lambda_s/\mum)")
+		ylabel("Pump Wavelength (\lambda_p/\mum)")
+
+		% [~,max_gain_ids] = max(gain,[],2);
+		% pump_gain_max = pump(1,max_gain_ids);
+		% hold on
+		% plot(signal(:,1).*1e6,pump_gain_max.*1e6);
+		% hold off
+
+		gain_sum = sum(gain,2)./length(pump(1,:));
+		nexttile
+		plot(signal(:,1).*1e6,gain_sum)
+		grid on
+		xlabel("Signal Wavelength (\lambda_s/\mum)")
+		ylabel("Integrated QPM Gain")
+	end
 
 end

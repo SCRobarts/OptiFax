@@ -9,8 +9,8 @@
 clear
 close all
 
-% name = "Auskerry_Test_Mirror";
-name = "Auskerry_Idler_OC_Mirror";
+% name = "Auskerry_Idler_OC_Mirror";
+name = "Laseroptik_L20295_Mirror";
 
 %% General Optic arguments
 % If only one surface is specified, it's assumed that the same coating
@@ -19,18 +19,19 @@ name = "Auskerry_Idler_OC_Mirror";
 regime = "R";
 % coating_str = "Layertec_126761_T"; % To be extracted?
 % coating = "Layertec_Proposed";
-coating = "Layertec_135111";
+% coating = "Layertec_135111";
+coating = "Laseroptik_B19696";
 load(coating);
 % coating = [50,1.0e-06;1,1.1e-06;60,1.3e-06;1,2.1e-06;98,6.5e-06];
 % s2 = "None";
 s2 = 'AR';	% Idealised 100% anti-reflection across all wavelengths
 % coating_str = 0;	% Idealised 100% reflection across all wavelengths
-material = "YAG";
+% material = "YAG";
+material = "FS";
 % L = 6.35e-3;
-L = 3.0e-3;
+L = 1.0e-3;
 
 mirror = Optic(regime,coating,material,L,0,s2);
-
 
 % Create a simulation window object using a default time window since we're
 % only interested in spectral information here
@@ -42,7 +43,7 @@ tOff =  1 * -1.25e-12;
 lamWin = SimWindow(lam0,points,wavelims,tOff,"wavelims");
 
 %% Initialise Laser / Input Pulse
-load("Chromacity_230042_9A.mat");
+load("C_9A.mat");
 % laser.SourceString = 'Sech';
 
 cav = Cavity(mirror,0);

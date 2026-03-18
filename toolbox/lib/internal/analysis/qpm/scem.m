@@ -1,4 +1,4 @@
-function [SPQ,scem,SPQ_curves,SP,S_plot] = scem(regimestr,lam_um,lam_ids,PQ,P_eff,id_plot,grating,L_xtal,w1,w2,lims)
+function [SPQ,scem,SPQ_curves,SP,S_plot] = scem(regimestr,lam_um,lam_ids,PQ,P_eff,id_plot,grating,L_xtal,w1,w2,cap,lims)
 	arguments
 	regimestr,lam_um,lam_ids,
 	PQ,		% [W^-1] 
@@ -6,6 +6,7 @@ function [SPQ,scem,SPQ_curves,SP,S_plot] = scem(regimestr,lam_um,lam_ids,PQ,P_ef
 	id_plot,grating,L_xtal,
 	w1 = 1; % weights = ones(length(lam_um),1);
 	w2 = 1;
+	cap = 1;
 	lims = [0.5 2];
 	end
 
@@ -71,7 +72,7 @@ function [SPQ,scem,SPQ_curves,SP,S_plot] = scem(regimestr,lam_um,lam_ids,PQ,P_ef
 			SP = max(SP(:,:,id_plot),[],3);
 		end
 		
-		if weights ~= 1
+		if weights ~= 1 && cap
 			weight_cap = weights ./ I_min;
 			% weight_cap = weights ./ I_max;
 			SPQ = cellfun(@(q) {min(q,weight_cap)}, SPQ);

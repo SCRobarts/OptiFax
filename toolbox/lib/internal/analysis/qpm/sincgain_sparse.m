@@ -11,7 +11,11 @@ arguments
 	m = 1;
 end
 if length(crystal.GratingPeriod) == 2
-	grating_um = linspace(crystal.GratingPeriod(1),crystal.GratingPeriod(2),nx_pos) .* 1e6; % [um] calculated period at this vertical position
+	if nx_pos == 1
+		grating_um = crystal.AveragePeriod .*1e6;
+	else
+		grating_um = linspace(crystal.GratingPeriod(1),crystal.GratingPeriod(2),nx_pos) .* 1e6; % [um] calculated period at this vertical position
+	end
 elseif length(crystal.GratingPeriod) == nx_pos
 	grating_um = crystal.GratingPeriod .* 1e6;
 end

@@ -77,9 +77,11 @@ end
 
 		[~,max_i] = max(E_ft);
 
+		% phi = (((w_sim - w_sim(max_i))./w_sim(max_i)).^2).*(10*pi);
 		phi = (((w_sim - w_sim(max_i))./w_sim(max_i)).^2).*(100*pi);
+		% phi = (((w_sim - w_sim(max_i))./w_sim(max_i)).^2).*(300*pi);
 		% E_ft = E_ft  .* exp(-1i*phi);
-		E_ft = E_ft  .* exp(1i*phi);
+		E_ft = (E_ft) .* exp(1i*phi);
 	end
 
 	

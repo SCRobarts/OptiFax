@@ -4,9 +4,17 @@ arguments
 	targets
 	n = 1
 end
-	[~,ids] = sort(abs(xs-targets'),2);
-	ids = ids(:,1:n)';
-	vals = xs(ids);
+	if size(xs,1) == 1
+		xs = xs';
+	end
+	if size(xs,2) ~= size(targets,1)
+		targets = targets';
+	end
+	% [~,ids] = sort(abs(xs-targets),ndims(targets));
+	% ids = ids(:,1:n,:)';
+	[~,ids] = sort(abs(xs-targets)); % Too memory intensive if many targets
+	ids = ids(1:n,:,:);
+	vals = xs(ids)';
 
 	%% Alternative approach
 	% finite_index = isfinite(xs);

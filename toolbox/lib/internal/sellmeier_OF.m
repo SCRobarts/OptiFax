@@ -1,6 +1,6 @@
-%% sellmeier.m
+%% sellmeier_OF.m
 
-function [n,Equiv] = sellmeier(lam, material, T_celsius)
+function [n,Equiv] = sellmeier_OF(lam, material, T_celsius)
 arguments
 	lam
 	material
@@ -19,7 +19,6 @@ switch material
 		% n = n_ktp_kato(lam,'a',T_celsius);
 		n = n_ktp_zhao(lam,T_celsius);
 	otherwise
-		% selldat = readtable('Sellmeier_Coefficients.xlsx','ReadRowNames',true);
 		selldat = readtable('Materials.csv','ReadRowNames',true);
 		M = selldat{material,8};
 	
@@ -50,8 +49,10 @@ switch material
 			x = lam;
 			n=sqrt(A0+A1.*x.^2+A2.*x.^-2+A3.*x.^-4+A4.*x.^-6+A5.*x.^-8);
 
-		end
-		
-	end
+		end % if
+	end % switch
+	
+	n = (n + conj(n))./2;
+	n(n<1) = 1;
 
-end
+end % function

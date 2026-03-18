@@ -13,6 +13,8 @@ classdef SimPlotter < matlab.mixin.Copyable
 		TimeLabel							= "Delay / (fs)";
 		YLabel
 		SpecLimits							= [350 2000];
+		TempLimits							= [];
+		ExtraLimits							= [];
 		YData
 		Type								= "Evolution";
 	end
@@ -35,6 +37,7 @@ classdef SimPlotter < matlab.mixin.Copyable
 		ScreenPositions
 	end
 	properties (Dependent)
+		TitleString
 		TimeLimits
 		YLimits
 	end
@@ -60,7 +63,11 @@ classdef SimPlotter < matlab.mixin.Copyable
 			obj.Parent = optSim;
 			obj.YData = ydat;
 			obj.YLabel = ylab;
-			obj.SpecLimits = kplotlims;
+			obj.SpecLimits = kplotlims(1,:);
+			if length(kplotlims(:,1))>1
+				obj.TempLimits = kplotlims(2,:);
+			end
+			obj.ExtraLimits = obj.Parent.SimWin.PlotLimits;
 			obj.Type = plottype;
 			obj.ScreenPositions = groot().MonitorPositions + 50*[1 1 -2 -3];
 			if length(obj.ScreenPositions(:,1)) < obj.Screen
@@ -70,7 +77,7 @@ classdef SimPlotter < matlab.mixin.Copyable
 				obj.evofig;
 			elseif strcmp(obj.Type,"Spectrogram")
 				obj.specfig;
-			elseif strcmp(obj.Type,"DelayScan")
+			elseif strcmp(obj.Type,"Scan")
 				obj.scanfig;
 			end
 		end
@@ -124,6 +131,9 @@ classdef SimPlotter < matlab.mixin.Copyable
 		end
 
 		function specfig(obj)
+			% if isempty(obj.TempLimits)
+			% 	obj.TempLimits = 
+			% end
 			obj.ProgressFigure = figure;
 			figPos = obj.ScreenPositions(1,:);
 			set(obj.ProgressFigure,'Color',[1 1 1],'Position',figPos, 'Visible', 'off')
@@ -135,7 +145,7 @@ classdef SimPlotter < matlab.mixin.Copyable
 			title(obj.InTiles,"Crystal In");
 			
 			obj.SpectralAxes = obj.createInOutAxes(obj.InTiles,"s");
-			[obj.SpectralMagPlot] = obj.Parent.XInPulse.spectrogram(obj.SpectralAxes,obj.SpecLimits);
+			[obj.SpectralMagPlot] = obj.Parent.XInPulse.spectrogram(obj.SpectralAxes,obj.SpecLimits,tlims=obj.TimeLimits);
 			title(obj.SpectralAxes,"Crystal In");
 
 			posOut = posIn;
@@ -146,7 +156,7 @@ classdef SimPlotter < matlab.mixin.Copyable
 			title(obj.OutTiles,delaystr);
 		
 			obj.SpectralAxes(2) = obj.createInOutAxes(obj.OutTiles,"s");
-			obj.SpectralMagPlot(2) = obj.Parent.XOutPulse.spectrogram(obj.SpectralAxes(2),obj.SpecLimits);
+			obj.SpectralMagPlot(2) = obj.Parent.XOutPulse.spectrogram(obj.SpectralAxes(2),obj.SpecLimits,tlims=obj.TimeLimits);
 			title(obj.SpectralAxes(2),"Crystal Out");
 
 			% posEvo = posIn;
@@ -157,13 +167,13 @@ classdef SimPlotter < matlab.mixin.Copyable
 			title(obj.EvoTiles,"Difference (Xtal GD offset)");
 
 			obj.SpectralEvoAxes = obj.createInOutAxes(obj.EvoTiles,"s");
-			obj.SpectralEvoPlot = obj.Parent.XDiffPulse.spectrogram(obj.SpectralEvoAxes,obj.SpecLimits);
+			obj.SpectralEvoPlot = obj.Parent.XDiffPulse.spectrogram(obj.SpectralEvoAxes,obj.SpecLimits,tlims=obj.TimeLimits);
 			title(obj.SpectralEvoAxes,"Signal");
 
 			obj.TemporalEvoAxes = obj.createInOutAxes(obj.EvoTiles,"s");
 			pumpLims = obj.Parent.Source.Wavelength*1e9 + obj.Parent.Source.LineWidth.*[-2e9 2e9];
 			obj.TemporalEvoAxes.YLim = pumpLims;
-			obj.TemporalEvoPlot = obj.Parent.XDiffPulse.spectrogram(obj.TemporalEvoAxes,pumpLims);
+			obj.TemporalEvoPlot = obj.Parent.XDiffPulse.spectrogram(obj.TemporalEvoAxes,pumpLims,tlims=obj.TimeLimits);
 			title(obj.TemporalEvoAxes,"Pump");
 
 			% posDep = posEvo;
@@ -173,11 +183,6 @@ classdef SimPlotter < matlab.mixin.Copyable
 
 		function scanfig(obj)
 			lnm = obj.Parent.SimWin.LambdanmPlot;
-			if isempty(obj.Parent.SimWin.SignalLimits)
-				signalLims = obj.Parent.SignalLimsnm;
-			else
-				signalLims = obj.Parent.SimWin.SignalLimits;
-			end
 			% idlerLims = [dfg_lambda() dfg_lambda()]
 
 			obj.ProgressFigure = figure;
@@ -188,19 +193,38 @@ classdef SimPlotter < matlab.mixin.Copyable
 			posEvo = [0 0 1 1];
 			ph1 = uipanel(obj.ProgressFigure,"Position",posEvo);
 			obj.EvoTiles = obj.createTiles(ph1);
+
+			obj.SpectralAxes = obj.createEvoAxes;
+			xlabel(obj.SpectralAxes,'Power / (W)')
+			obj.SpectralMagPlot = obj.lplot(obj.SpectralAxes);
+			if ~isempty(obj.ExtraLimits)
+				hold(obj.SpectralAxes,"on")
+				obj.SpectralMagPlot(2) = obj.lplot(obj.SpectralAxes);
+				obj.SpectralMagPlot(2).Color = 'red';
+				hold(obj.SpectralAxes,"off")
+			end
+
 			obj.SpectralEvoAxes = obj.createEvoAxes;
 			xlabel(obj.SpectralEvoAxes(1),obj.SpecLabel)
 			xlim(obj.SpectralEvoAxes(1), obj.Parent.PumpLimsnm);
 			obj.SpectralEvoPlot = obj.cplot(obj.SpectralEvoAxes, within(lnm,obj.Parent.PumpLimsnm));
-			clim([-25 0]);
+			clim(obj.SpectralEvoAxes(1),[-15 0]);
 
 			obj.SpectralEvoAxes(2) = obj.createEvoAxes([1 2]);
 			xlabel(obj.SpectralEvoAxes(2),obj.SpecLabel)
-			xlim(obj.SpectralEvoAxes(2), signalLims);
-			obj.SpectralEvoPlot(2) = obj.cplot(obj.SpectralEvoAxes(2), within(lnm,obj.Parent.SignalLimsnm)); % Allows for panning in signal range, could change to signalLims
-			clim([-25 0]);
+			xlim(obj.SpectralEvoAxes(2), obj.SpecLimits);	 % Allows for panning in signal range?
+			obj.SpectralEvoPlot(2) = obj.cplot(obj.SpectralEvoAxes(2), within(lnm,obj.Parent.SignalLimsnm));
+			clim(obj.SpectralEvoAxes(2),[-20 0]);
 
-			cb = colorbar;
+			if ~isempty(obj.ExtraLimits)
+				obj.SpectralEvoAxes(3) = obj.createEvoAxes;
+				xlabel(obj.SpectralEvoAxes(3),obj.SpecLabel)
+				xlim(obj.SpectralEvoAxes(3), obj.ExtraLimits);
+				obj.SpectralEvoPlot(3) = obj.cplot(obj.SpectralEvoAxes(3), within(lnm,obj.ExtraLimits));
+				clim(obj.SpectralEvoAxes(3),[-20 0]);
+			end
+
+			cb = colorbar(obj.SpectralEvoAxes(1));
 			cb.Layout.Tile = 'east';
 			drawnow('limitrate'); 
 		end
@@ -240,6 +264,14 @@ classdef SimPlotter < matlab.mixin.Copyable
 		end
 
 		%% Plotting
+		function ph = lplot(obj,ax)
+			x = ones(1,length(obj.YData));
+			ph = plot(ax,x,obj.YData,'y-x');
+			ylim(ax,obj.YLimits);
+			ax.Color = 'k';
+			ph.LineWidth = 1.5;
+		end
+
 		function ph = cplot(obj,ax,x)
 			z = ones(length(obj.YData),length(x));
 			ph = surf(ax,x,obj.YData,z);
@@ -316,12 +348,12 @@ classdef SimPlotter < matlab.mixin.Copyable
 					obj.ioplots(2,optSim.XInPulse);
 				case "Spectrogram"
 					obj.InTiles.Title.String = tripstr;
-					obj.Parent.XInPulse.spectrogram(obj.SpectralAxes(1),obj.SpecLimits);
-					obj.Parent.XOutPulse.spectrogram(obj.SpectralAxes(2),obj.SpecLimits);
-					obj.Parent.XDiffPulse.spectrogram(obj.SpectralEvoAxes,obj.SpecLimits);
+					obj.Parent.XInPulse.spectrogram(obj.SpectralAxes(1),obj.SpecLimits,tlims=obj.TimeLimits);
+					obj.Parent.XOutPulse.spectrogram(obj.SpectralAxes(2),obj.SpecLimits,tlims=obj.TimeLimits);
+					obj.Parent.XDiffPulse.spectrogram(obj.SpectralEvoAxes,obj.SpecLimits,tlims=obj.TimeLimits);
 					pumpLims = obj.Parent.Source.Wavelength*1e9 + obj.Parent.Source.LineWidth.*[-2e9 2e9];
-					obj.Parent.XDiffPulse.spectrogram(obj.TemporalEvoAxes,pumpLims);
-				case "DelayScan"
+					obj.Parent.XDiffPulse.spectrogram(obj.TemporalEvoAxes,pumpLims,tlims=obj.TimeLimits);
+				case "Scan"
 					% esdpumpdep = optSim.OutputPulse.CombinedESD_pJ_THz;
 					% esdout = optSim.OutputPulse.CombinedESD_pJ_THz;
 					esdpumpdep = optSim.CombinedESDPumpDep;
@@ -331,6 +363,18 @@ classdef SimPlotter < matlab.mixin.Copyable
 					% obj.SpectralEvoPlot.ZData = optSim.CombinedESDOut;
 					obj.SpectralEvoPlot(1).ZData = esd2irel(pumpdep,-100);
 					obj.SpectralEvoPlot(2).ZData = esd2irel(signal,-100);
+					obj.SpectralMagPlot(1).XData = obj.Parent.CombinedPowerOut;
+					if ~isempty(obj.ExtraLimits)
+						esdxout = optSim.CombinedESDXOut;
+						spec = within(esdxout,obj.ExtraLimits,obj.Parent.SimWin.LambdanmPlot);
+						obj.SpectralEvoPlot(3).ZData = esd2irel(spec,-100);
+						pow = sum(spec.*1e-24,2).*obj.Parent.SimWin.DeltaNu.*obj.Parent.Source.RepetitionRate;
+						obj.SpectralMagPlot(2).XData = pow;
+					end
+
+					obj.EvoTiles.Title.String = obj.TitleString;
+					obj.EvoTiles.Title.Interpreter = 'none';
+					obj.EvoTiles.Subtitle.String = obj.Parent.InfoString;
 			end
 
 			if ~obj.ProgressFigure.Visible
@@ -369,12 +413,15 @@ classdef SimPlotter < matlab.mixin.Copyable
 		end
 
 		function updatelimits(obj)
-			if ~isempty(obj.SpectralAxes)
+			if ~isempty(obj.SpectralAxes) && ~strcmp(obj.Type,"Scan")
 				[obj.SpectralAxes.XLim] = deal(obj.SpecLimits);
 			end
 			if~isempty(obj.SpectralEvoAxes)
 				if length(obj.SpectralEvoAxes) > 1
 					obj.SpectralEvoAxes(2).XLim = obj.SpecLimits;
+					if~isempty(obj.ExtraLimits)
+						obj.SpectralEvoAxes(3).XLim = obj.ExtraLimits;
+					end
 				end
 			end
 		end
@@ -383,9 +430,29 @@ classdef SimPlotter < matlab.mixin.Copyable
 			obj.SpecLimits = speclims;
 			obj.updatelimits;
 		end
+
+		function set.ExtraLimits(obj,speclims)
+			obj.ExtraLimits = speclims;
+			obj.updatelimits;
+		end
+
 		%% Dependent Get Functions
+		function tstr = get.TitleString(obj)
+			cavname = [char(obj.Parent.System.Name)];
+			xtalinf = obj.Parent.System.Xtal.InfoString;
+			lasname = [char(obj.Parent.Source.Name)];
+			powin	= [num2str(obj.Parent.Source.AveragePower','% .2f'), 'W'];
+			lasinf	= [obj.Parent.Source.InfoString];
+
+			tstr = [cavname,', ',xtalinf,', ',lasname,' ',powin,' ',lasinf];
+		end
+
 		function tls = get.TimeLimits(obj)
-			tls = 0.95*[min(obj.Parent.SimWin.Timesfs) max(obj.Parent.SimWin.Timesfs)];
+			if isempty(obj.TempLimits)
+				tls = 0.95*[min(obj.Parent.SimWin.Timesfs) max(obj.Parent.SimWin.Timesfs)];
+			else
+				tls = obj.TempLimits;
+			end
 		end
 
 		function yls = get.YLimits(obj)

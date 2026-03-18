@@ -55,8 +55,6 @@ xtal.ModeFieldDiameter = mfd;
 % xtal.WaistPosition = 4.3e-3;
 xtal.Bulk.Temperature = temp_C;
 
-
-
 %%% Create a simulation window object using a default time window since we're
 %%% only interested in spectral information here
 points = 2^15;

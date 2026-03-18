@@ -1,4 +1,5 @@
 Material,B1,B2,B3,C1,C2,C3,Equivalent,Equation,T_file,T_length_m,Fresnel_Reflections,,D1,D2
+Linear,4,0.005,0.005,0,0,0,,CDGM,,1,2,,,
 FS,0.684,0.42,0.585,0.0046,0.0134,64.5,,Schott,BK7_Transmission_1cm.txt,0.01,2,,,
 N-BAF10,1.37,0.109,1.02,0.00883,0.0439,114,,Schott,BK7_Transmission_1cm.txt,0.01,2,,,
 N-BAF3,1.35,0.108,1.13,0.00871,0.0478,113,,Schott,BK7_Transmission_1cm.txt,0.01,2,,,

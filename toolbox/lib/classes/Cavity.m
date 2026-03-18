@@ -10,6 +10,7 @@ classdef Cavity < handle
 		OCPosition
 	end
 	properties (Transient)
+		TransferMatrix = @(lam) [1 0; 0 1];
 		SimWin SimWindow
 		OpticalPathLength = 0;
 		PumpDispersion = 0;
@@ -19,8 +20,11 @@ classdef Cavity < handle
 		GDD = 0;
 	end
 	properties (Dependent)
+		PreCavityLength
+		CavityLength
 		Xtal
 		CrystalPosition
+		CrystalZ
 		PumpGD
 		PumpChirp
 		MinGDWave
@@ -83,6 +87,8 @@ classdef Cavity < handle
 				obj.GroupDelay = obj.GroupDelay + opt.RelativeGD;
 				obj.GDD = obj.GDD + opt.GDD;
 				obj.OpticalPathLength = obj.OpticalPathLength + opt.OpticalPath;
+				M = obj.TransferMatrix;
+				obj.TransferMatrix = @(lam) opt.TransferMatrix(lam)*M(lam);
 			end
 		end
 
@@ -111,8 +117,31 @@ classdef Cavity < handle
 			end
 		end
 
+		function xz = get.CrystalZ(obj)
+			xz = obj.PreCavityLength;
+			if obj.CrystalPosition > 1
+				for ii = 1:obj.CrystalPosition
+					xz = xz + obj.Optics.(ii).Length;
+				end
+			end
+		end
+
 		function xtal = get.Xtal(obj)
 			xtal = obj.Optics.(obj.CrystalPosition);
+		end
+
+		function preCavL = get.PreCavityLength(obj)
+			preCavL = 0;
+			for ii = 1:width(obj.PreCavityOptics)
+				preCavL = preCavL + obj.PreCavityOptics.(ii).Length;
+			end
+		end
+
+		function cavL = get.CavityLength(obj)
+			cavL = 0;
+			for ii = 1:width(obj.Optics)
+				cavL = cavL + obj.Optics.(ii).Length;
+			end
 		end
 
 		function plot(obj,lims)

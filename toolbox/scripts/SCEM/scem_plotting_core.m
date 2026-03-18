@@ -11,11 +11,11 @@ loaded_full = 0;
 loaded_sim  = 0;
 
 %% Options
-example = 'core';
-% example = 'ppktp';
+% example = 'core';
+example = 'ppktp';
 
 coarse = 0;
-sf_flag	= 0;	% Save figures?
+sf_flag	= 1;	% Save figures?
 fdisp = 1;		% Use frequency axis on final plot?
 
 % demo_str = "SCPM_demo_vars_3.mat";
@@ -23,11 +23,11 @@ fdisp = 1;		% Use frequency axis on final plot?
 
 if strcmp(example,'core')
 	demo_str = "SCEM_core_vars_3.mat";
-	folderstr = 'SCEM_core_images';
+	folderstr = 'SCEM_core_images_final';
 	N = 5;
 elseif strcmp(example,'ppktp')	
 	demo_str = "PPKTP_vars.mat";
-	folderstr = 'PPKTP_images';
+	folderstr = 'PPKTP_images_final';
 	N = 9;
 end
 full_str = demo_str;
@@ -37,7 +37,7 @@ f_lims = [61.237 228.5];
 % f_lims = [51 339];
 
 % pathstr = '/Users/Richard/Heriot-Watt University Team Dropbox/RES_EPS_McCracken_Lab/Seb/PGR/Writing/PCPM Paper';
-pathstr = 'C:\Users\Seb Robarts\Heriot-Watt University Team Dropbox\RES_EPS_McCracken_Lab\Seb\PGR\Writing\PCPM Paper';
+pathstr = 'C:\Users\Seb Robarts\Heriot-Watt University Team Dropbox\RES_EPS_McCracken_Lab\Seb\PGR\Writing\SCEM Paper';
 % folderstr = 'OPGaP_images';
 % folderstr = 'Tandem_PPLN_part_1_images';
 prestr = [pathstr,'/',folderstr,'/'];
@@ -101,9 +101,24 @@ tlhA = cell(5,1);
 [lam_dfg, dfgids] = dfg_lambda(lam_um',lam_um,lam_um);
 
 % return
+%% QPM sinc example for Supplemental/Appendix
+delta_k = linspace(-3*pi,3*pi,2^10);
+qpm_sinc = (sinc(delta_k)).^2;
+
+lw = 8.678;
+lw = 1.5*lw;	% increased resolution
+
+% fhqpm = figure("Position",[0 0 1.5*lw lw],"Units","centimeters");
+singlefig;
+plot(delta_k,qpm_sinc,"LineWidth",1.5)
+xticks([-3*pi,3*pi])
+xticklabels(["-3\pi","3\pi"])
+xlabel("Wavevector Mismatch, \DeltakL/2")
+ylabel("Efficiency, sinc^2(\DeltakL/2)")
+
 %% Delta Pump Sample Plot - Fig 1
 if fdisp
-	[tlh,ax_nu,ax_lam] = fplot(f_lims,'SPDC');
+	[tlh,ax_nu,ax_lam] = fplot(f_lims,'SPDC Output');
 	axh = ax_nu;
 	plot(axh,f_THz,opo_delta_gain(:,sampID))
 	% cbf = colorbar;
@@ -111,7 +126,7 @@ if fdisp
 	tlhA{2} = tlh;
 else
 	tlh = dualplot(lam_um,opo_delta_gain(:,sampID));
-	xlabel(tlh,"SPDC Wavelength / \mum")
+	xlabel(tlh,"SPDC Output Wavelength / \mum")
 	axh = nexttile(1);
 end
 lgd = legend(axh, num2str(grating_um(:,sampID)','%.1f'),'Location','best');
@@ -123,7 +138,7 @@ fignum = savefignum(gcf,fignum,prestr,sf_flag);
 
 %% Delta Pump SCPM - Fig 2
 if fdisp
-	[tlh,ax_nu,ax_lam] = fplot(f_lims,'SPDC');
+	[tlh,ax_nu,ax_lam] = fplot(f_lims,'SPDC Output');
 	pcolour(f_THz(1,:), grating_um, opo_delta_gain',ax_nu);
 	% xlim(f_lims)
 	cb = colorbar(ax_nu,"eastoutside");
@@ -146,7 +161,7 @@ fignum = savefignum(gcf,fignum,prestr,sf_flag);
 
 %% Plot QPM Curves - Fig 3
 if fdisp
-	[tlh,ax_nu,ax_lam] = fplot(f_lims,'SPDC');
+	[tlh,ax_nu,ax_lam] = fplot(f_lims,'SPDC Output');
 	pcolour(f_THz, lambda_pump,curves_opo_qpm,ax_nu);
 	cb = colorbar(ax_nu,"eastoutside");
 	tlhA{1} = tlh;
@@ -163,7 +178,7 @@ fignum = savefignum(gcf,fignum,prestr,sf_flag);
 %% Top Hat Pump Sample Plot - Fig 4
 pump_linewidth_FWHM = 0.001 * 10 * 1; % [um]
 if fdisp
-	[tlh,ax_nu,ax_lam] = fplot(f_lims,'SPDC');
+	[tlh,ax_nu,ax_lam] = fplot(f_lims,'SPDC Output');
 	axh = ax_nu;
 	plot(axh,f_THz,scem_opo_pumpwidth(:,sampID))
 	ylim([0 0.4]);
@@ -177,7 +192,7 @@ lgd = legend(axh, num2str(grating_um(:,sampID)','%.1f'),'Location','best');
 lgd.Title.String = '\Lambda/\mum';
 lgd.ItemTokenSize(1) = 10;
 % ylabel(tlh,"\Sigmasinc^{2}(\DeltakL/2)/N_{\lambda_p}")
-ylabel(tlh,"\Sigmasinc^{2}(\DeltakL/2)/N(\lambda_p)")
+ylabel(tlh,"\Sigmasinc^{2}(\Deltak_QL/2)/N(\lambda_p)")
 fignum = savefignum(gcf,fignum,prestr,sf_flag);
 
 %% Figs 1+4 combined
@@ -187,8 +202,9 @@ savefignum(gcf,[1,4],prestr,sf_flag);
 
 %% Top Hat Pump SCPM - Fig 5
 if fdisp
-	[tlh,ax_nu,ax_lam] = fplot(f_lims,'SPDC');
+	[tlh,ax_nu,ax_lam] = fplot(f_lims,'SPDC Output');
 	pcolour(f_THz(1,:), grating_um, scem_opo_pumpwidth',ax_nu);
+	xlim(f_lims)
 	cb = colorbar(ax_nu,"eastoutside");
 	tlhA{5} = tlh;
 	ax_nu.YTick = grating_ticks;
@@ -218,7 +234,7 @@ if ~loaded_full
 end
 if fdisp
 	[tlh,ax_nu,ax_lam] = fplot(f_lims,'Second Input');
-	pcolour(f_THz(1,:),lam_um,conv_all_dfg./(L.^2),ax_nu);
+	pcolour(f_THz(1,:),lam_um, conv_all_dfg ./(L.^2),ax_nu);
 	% pcolour(f_THz(1,:),lam_um,prefactor,ax_nu);
 	xlim(f_lims)
 	cb = colorbar(ax_nu,"eastoutside");
@@ -232,7 +248,8 @@ end
 ylabel(tlh,"Pump Wavelength / \mum")
 ylim([min(lam_um) 1.5])
 cb.Label.Interpreter = 'latex';
-cb.Label.String = "$ \rm \tilde{P_\eta} / W^{-1}Hz^{-2} $";
+% cb.Label.String = "$ \rm \tilde{P_\eta} / W^{-1}Hz^{-2} $";
+cb.Label.String = "$ \rm P_\eta / W^{-1} $";		% Replaced 04/02/26 - no longer plotting 'Prefactor'
 fontsize(cb,scale=1.2);
 
 fignum = 6;
@@ -257,9 +274,10 @@ fignum = savefignum(gcf,fignum,prestr,sf_flag);
 
 % return
 %% Weighted Prefactors - Fig 8
+
 if fdisp
 	[tlh,ax_nu,ax_lam] = fplot(f_lims,'Second Input');
-	pcolour(f_THz(1,:),lam_um,prefactor,ax_nu);
+	pcolour(f_THz(1,:),lam_um,prefactor.*L.^2.*32,ax_nu);
 	 % pcolour(f_THz(1,:),lam_um,conv_all_dfg,ax_nu);
 	cb = colorbar(ax_nu,"eastoutside");
 	xlim(f_lims)
@@ -273,16 +291,18 @@ ylabel(tlh,"Pump Wavelength / \mum")
 % 	fignum = numtitle(tlh,fignum);
 	% ylim(pump_lims)
 cb.Label.Interpreter = 'latex';
-cb.Label.String = "$ \rm \tilde{I_p} L^2 \tilde{P_{\eta}}   / Hz^{-2} $";
+% cb.Label.String = "$ \rm \tilde{I_p} L^2 \tilde{P_{\eta}}   / Hz^{-2} $";
+cb.Label.String = "$ \rm \tilde{I_p} L^2 {P_{\eta}}   / Hz^{-1} $";
 fontsize(cb,scale=1.2);
 fignum = 8;
 fignum = savefignum(gcf,fignum,prestr,sf_flag);
 
 % return
 
-%% Weighted SPDC SCPM - Fig 9
+%% Weighted SPDC SCEM - Fig 9
+
 if fdisp
-	[tlh,ax_nu,ax_lam] = fplot(f_lims,'SPDC');
+	[tlh,ax_nu,ax_lam] = fplot(f_lims,'SPDC Output');
 	pcolour(f_THz(1,:), grating_um, scem_opo_weighted',ax_nu);
 	cb = colorbar(ax_nu,"eastoutside");
 	ax_nu.YTick = grating_ticks;
@@ -299,7 +319,8 @@ ylabel(tlh,"Grating Period / \mum")
 
 % cb.Label.String = "ISD / (Wm^{-2}/Hz)";
 cb.Label.Interpreter = 'latex';
-cb.Label.String = "\sffamily \selectfont Relative Potential Gain ($\sum_{\omega_p}\rm \tilde{I_p} L^2 P_{\eta}/ Hz^{-1}$)";
+% cb.Label.String = "\sffamily \selectfont Relative Potential Gain ($\sum_{\omega_p}\rm \tilde{I_p} L^2 P_{\eta}/ Hz^{-1}$)";
+cb.Label.String = "\sffamily \selectfont Relative Potential Gain ($\sum_{\omega_p}\rm \tilde{I_p} L^2 P_{\eta}$)";
 fontsize(cb,scale=1.2);
 for tn = 1:max(tilenum(tlh.Children),[],"all")
 	nexttile(tn)
@@ -310,8 +331,8 @@ fignum = savefignum(gcf,fignum,prestr,sf_flag);
 drawnow
 
 % return
-%% Full SCPM Section - Fig 10
-cols = 0;
+%% Full SCEM Section - Fig 10
+cols = 1;
 if cols
 	fig_pos_cm = [gr.MonitorPositions(2,1:2)+0.25 lw 2*lw];
 else
@@ -335,8 +356,8 @@ conv_PPLN_sfg = conv_all_sfg./L^2;
 conv_PPLN_dfg = conv_all_dfg./L^2;
 curves_PPLN_sfg = curves_all_sfg./L^2;
 curves_PPLN_dfg = curves_all_dfg./L^2;
-cpm_base_sfg = scem_base_sfg./L^2;
-cpm_base_dfg = scem_base_dfg./L^2;
+cem_base_sfg = scem_base_sfg./L^2;
+cem_base_dfg = scem_base_dfg./L^2;
 
 % Baseline Full Crystal SFG - Fig 10.1
 if cols
@@ -345,7 +366,7 @@ else
 	tlh = rowfig;
 end
 regimestr = "SFG";
-[convAx,qpmAx,scemAx] = scem_evo_plot(regimestr,lam_um,grating_um,conv_PPLN_sfg,curves_PPLN_sfg,cpm_base_sfg,coarse,fdisp,cols); %#ok<*ASGLU>
+[convAx,qpmAx,scemAx] = scem_evo_plot(regimestr,lam_um,grating_um,conv_PPLN_sfg,curves_PPLN_sfg,cem_base_sfg,coarse,fdisp,cols); %#ok<*ASGLU>
 
 if fdisp
 	[convAx{1}.XTickLabel{2:2:4}] = deal(''); 
@@ -358,7 +379,7 @@ labelaxes(convAx,qpmAx,scemAx,fdisp,cols)
 
 % Baseline Full Crystal DFG - Fig 10.2
 regimestr = "DFG";
-[convAx,qpmAx,scemAx] = scem_evo_plot(regimestr,lam_um,grating_um,conv_PPLN_dfg,curves_PPLN_dfg,cpm_base_dfg,coarse,fdisp,cols);
+[convAx,qpmAx,scemAx] = scem_evo_plot(regimestr,lam_um,grating_um,conv_PPLN_dfg,curves_PPLN_dfg,cem_base_dfg,coarse,fdisp,cols);
 
 if fdisp
 	[convAx{1}.XTickLabel{2:2:4}] = deal('');
@@ -374,9 +395,12 @@ end
 
 cba = findobj(tlh,'Type','ColorBar');
 cba = flipud(cba);
-cbls = ["$ \rm \tilde{P_{\eta}} / W^{-1}Hz^{-2} $",...
-		"$ \rm \tilde{P_{\eta}}Q / W^{-1}Hz^{-2} $",...
-		"$ \rm \sum_{\omega_p} P_{\eta} Q / W^{-1}Hz^{-1} $"];
+% cbls = ["$ \rm \tilde{P_{\eta}} / W^{-1}Hz^{-2} $",...
+% 		"$ \rm \tilde{P_{\eta}}Q / W^{-1}Hz^{-2} $",...
+% 		"$ \rm \sum_{\omega_p} P_{\eta} Q / W^{-1}Hz^{-1} $"];
+cbls = ["$ \rm {P_{\eta}} / W^{-1} $",...
+		"$ \rm {P_{\eta}}Q / W^{-1} $",...
+		"$ \rm \sum_{\omega_p} P_{\eta} Q \Delta\nu/ W^{-1}Hz $"];
 cbls = [cbls,cbls];
 for tn = 1:length(cba)
 	cba(tn).Label.Interpreter = 'none';

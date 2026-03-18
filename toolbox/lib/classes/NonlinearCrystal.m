@@ -7,8 +7,9 @@ classdef NonlinearCrystal < Waveguide
 
 	properties
 		GratingPeriod
-		Uncertainty
-		DutyCycleOffset
+		PoledLength
+		Uncertainty		 = 0;
+		DutyCycleOffset  = 0;
 		StepSize = 1e-7;
 		Height = 1;				% Int for stepped, [m] for fanout.
 		VerticalPosition = 1;	% Int for stepped, [m] for fanout.
@@ -23,8 +24,10 @@ classdef NonlinearCrystal < Waveguide
 		NSteps
 	end
 	properties (Dependent)
+		AveragePeriod
 		TStepShift
 		Z
+		InfoString
 	end
 
 	methods
@@ -63,13 +66,28 @@ classdef NonlinearCrystal < Waveguide
 			obj.Uncertainty = uncertainty_m;
 			obj.DutyCycleOffset = dutyOff;
 			obj.WaistPosition = obj.Length./2;
+			obj.PoledLength = obj.Length;
 		end
 
 		function simulate(obj,simWin)
 			simulate@Waveguide(obj,simWin);
 			L_m = obj.Bulk.Length;
+			if isempty(obj.PoledLength)
+				obj.PoledLength = L_m; % Assign PoledLength if it was empty
+			else
+				% L_m = obj.PoledLength;
+			end
+			if ~isscalar(obj.PoledLength)
+				% L_m = L_m(obj.VerticalPosition);
+				nG = length(obj.GratingPeriod);
+				nPL = length(obj.PoledLength);
+				if nPL ~= nG
+					obj.GratingPeriod = repmat(obj.GratingPeriod,1,nPL);
+					obj.PoledLength = repmat(obj.PoledLength,nG,1);
+					obj.PoledLength = obj.PoledLength(:)';
+				end
+			end
 			obj.NSteps = floor(L_m / obj.StepSize);
-
 			obj.pole;
 		end
 
@@ -82,27 +100,33 @@ classdef NonlinearCrystal < Waveguide
 		end
 
 		function pole(obj)
-			L_m = obj.Bulk.Length;
+			L_m = obj.Length;
 			if isnumeric(obj.GratingPeriod)
 				n = length(obj.GratingPeriod);
 				switch n
 					case 1
 						grating = obj.GratingPeriod;
+						L_pol_m = L_m;
 					case 2
 						grating = obj.fanout;
+						L_pol_m = L_m;
 					otherwise
 						obj.Height = uint8(n);
 						obj.VerticalPosition = uint8(ceil(obj.VerticalPosition));
 						grating = obj.GratingPeriod(obj.VerticalPosition);
+						L_pol_m = obj.PoledLength(obj.VerticalPosition);
 				end
 			else
 				grating = obj.GratingPeriod;
+				L_pol_m = L_m;
 			end
-			
+			% if~isscalar(L_m)
+			% 	L_m = L_m(obj.VerticalPosition);
+			% end
 			xtal = QPMcrystal(obj.NSteps,L_m,grating,...
 										 obj.Uncertainty,...
-										 obj.DutyCycleOffset);
-
+										 obj.DutyCycleOffset,...
+										 L_pol_m);
 			obj.Polarisation = xtal.P .* 1 .* obj.Chi2;
 			obj.DomainWidths = xtal.domains;
 			obj.DomainWallPositions = xtal.walls;
@@ -114,18 +138,25 @@ classdef NonlinearCrystal < Waveguide
 				obj NonlinearCrystal
 				r0			% Beam radius entering crystal [m]
 				% waistPos = obj.Length/2	% How far along crystal waist occurs [m]
-				beamWaist = obj.ModeFieldDiameter	% Beam waist size in crystal [m]
+				beamWaist = obj.ModeFieldDiameter ./2	% Beam waist size in crystal [m]
 			end
 			waistPos = obj.WaistPosition;
 			linearDiv = -(beamWaist - r0) ./ waistPos;	% Linear approximation of spot size divergence
 			zR = abs((beamWaist.*(sqrt(2)-1)./linearDiv) + waistPos); % Rayleigh range
 			focusParam = obj.Length ./ (2 * zR);
-
 			rz = @(z) linearDiv.*abs(z-waistPos) + beamWaist; % Beam radius as a function of position
-
-			polScale =  beamWaist ./ rz(obj.Z); % Scaling factor to apply to crystal polarisation
+			polScale =  beamWaist ./ rz(obj.Z'); % Scaling factor to apply to crystal polarisation
 			obj.Polarisation = obj.Polarisation .* polScale.^2;
-			% obj.Polarisation = obj.Polarisation .* polScale;
+		end
+
+		function beamScale(obj,beamin)
+			beamOpt = beamin.Medium;
+			beamin.transfer(obj);
+			[wpzx,~] = beamin.getdims(obj.Z');
+			polScale = beamin.Radius./wpzx;
+			% obj.Polarisation = obj.Polarisation .* polScale.^2;
+			obj.Polarisation = obj.Polarisation .* polScale;
+			beamin.transfer(beamOpt);
 		end
 
 		function grating = fanout(obj)
@@ -136,6 +167,10 @@ classdef NonlinearCrystal < Waveguide
 			y = obj.VerticalPosition;
 
 			grating = P1 + (dgdy*y);
+		end
+
+		function avgP = get.AveragePeriod(obj)
+			avgP = mean(obj.Periods(2:end-1));
 		end
 		
 		function tss = get.TStepShift(obj)
@@ -148,7 +183,33 @@ classdef NonlinearCrystal < Waveguide
 			z = 0:dz:obj.Length;
 		end
 
+		function istr = get.InfoString(obj)
+			% Lstr = ['L_', num2str(obj.Length.*1e3,'% .1f') , 'mm'];
+			% Gstr = ['Gr_' , num2str(obj.AveragePeriod.*1e6,'% .2f') , 'um'];
+			% Tstr = ['T_', num2str(obj.Bulk.Temperature,'%i'), 'C'];
+			% MFDstr = ['MFD_', num2str(obj.ModeFieldDiameter(1).*1e6,'% .2f'), 'um'];
+			% DCstr  = ['DCO_', num2str(obj.DutyCycleOffset.*100,'%i')];
+			Lstr = ['L ', num2str(obj.Length.*1e3,'% .1f') , 'mm'];
+			Gstr = ['Gr ' , num2str(obj.AveragePeriod.*1e6,'% .2f') , 'um'];
+			Tstr = ['T ', num2str(obj.Bulk.Temperature,'%i'), 'C'];
+			MFDstr = ['MFD ', num2str(obj.ModeFieldDiameter(1).*1e6,'% .2f'), 'um'];
+			DCstr  = ['DCO ', num2str(obj.DutyCycleOffset.*100,'%i')];
+			if length(obj.PoledLength)>1
+				Polstr = ['PolL_', num2str(obj.PoledLength(obj.VerticalPosition).*1e3,'% .2f') , 'mm'];
+				istr = [Lstr,'_',Polstr,'_',Gstr,'_',Tstr,'_',MFDstr,'_',DCstr];
+			else
+				% istr = [Lstr,'_',Gstr,'_',Tstr,'_',MFDstr,'_',DCstr];
+				istr = [Lstr,' ',Gstr,' ',Tstr,' ',MFDstr,' ',DCstr];
+			end
+		end
+
 		%% Plotting
+		function polplot(obj)
+			plot(obj.Z.*1e3,obj.Polarisation.*1e12);
+			xlabel("Crystal Position (z)/mm")
+			ylabel("Polarisation (\chi^{(2)})/pVm^{-1}")
+		end
+
 		function scanplot(obj,sigrange,n_pos,beam_str,axs)
 			arguments
 				obj	NonlinearCrystal
@@ -280,11 +341,12 @@ classdef NonlinearCrystal < Waveguide
 			title(tl,titleStr,"Interpreter","none");
 			
 			nexttile
-			plot(obj.DomainWallPositions(1:end-1),obj.DomainWidths);
+			plot(obj.DomainWallPositions(2:end-2),obj.DomainWidths(2:end-1));
 			title('Poling Function')
 			xlabel('z Position / m')
 			ylabel('Domain Width / m')
 			xlim([0 obj.Length])
+			ylim([0 1.5*max(obj.DomainWidths(2:end-1))])
 
 			nexttile
 			histogram(dutyCycles*100,11)

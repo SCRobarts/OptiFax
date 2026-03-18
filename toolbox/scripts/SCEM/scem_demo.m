@@ -17,32 +17,51 @@ set(0, 'DefaultLineLineWidth', 1)
 format short g
 
 load PPLN_Fanout_1mm.mat
-crystal.Length = [150, 250, 350, 500].*1e-6;
-crystal.GratingPeriod = [19.7,19.88,20.10].*1e-6;
+% crystal.Length = [150, 250, 350, 500].*1e-6;
+% crystal.GratingPeriod = [19.7,19.88,20.10].*1e-6;
+crystal.Length = 5e-3;
+crystal.GratingPeriod = 30.49e-6;
 L = crystal.Length;
 
-n_points = 2^13;
+% n_points = 2^13;
+n_points = 2^14;
 % nx_pos = 5;
 nx_grat = length(crystal.GratingPeriod);
 nx_L = length(L);
 nx_pos = round(nx_L .* nx_grat);
 d_sample = 1;
 sampID = 1:d_sample:nx_pos;
-SFG_orders = 1:2:9;
-DFG_orders = 1:2:9;
+% SFG_orders = 1:2:9;
+% DFG_orders = 1:2:9;
+SFG_orders = 1;
+DFG_orders = 1;
 fdisp = 1;
 
-lambdaC = 784e-9;
-waistR = 6.3e-6;
-fRep = 500e6;
-power = 0.5;
-spectralString = "TiSapph_JC_Spectrum_697-881nm.txt";
+% lambdaC = 784e-9;
+% % waistR = 6.3e-6;
+% waistR = 4.5e-6;
+% fRep = 500e6;
+% power = 0.5;
+% spectralString = "TiSapph_JC_Spectrum_697-881nm.txt";
+% laser = Laser(lambdaC, waistR, fRep, power, spectralString);
+% 		laser.PulseDuration = 50e-15;
+% 		lambda_pump_central = laser.Wavelength .* 1e6;	% [um]
 
-laser = Laser(lambdaC, waistR, fRep, power, spectralString);
-		laser.PulseDuration = 50e-15;
+lambdaC = 1033e-9;
+waistR = 50e-6;
+fRep = 49.16e6;
+power = 1;
+dlam = 30e-9;
+dtau = 100e-15;
+srcString = 'Sech';
+constraint = 'temporal';
+
+laser = Laser(lambdaC,waistR,fRep,power,srcString,dtau,dlam);
+laser.Constraint = constraint;
 		lambda_pump_central = laser.Wavelength .* 1e6;	% [um]
 
-scemWin = SimWindow(lambda_pump_central.*1e-6,n_points,[0.35,6].*1e3,0,"spec");
+% scemWin = SimWindow(lambda_pump_central.*1e-6,n_points,[0.35,6].*1e3,0,"spec");
+scemWin = SimWindow(lambda_pump_central.*1e-6,n_points,[0.5,4].*1e3,0,"spec");
 scemWin.ref2max;
 lam_um = (fliplr(scemWin.LambdanmPlot.*1e-3));	% [um]  Ascending
 f_THz = fliplr(scemWin.Frequencies.*1e-12);		% [THz] Descending
@@ -84,7 +103,7 @@ title("QPM Curves");
 xlabel("Second Input Wavelength / \mum")
 ylabel("Pump Wavelength / \mum")
 
-% return
+return
 %% Base Crystal Efficiency Maps
 figure
 [~,scem_base_sfg,curves_all_sfg,conv_all_sfg] = scem("SFG",lam_um,sfgids,PQ_sfg,P_eff_sfg,sampID,grating_um,L);

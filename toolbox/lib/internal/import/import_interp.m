@@ -12,11 +12,23 @@ x_dat = funcs.xfun(x_dat);
 y_dat = table2array(dat(:,2));
 y_dat = smooth(y_dat,0.01);
 y_dat = funcs.yfun(y_dat);
+%% Convert to Row Vectors
+x_dat = x_dat.';
+y_dat = y_dat.';
 
-if min(abs(x_sim)) < min(abs(x_dat)) && max(abs(x_sim)) > max(abs(x_dat))
-	x_dat = [min(abs(x_sim)) x_dat.' max(x_sim)];
-	y_dat = [0 y_dat.' 0];
+if min(abs(x_sim)) < min(abs(x_dat))
+	x_dat = [min(abs(x_sim)) x_dat];
+	y_dat = [y_dat(1) y_dat];
 end
+if  max(abs(x_sim)) > max(abs(x_dat))
+	x_dat = [x_dat max(x_sim)];
+	y_dat = [y_dat y_dat(end)];
+end
+
+% if min(abs(x_sim)) < min(abs(x_dat)) && max(abs(x_sim)) > max(abs(x_dat))
+% 	x_dat = [min(abs(x_sim)) x_dat.' max(x_sim)];
+% 	y_dat = [0 y_dat.' 0];
+% end
 
 y = interp1(x_dat,y_dat,x_sim,'makima',0);
 

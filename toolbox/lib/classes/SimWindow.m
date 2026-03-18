@@ -8,7 +8,7 @@ classdef SimWindow < matlab.mixin.Copyable
 		TimeOffset
 		SpectralLimits = [300 6000]	% Wavelength cutoffs [nm]
 		Constraint = "time";
-		SignalLimits = [];
+		PlotLimits = [];
 	end
 	properties (Dependent)
 		ReferenceOmega
@@ -29,6 +29,7 @@ classdef SimWindow < matlab.mixin.Copyable
 		Lambdanm
 		LambdanmPlot
 		IsNumIndex		% Index to address the non-NAN elements of lambda
+		InfoString
 	end
 
 	methods
@@ -73,23 +74,27 @@ classdef SimWindow < matlab.mixin.Copyable
 		end
 
 		function f_rel = get.RelativeFrequencies(obj)
-			if strcmp(obj.Constraint,"time")
-				f_rel = fftax(obj.Times);		% relative frequency from relative time array [Hz]
+			if obj.NumberOfPoints > 1
+				if strcmp(obj.Constraint,"time")
+					f_rel = fftax(obj.Times);		% relative frequency from relative time array [Hz]
+				else
+				np = obj.NumberOfPoints;
+				% Prevent f0 = 0;
+				if ~mod(obj.ReferenceWave*1e9,obj.SpectralLimits(1))
+					obj.SpectralLimits(1) = obj.SpectralLimits(1) - 1;
+				end
+				if ~mod(obj.SpectralLimits(2),obj.ReferenceWave*1e9)
+					obj.SpectralLimits(2) = obj.SpectralLimits(2) + 1;
+				end
+				f0 = c./obj.ReferenceWave;
+				f_max = (c ./ obj.SpectralLimits(1) ./1e-9) - f0;
+				f_min = (c ./ obj.SpectralLimits(2) ./1e-9) - f0;
+				f_axis = 2 * max(abs(f_min),abs(f_max));
+				% f_axis = 4 * max(abs(f_min),abs(f_max)); % avoid spectral aliasing?
+				f_rel = (-np/2:np/2-1)/np*f_axis;	% relative frequency array [Hz]
+				end
 			else
-			np = obj.NumberOfPoints;
-			% Prevent f0 = 0;
-			if ~mod(obj.ReferenceWave*1e9,obj.SpectralLimits(1))
-				obj.SpectralLimits(1) = obj.SpectralLimits(1) - 1;
-			end
-			if ~mod(obj.SpectralLimits(2),obj.ReferenceWave*1e9)
-				obj.SpectralLimits(2) = obj.SpectralLimits(2) + 1;
-			end
-			f0 = c./obj.ReferenceWave;
-			f_max = (c ./ obj.SpectralLimits(1) ./1e-9) - f0;
-			f_min = (c ./ obj.SpectralLimits(2) ./1e-9) - f0;
-			f_axis = 2 * max(abs(f_min),abs(f_max));
-			% f_axis = 4 * max(abs(f_min),abs(f_max)); % avoid spectral aliasing?
-			f_rel = (-np/2:np/2-1)/np*f_axis;	% relative frequency array [Hz]
+				f_rel = 0;
 			end
 		end
 
@@ -110,7 +115,7 @@ classdef SimWindow < matlab.mixin.Copyable
 		end
 
 		function l = get.Wavelengths(obj)
-			l = 2*pi*c./obj.Omegas;
+				l = 2*pi*c./obj.Omegas;
 		end
 
 		function tfs = get.Timesfs(obj)
@@ -123,19 +128,35 @@ classdef SimWindow < matlab.mixin.Copyable
 		end
 
 		function dt = get.DeltaTime(obj)
-			dt = obj.Times(2) - obj.Times(1);
+			if obj.NumberOfPoints > 1
+				dt = obj.Times(2) - obj.Times(1);
+			else
+				dt = 0;
+			end
 		end
 
 		function dl0 = get.DeltaLambda0(obj)
-			dl0 = (obj.Wavelengths(obj.ReferenceIndex-1) - obj.Wavelengths(obj.ReferenceIndex+1))/2;
+			if obj.NumberOfPoints > 1
+				dl0 = (obj.Wavelengths(obj.ReferenceIndex-1) - obj.Wavelengths(obj.ReferenceIndex+1))/2;
+			else
+				dl0 = 0;
+			end
 		end
 
 		function dw = get.DeltaOmega(obj)
-			dw = obj.Omegas(2) - obj.Omegas(1);
+			if obj.NumberOfPoints > 1
+				dw = obj.Omegas(2) - obj.Omegas(1);
+			else
+				dw = 0;
+			end
 		end
 		
 		function dNu = get.DeltaNu(obj)
-			dNu = obj.RelativeFrequencies(2) - obj.RelativeFrequencies(1);
+			if obj.NumberOfPoints > 1
+				dNu = obj.RelativeFrequencies(2) - obj.RelativeFrequencies(1);
+			else
+				dNu = 0;
+			end
 		end
 
 		function cgrain = get.Granularity(obj)
@@ -160,6 +181,14 @@ classdef SimWindow < matlab.mixin.Copyable
 
 		function cidx = get.ReferenceIndex(obj)
 			cidx = floor(obj.NumberOfPoints/2) + 1;
+		end
+
+		function istr = get.InfoString(obj)
+			% tripstr = [num2str(obj.TripNumber,'%i') , 'trips'];
+			ptsstr	= ['2^{',num2str(round(log2(obj.NumberOfPoints)),'%i'), '}pts'];
+			tstr	= [num2str(obj.TemporalRange.*1e12,3), 'ps'];
+			refstr	= ['\lambda_0=',num2str(obj.ReferenceWave.*1e6,3), '\mum'];
+			istr = [ptsstr, ', ', tstr, ', ', refstr];
 		end
 
 		function ref2max(obj)
