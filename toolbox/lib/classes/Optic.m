@@ -162,7 +162,9 @@ classdef Optic < matlab.mixin.Copyable
 				L = obj.Length;
 				S1M = obj.S1.TransferMatrix(lam);
 				S2M = obj.S2.TransferMatrix(lam);
-				DM = [1 L; 0 1];
+				% DM = [1 L; 0 1];
+				L = shiftdim(L,-1);
+				DM = [ones(size(L)) L; zeros(size(L)) ones(size(L))];
 				% DM = repmat(DM,1,1,length(lam));
 				M = pagemtimes(DM,S1M);
 				M = pagemtimes(S2M,M);
