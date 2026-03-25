@@ -170,30 +170,58 @@ function [gain,pump,signal,idler,weights,p_mask,i_mask] = qpmgain(crystal,ppulse
 	% gain = abs(As./Ap);
 	% gain = abs(g_coeff .* sum(QPMevo,3)) ./ max(p_mask) ./simWin.NumberOfPoints;
 
-	if plotting
-		fh = figure('Position',[800 300 450 600]);
-		tlh = tiledlayout(fh,"vertical","TileSpacing","compact","Padding","compact");
-		pcolour(signal(:,1).*1e6,pump(1,:).*1e6,gain');
-		cb = colorbar;
-		cb.Layout.Tile = 'east';
-		grid on
-		titlestr = ['QPM: ',crystal.InfoString];
-		title(titlestr,ppulse.Source.InfoString);
-		% xlabel("Signal Wavelength (\lambda_s/\mum)")
-		ylabel("Pump Wavelength (\lambda_p/\mum)")
-
-		% [~,max_gain_ids] = max(gain,[],2);
-		% pump_gain_max = pump(1,max_gain_ids);
-		% hold on
-		% plot(signal(:,1).*1e6,pump_gain_max.*1e6);
-		% hold off
-
+	%% Plotting
+	if ischar(plotting)
+		[~,max_gain_ids] = max(gain,[],2);
+		pump_gain_max = pump(1,max_gain_ids);
 		gain_sum = sum(gain,2)./length(pump(1,:));
-		nexttile
-		plot(signal(:,1).*1e6,gain_sum)
-		grid on
-		xlabel("Signal Wavelength (\lambda_s/\mum)")
-		ylabel("Integrated QPM Gain")
+		titlestr = ['QPM: ',crystal.InfoString];
+		pumpstr = "Pump Wavelength (\lambda_p/\mum)";
+		sigstr = "Signal Wavelength (\lambda_s/\mum)";
+		gainstr = "Integrated QPM Gain";
+		maxstr = "Max QPM Pump Wavelength (\lambda_p/\mum)";
+		if strcmp(plotting,'v')
+			fh = figure('Position',[800 300 450 600]);
+			tlh = tiledlayout(fh,"vertical","TileSpacing","compact","Padding","compact");
+			pcolour(signal(:,1).*1e6,pump(1,:).*1e6,gain');
+			cb = colorbar('eastoutside');
+			% cb.Layout.Tile = 'east';
+			grid on
+			title(titlestr,ppulse.Source.InfoString);
+			ylabel(pumpstr)
+	
+			% hold on
+			% plot(signal(:,1).*1e6,pump_gain_max.*1e6);
+			% hold off
+	
+			nexttile
+			yyaxis left
+			plot(signal(:,1).*1e6,gain_sum)
+			grid on
+			xlabel(sigstr)
+			ylabel(gainstr)
+			yyaxis right
+			plot(signal(:,1).*1e6,pump_gain_max.*1e6)
+			ylabel(maxstr)
+		else
+			fh = figure('Position',[800 300 600 450]);
+			tlh = tiledlayout(fh,"horizontal","TileSpacing","compact","Padding","compact");
+			pcolour(pump(1,:).*1e6,signal(:,1).*1e6,gain);
+			cb = colorbar('northoutside');
+			grid on
+			title(tlh,titlestr,ppulse.Source.InfoString);
+			xlabel(pumpstr)
+			ylabel(sigstr)
+			siglims = ylim;
+
+			nexttile
+			[axh_bot,axh_top] = xxaxis(signal(:,1).*1e6,gain_sum,pump_gain_max.*1e6);
+			grid on
+			ylim(axh_bot,siglims);
+			ylim(axh_top,siglims);
+			xlabel(axh_bot,gainstr)
+			xlabel(axh_top,maxstr)
+		end
 	end
 
 end

@@ -100,7 +100,7 @@ function [SPQ,scem,SPQ_curves,SP,S_plot] = scem(regimestr,lam_um,lam_ids,PQ,P_ef
 		SPQ_curves = sparse(sum(reshape(full([SPQ_curves{:}]),sz_plot), 3));
 	end
 	
-	%% SCPM
+	%% SCEM
 	if ~iscell(SPQ_bin)
 		scem = squeeze(sum(SPQ_bin)) .* dnu;
 	else
@@ -131,7 +131,7 @@ function [SPQ,scem,SPQ_curves,SP,S_plot] = scem(regimestr,lam_um,lam_ids,PQ,P_ef
 		% xlim(lims)
 	end
 	
-	%% SCPM Plots
+	%% SCEM Plots
 	if length(Ls) == nx_plot
 	% grating = repmat(grating,1,nx_L);
 		grating = 1:nx_plot+1;
