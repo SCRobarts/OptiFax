@@ -156,9 +156,16 @@ classdef Optic < matlab.mixin.Copyable
 			if obj.Regime ~= "T"
 				R1 = obj.S1.ROC;
 				theta = obj.S1.IncidentAngle;
-				R_eff = R1.*cosd(theta); % Tangential effective ROC
-				% R_eff = R1./cosd(theta); % Sagittal effective ROC
-				M = [1 0; -2./R_eff 1];
+				% R_eff = R1.*cosd(theta); % Tangential effective ROC
+				% M = [1 0; -2./R_eff 1];
+
+				R_t = R1.*cosd(theta); % Tangential effective ROC
+				R_s = R1./cosd(theta); % Sagittal effective ROC
+				Mt = [1 0; -2./R_t 1];
+				Ms = [1 0; -2./R_s 1];
+
+				M = [Mt, zeros(2); zeros(2), Ms];
+
 			else
 				L = obj.Length;
 				S1M = obj.S1.TransferMatrix(lam);

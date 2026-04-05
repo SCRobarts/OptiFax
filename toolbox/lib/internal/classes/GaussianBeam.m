@@ -79,9 +79,19 @@ classdef GaussianBeam < matlab.mixin.Copyable
 
 		function q2 = matrixtransfer(obj,M)
 			q1 = obj.ComplexParameter;
-			A = squeeze(M(1,1,:)); B = squeeze(M(1,2,:));
-			C = squeeze(M(2,1,:)); D = squeeze(M(2,2,:));
-			q2 = (A.*q1 + B) ./ (C.*q1 + D);
+			Ax = squeeze(M(1,1,:)); Bx = squeeze(M(1,2,:));
+			Cx = squeeze(M(2,1,:)); Dx = squeeze(M(2,2,:));
+			if length(q1(1,:)) > 1 && length(M(:,1,1)) > 2
+				q1x = q1(:,1);
+				q1y = q1(:,2);
+				Ay = squeeze(M(3,3,:)); By = squeeze(M(3,4,:));
+				Cy = squeeze(M(4,3,:)); Dy = squeeze(M(4,4,:));
+				q2x = (Ax.*q1x + Bx) ./ (Cx.*q1x + Dx);
+				q2y = (Ay.*q1y + By) ./ (Cy.*q1y + Dy);
+				q2 = [q2x , q2y];
+			else
+				q2 = (Ax.*q1 + Bx) ./ (Cx.*q1 + Dx);
+			end
 		end
 
 		function setfocus(obj,optf,waistpos)

@@ -115,7 +115,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 				if isempty(obj.Beam)
 					obj.Radius = lasersrc.Waist;
 				else
-					obj.Radius = obj.Beam.Radius;
+					obj.Radius = mean(obj.Beam.Radius,2);
 				end
 			end
 		end
@@ -132,11 +132,16 @@ classdef OpticalPulse < matlab.mixin.Copyable
 		end
 
 		function nAnn = get.Annuli(obj)
-			nAnn = length(obj.Source.Waist);
+			nAnn = length(obj.Source.Waist(:,1));
 		end
 
 		function nP = get.NumberOfPulses(obj)
-			nP = length(obj.TemporalField(:,1)) ./obj.Annuli;
+			if ~isempty(obj.TemporalField)
+				nP = length(obj.TemporalField(:,1)) ./obj.Annuli;
+			else
+				nP = length(obj.Radius(:,1));
+			end
+			nP = ceil(nP);
 		end
 		
 		%% Propagation
@@ -211,7 +216,7 @@ classdef OpticalPulse < matlab.mixin.Copyable
 					obj.Radius = mat.ModeFieldDiameter./2;
 				end
 			else
-				obj.Radius = obj.Source.Waist;
+				obj.Radius =  mean(obj.Source.Waist);
 				% obj.Radius = obj.Beam.Radius;
 			end
 		end
