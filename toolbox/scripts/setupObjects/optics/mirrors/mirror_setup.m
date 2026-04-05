@@ -10,7 +10,8 @@ clear
 close all
 
 % name = "Auskerry_Idler_OC_Mirror";
-name = "Laseroptik_L20295_Mirror";
+% name = "Laseroptik_L20295_Mirror";
+name = "Layertec_106812_Curved_Mirror";
 
 %% General Optic arguments
 % If only one surface is specified, it's assumed that the same coating
@@ -19,19 +20,22 @@ name = "Laseroptik_L20295_Mirror";
 regime = "R";
 % coating_str = "Layertec_126761_T"; % To be extracted?
 % coating = "Layertec_Proposed";
-% coating = "Layertec_135111";
-coating = "Laseroptik_B19696";
+coating = "Layertec_114645";
+% coating = "Laseroptik_B19696";
 load(coating);
 % coating = [50,1.0e-06;1,1.1e-06;60,1.3e-06;1,2.1e-06;98,6.5e-06];
+s1 = coating;
+s1.ROC = 100e-3;
 % s2 = "None";
 s2 = 'AR';	% Idealised 100% anti-reflection across all wavelengths
 % coating_str = 0;	% Idealised 100% reflection across all wavelengths
 % material = "YAG";
 material = "FS";
-% L = 6.35e-3;
-L = 1.0e-3;
+L = 6.35e-3;
+% L = 1.0e-3;
+theta_in = 0;
 
-mirror = Optic(regime,coating,material,L,0,s2);
+mirror = Optic(regime,s1,material,L,theta_in,s2);
 
 % Create a simulation window object using a default time window since we're
 % only interested in spectral information here
@@ -50,5 +54,5 @@ cav = Cavity(mirror,0);
 cav.simulate(lamWin);
 % laser.Pulse.plot;
 
-mirror.store(name,1);
+% mirror.store(name,1);
 mirror.plot;

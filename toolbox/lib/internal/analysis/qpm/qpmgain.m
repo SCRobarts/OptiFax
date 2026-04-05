@@ -204,7 +204,7 @@ function [gain,pump,signal,idler,weights,p_mask,i_mask] = qpmgain(crystal,ppulse
 			plot(signal(:,1).*1e6,pump_gain_max.*1e6)
 			ylabel(maxstr)
 		else
-			fh = figure('Position',[800 300 600 450]);
+			fh = figure('Position',[800 300 650 450]);
 			tlh = tiledlayout(fh,"horizontal","TileSpacing","compact","Padding","compact");
 			pcolour(pump(1,:).*1e6,signal(:,1).*1e6,gain);
 			cb = colorbar('northoutside');
