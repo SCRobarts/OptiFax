@@ -116,6 +116,27 @@ classdef Optic < matlab.mixin.Copyable
 			obj.S2.Parent = obj;
 		end
 
+		function invert(obj,new_regime)
+			arguments
+				obj
+				new_regime string = obj.Regime
+			end
+			s1 = obj.S1;
+			s2 = obj.S2;
+
+			s1.Order = 2;
+			s2.Order = 1;
+			s1.ROC = -s1.ROC;
+			s2.ROC = -s2.ROC;
+
+			obj.S1 = s2;
+			obj.S2 = s1;
+
+			obj.Regime = new_regime;
+		end
+
+
+
 		function scaleT(obj,lamOCnm,target,lamLimsnm)
 			arguments
 				obj Optic
@@ -133,19 +154,6 @@ classdef Optic < matlab.mixin.Copyable
 
 			obj.Transmission(limIDs) = obj.Transmission(limIDs) .^ powOC;
 			obj.Reflection(limIDs) = 1 - obj.Transmission(limIDs);
-		end
-
-		function invert(obj)
-			s1 = obj.S1;
-			s2 = obj.S2;
-
-			s1.Order = 2;
-			s2.Order = 1;
-			s1.ROC = -s1.ROC;
-			s2.ROC = -s2.ROC;
-
-			obj.S1 = s2;
-			obj.S2 = s1;
 		end
 
 		function M = get.TransferMatrix(obj)
