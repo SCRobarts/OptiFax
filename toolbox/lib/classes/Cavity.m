@@ -21,6 +21,8 @@ classdef Cavity < handle
 		PreCavityLength
 		CavityLength
 		OpticalPathLength
+		PreInterfaceZs
+		InterfaceZs
 		TransferMatrix
 		Xtal
 		CrystalPosition
@@ -125,18 +127,26 @@ classdef Cavity < handle
 			xtal = obj.Optics.(obj.CrystalPosition);
 		end
 
-		function preCavL = get.PreCavityLength(obj)
-			preCavL = 0;
+		function preoptzs = get.PreInterfaceZs(obj)
+			preoptzs = zeros(1,1+width(obj.PreCavityOptics));
 			for ii = 1:width(obj.PreCavityOptics)
-				preCavL = preCavL + obj.PreCavityOptics.(ii).Length;
+				preoptzs(ii+1) = preoptzs(ii) + obj.PreCavityOptics.(ii).Length;
 			end
 		end
 
-		function cavL = get.CavityLength(obj)
-			cavL = 0;
+		function optzs = get.InterfaceZs(obj)
+			optzs = zeros(1,1+width(obj.Optics));
 			for ii = 1:width(obj.Optics)
-				cavL = cavL + obj.Optics.(ii).Length;
+				optzs(ii+1) = optzs(ii) + obj.Optics.(ii).Length;
 			end
+		end
+
+		function preCavL = get.PreCavityLength(obj)
+			preCavL = obj.PreInterfaceZs(end) - obj.PreInterfaceZs(1);
+		end
+
+		function cavL = get.CavityLength(obj)
+			cavL = obj.InterfaceZs(end) - obj.InterfaceZs(1);
 		end
 
 		function opl = get.OpticalPathLength(obj)
