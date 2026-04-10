@@ -4,7 +4,7 @@ classdef Cavity < handle
 	%
 	%	Sebastian C. Robarts 2023 - sebrobarts@gmail.com
 	properties
-		Name
+		Name	string	=	"Optical Cavity";	
 		PreCavityOptics
 		Optics 
 		OCPosition
