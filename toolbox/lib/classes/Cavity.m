@@ -128,17 +128,11 @@ classdef Cavity < handle
 		end
 
 		function preoptzs = get.PreInterfaceZs(obj)
-			preoptzs = zeros(1,1+width(obj.PreCavityOptics));
-			for ii = 1:width(obj.PreCavityOptics)
-				preoptzs(ii+1) = preoptzs(ii) + obj.PreCavityOptics.(ii).Length;
-			end
+			preoptzs = obj.opticinterfaces(obj.PreCavityOptics);
 		end
 
 		function optzs = get.InterfaceZs(obj)
-			optzs = zeros(1,1+width(obj.Optics));
-			for ii = 1:width(obj.Optics)
-				optzs(ii+1) = optzs(ii) + obj.Optics.(ii).Length;
-			end
+			optzs = obj.opticinterfaces(obj.Optics);
 			optzs = optzs + obj.PreCavityLength;
 		end
 
@@ -164,6 +158,21 @@ classdef Cavity < handle
 				opt = obj.Optics.(ii);
 				M = @(lam) opt.TransferMatrix(lam)*M(lam);
 			end
+		end
+
+		function optzs = opticinterfaces(~,optics)
+			nopts = width(optics);
+			optzs = zeros(1,1+nopts);
+			z = optics.(1).Length;
+			optzs(2) = z;
+			for ii = 2:nopts
+				z = z + optics.(ii).Length;
+				if optics.(ii-1).Bulk == optics.(ii).Bulk
+					optzs(ii) = 0;
+				end
+				optzs(ii+1) = z;
+			end
+			optzs = [0,nonzeros(optzs)'];
 		end
 
 		function plot(obj,lims)
