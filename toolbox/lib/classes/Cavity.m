@@ -139,6 +139,7 @@ classdef Cavity < handle
 			for ii = 1:width(obj.Optics)
 				optzs(ii+1) = optzs(ii) + obj.Optics.(ii).Length;
 			end
+			optzs = optzs + obj.PreCavityLength;
 		end
 
 		function preCavL = get.PreCavityLength(obj)
