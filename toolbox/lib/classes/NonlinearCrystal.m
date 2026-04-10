@@ -101,12 +101,12 @@ classdef NonlinearCrystal < Waveguide
 
 		function pole(obj)
 			L_m = obj.Length;
+			grating = obj.GratingPeriod;
+			L_pol_m = L_m;
 			if isnumeric(obj.GratingPeriod)
 				n = length(obj.GratingPeriod);
 				switch n
 					case 1
-						grating = obj.GratingPeriod;
-						L_pol_m = L_m;
 					case 2
 						grating = obj.fanout;
 						L_pol_m = L_m;
@@ -114,11 +114,10 @@ classdef NonlinearCrystal < Waveguide
 						obj.Height = uint8(n);
 						obj.VerticalPosition = uint8(ceil(obj.VerticalPosition));
 						grating = obj.GratingPeriod(obj.VerticalPosition);
-						L_pol_m = obj.PoledLength(obj.VerticalPosition);
+						if ~isscalar(obj.PoledLength)
+							L_pol_m = obj.PoledLength(obj.VerticalPosition);
+						end
 				end
-			else
-				grating = obj.GratingPeriod;
-				L_pol_m = L_m;
 			end
 			% if~isscalar(L_m)
 			% 	L_m = L_m(obj.VerticalPosition);

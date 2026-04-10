@@ -177,6 +177,9 @@ classdef Optic < matlab.mixin.Copyable
 				M = pagemtimes(DM,S1M);
 				M = pagemtimes(S2M,M);
 				% M = S2M*DM*S1M;
+
+				M = [M, zeros(2); zeros(2), M];
+
 			end
 		end
 

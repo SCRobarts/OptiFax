@@ -10,9 +10,7 @@ classdef Cavity < handle
 		OCPosition
 	end
 	properties (Transient)
-		TransferMatrix = @(lam) [1 0; 0 1];
 		SimWin SimWindow
-		OpticalPathLength = 0;
 		PumpDispersion = 0;
 		Transmission = 1;
 		Dispersion = 0;
@@ -22,6 +20,8 @@ classdef Cavity < handle
 	properties (Dependent)
 		PreCavityLength
 		CavityLength
+		OpticalPathLength
+		TransferMatrix
 		Xtal
 		CrystalPosition
 		CrystalZ
@@ -58,7 +58,6 @@ classdef Cavity < handle
 			obj.Dispersion = 0;
 			obj.GroupDelay = 0;
 			obj.GDD = 0;
-			obj.OpticalPathLength = 0;
 			if ~isempty(obj.PreCavityOptics)
 				for ii = 1:width(obj.PreCavityOptics)
 					opt = obj.PreCavityOptics.(ii);
@@ -83,12 +82,8 @@ classdef Cavity < handle
 					obj.Transmission = obj.Transmission .* opt.Transmission;
 				end
 				obj.Dispersion = obj.Dispersion + opt.Dispersion;
-				% obj.GroupDelay = obj.GroupDelay + opt.GroupDelay;
 				obj.GroupDelay = obj.GroupDelay + opt.RelativeGD;
 				obj.GDD = obj.GDD + opt.GDD;
-				obj.OpticalPathLength = obj.OpticalPathLength + opt.OpticalPath;
-				M = obj.TransferMatrix;
-				obj.TransferMatrix = @(lam) opt.TransferMatrix(lam)*M(lam);
 			end
 		end
 
@@ -141,6 +136,22 @@ classdef Cavity < handle
 			cavL = 0;
 			for ii = 1:width(obj.Optics)
 				cavL = cavL + obj.Optics.(ii).Length;
+			end
+		end
+
+		function opl = get.OpticalPathLength(obj)
+			opl = 0;
+			for ii = 1:width(obj.Optics)
+				opt = obj.Optics.(ii);
+				opl = opl + opt.OpticalPath;
+			end
+		end
+
+		function M = get.TransferMatrix(obj)
+			M = @(lam) eye(4);
+			for ii = 1:width(obj.Optics)
+				opt = obj.Optics.(ii);
+				M = @(lam) opt.TransferMatrix(lam)*M(lam);
 			end
 		end
 
