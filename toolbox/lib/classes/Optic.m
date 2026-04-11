@@ -126,8 +126,11 @@ classdef Optic < matlab.mixin.Copyable
 
 			s1.Order = 2;
 			s2.Order = 1;
-			s1.ROC = -s1.ROC;
-			s2.ROC = -s2.ROC;
+
+			if strcmp(new_regime,obj.Regime)
+				s1.ROC = -s1.ROC;
+				s2.ROC = -s2.ROC;
+			end
 
 			obj.S1 = s2;
 			obj.S2 = s1;

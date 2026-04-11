@@ -46,7 +46,7 @@ classdef GaussianBeam < matlab.mixin.Copyable
 		function propagate(obj,optvar)
 			if isnumeric(optvar)
 				L = optvar;
-				obj.ComplexParameter = obj.ComplexParameter + L;
+				obj.ComplexParameter = obj.ComplexParameter + L';
 			elseif ~isempty(optvar)
 				if istable(optvar)
 					M = eye(2);
@@ -170,7 +170,7 @@ classdef GaussianBeam < matlab.mixin.Copyable
 				Rz = obj.Curvature;
 				if ~isscalar(zs)
 					if transferflag
-						obj.ComplexParameter = obj.ComplexParameter(:,end);
+						obj.ComplexParameter = obj.ComplexParameter(end,:);
 					else
 						obj.ComplexParameter = q1;
 					end
