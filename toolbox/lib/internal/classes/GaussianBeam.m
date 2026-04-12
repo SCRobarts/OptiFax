@@ -46,10 +46,11 @@ classdef GaussianBeam < matlab.mixin.Copyable
 		function propagate(obj,optvar)
 			if isnumeric(optvar)
 				L = optvar;
+				% L = shiftdim(L,-1);
 				obj.ComplexParameter = obj.ComplexParameter + L';
 			elseif ~isempty(optvar)
 				if istable(optvar)
-					M = eye(2);
+					M = eye(4);
 					for ii = 1:width(optvar)
 						opt = optvar.(ii);
 						% M = opt.TransferMatrix(obj.Wavelength) * M;
@@ -67,12 +68,17 @@ classdef GaussianBeam < matlab.mixin.Copyable
 			if obj.Medium ~= opt
 				lam = obj.Wavelength;
 				M_out = obj.Medium.S2.TransferMatrix(lam);
-				M_in = opt.S1.TransferMatrix(lam);
-				% M_trans = M_in*M_out;
-				M_trans = pagemtimes(M_in,M_out);
-	
-				q2 = obj.matrixtransfer(M_trans);
-				obj.Medium = opt;
+				if strcmp(opt.Regime,"T")
+					M_in = opt.S1.TransferMatrix(lam);
+					% M_trans = M_in*M_out;
+					M_trans = pagemtimes(M_in,M_out);
+					q2 = obj.matrixtransfer(M_trans);
+					obj.Medium = opt;
+				else
+					M_in = opt.TransferMatrix(lam);
+					M_trans = pagemtimes(M_in,M_out);
+					q2 = obj.matrixtransfer(M_trans);
+				end
 				obj.ComplexParameter = q2;
 			end
 		end
@@ -94,10 +100,11 @@ classdef GaussianBeam < matlab.mixin.Copyable
 			end
 		end
 
-		function setfocus(obj,optf,waistpos)
+		function setfocus(obj,optf,zoff,waistpos)
 			arguments
 				obj
 				optf
+				zoff = 0;
 				waistpos = optf.Length./2;
 			end
 			opt_current = obj.Medium;
@@ -105,6 +112,7 @@ classdef GaussianBeam < matlab.mixin.Copyable
 			obj.ComplexParameter = -waistpos + imag(obj.ComplexParameter).*1i;
 			obj.refresh;
 			obj.transfer(opt_current);
+			obj.propagate(-zoff);
 		end
 
 		%% Parameter Calculations

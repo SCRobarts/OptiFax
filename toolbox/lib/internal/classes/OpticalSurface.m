@@ -79,6 +79,9 @@ classdef OpticalSurface < matlab.mixin.Copyable
 			C = shiftdim(C,-2);
 			D = shiftdim(D,-2);
 			M = [A B; C D];
+
+			m0 = zeros(size(M));
+			M = [M, m0; m0, M];
 		end
 
 		function T = get.Transmission(obj)

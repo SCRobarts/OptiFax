@@ -117,7 +117,7 @@ classdef Cavity < handle
 		function xz = get.CrystalZ(obj)
 			xz = obj.PreCavityLength;
 			if obj.CrystalPosition > 1
-				for ii = 1:obj.CrystalPosition
+				for ii = 1:obj.CrystalPosition-1
 					xz = xz + obj.Optics.(ii).Length;
 				end
 			end
@@ -156,7 +156,7 @@ classdef Cavity < handle
 			M = @(lam) eye(4);
 			for ii = 1:width(obj.Optics)
 				opt = obj.Optics.(ii);
-				M = @(lam) opt.TransferMatrix(lam)*M(lam);
+				M = @(lam) pagemtimes(opt.TransferMatrix(lam),M(lam));
 			end
 		end
 
