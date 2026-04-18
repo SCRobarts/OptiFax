@@ -89,6 +89,8 @@ classdef Cavity < handle
 			end
 		end
 
+		
+
 		function minGDlam = get.MinGDWave(obj)
 			wavs = obj.SimWin.Lambdanm;
 			minGD = min(obj.GroupDelay(wavs > 0));
@@ -160,6 +162,26 @@ classdef Cavity < handle
 			end
 		end
 
+		function q = eigencalc(obj,lam)
+			arguments
+				obj
+				lam = 1.5e-6;
+			end
+			M = obj.TransferMatrix(lam);
+			A = (M([1,3],[1,3],:)); B = (M([1,3],[2,4],:));
+			C = (M([2,4],[1,3],:)); D = (M([2,4],[2,4],:));
+
+			gg = (A + D)./2;
+			a = C;
+			b = D - A;
+			c = -B;
+
+			qp = (-b + sqrt(b.^2 - 4.*a.*c))./(2.*a);
+			qm = conj(qp);
+			q = max(qp,qm);
+			q = diag(q).';
+		end
+
 		function optzs = opticinterfaces(~,optics)
 			nopts = width(optics);
 			optzs = zeros(1,1+nopts);
@@ -213,7 +235,7 @@ classdef Cavity < handle
 		function store(cav,name,devFlag)
 			arguments
 				cav
-				name
+				name = cav.Name;
 				devFlag = 0;
 			end
 			cav.Name = name;
