@@ -5,8 +5,10 @@ classdef BeamPlotter < matlab.mixin.Copyable
 
 	properties
 		System	Cavity
-		Source	GaussianBeam = GaussianBeam.empty;
-		Beam	GaussianBeam = GaussianBeam.empty;
+		Source	Laser;
+		BeamIn	GaussianBeam = GaussianBeam.empty;
+		CavBeam	GaussianBeam = GaussianBeam.empty;
+		Mismatch			% Calculated source-signal overlap in crystal
 		NTrips		= 1;	% Number of signal round trips to plot
 		CoarseStep	= 1e-4;	% Step size through large optics [m]
 		FineStep	= 1e-6;	% Step size through small/critical optics [m]
@@ -21,46 +23,96 @@ classdef BeamPlotter < matlab.mixin.Copyable
 			arguments
 				cav
 				src
-				sigbeam = src.copy;
+				sigbeam = cav.EigenBeam.copy;
 				siglam = sigbeam.Wavelength;
 			end
 			%BEAMPLOTTER Construct an instance of this class
 			%   Detailed explanation goes here
 			obj.System = cav;
 			obj.Source = src;
-			obj.Beam = sigbeam;
-			obj.Beam.Wavelength = siglam;
+			obj.CavBeam = sigbeam;
+			obj.CavBeam.Wavelength = siglam;
+			if isempty(obj.Source.Beam)
+				obj.Source.createBeam;
+			end
+			obj.BeamIn = obj.Source.Beam.copy;
 		end
 
-		function run(obj)
+		function refresh(obj)
+			obj.CavBeam = obj.System.EigenBeam.copy;
+			if isempty(obj.Source.Beam)
+				obj.Source.createBeam;
+			end
+			obj.BeamIn = obj.Source.Beam.copy;
+			obj.Pump.Z = 0;
+			obj.Pump.Radius = obj.BeamIn.Radius;
+			obj.Pump.Curvature = obj.BeamIn.Curvature;
+			obj.Signal.Z = obj.System.InterfaceZs(1);
+			obj.Signal.Radius = obj.CavBeam.Radius;
+			obj.Signal.Curvature = obj.CavBeam.Curvature;
+		end
+
+		function [spaces,changes] = modematch(obj,spaceOptics)
+			nSpaces = width(spaceOptics);
+			spaces = zeros(1,nSpaces);
+			for optn = 1:nSpaces
+				spaces(optn) = spaceOptics.(optn).Length;
+			end
+			s0 = spaces;
+			options = optimset('TolX',1e-3,'PlotFcns','optimplotfval');
+			spaces = fminsearch(@mmtune,spaces,options);
+			changes = spaces-s0;
+
+			function olap = mmtune(spaces)
+				for sn = 1:nSpaces
+					spaceOptics.(sn).Length = round(spaces(sn),3);
+				end
+				olap = obj.modemismatch;
+			end
+		end
+
+		function mismatch = modemismatch(obj)
+			obj.refresh;
+			obj.run(obj.System.CrystalPosition);
+			xz = obj.System.CrystalZ;
+			pumpRs = obj.Pump.Radius(obj.Pump.Z>xz,:);
+			sigRs = obj.Signal.Radius(obj.Signal.Z>xz,:);
+			mismatch = norm(pumpRs - sigRs);
+			obj.Mismatch = mismatch;
+		end
+
+		function run(obj,nOptics)
+			arguments
+				obj
+				nOptics = width(obj.System.Optics)
+			end
 		% Propagate the beam(s) through the cavity and store dims
 		% obj.Beam.setfocus(obj.System.Xtal,obj.System.CrystalZ-obj.System.InterfaceZs(1));
-			obj.Pump.Z = 0;
-			obj.Pump.Radius = obj.Source.Radius;
-			obj.Pump.Curvature = obj.Source.Curvature;
-			obj.Signal.Z = obj.System.InterfaceZs(1);
-			obj.Signal.Radius = obj.Beam.Radius;
-			obj.Signal.Curvature = obj.Beam.Curvature;
+			obj.refresh;
+			if nOptics < width(obj.System.Optics)
+				nTrips = 1;
+			else
+				nTrips = obj.NTrips;
+			end
 
 			obj.sourcePropagate;
-			ref_win = SimWindow(obj.Beam.Wavelength,1);
+			for optn = 1:nOptics
+				obj.Pump = obj.transferBeam(obj.BeamIn,obj.System.Optics.(optn),obj.Pump);
+			end
+			ref_win = SimWindow(obj.CavBeam.Wavelength,1);
 			obj.System.simulate(ref_win);
-			
-			for trips = 1:obj.NTrips
-				for optn = 1:width(obj.System.Optics)
-					obj.Signal = obj.transferBeam(obj.Beam,obj.System.Optics.(optn),obj.Signal);
+			for trips = 1:nTrips
+				for optn = 1:nOptics
+					obj.Signal = obj.transferBeam(obj.CavBeam,obj.System.Optics.(optn),obj.Signal);
 				end
 			end
 		end
 
 		function sourcePropagate(obj)
-			ref_win = SimWindow(obj.Source.Wavelength,1);
-			% obj.System.simulate(ref_win);
+			ref_win = SimWindow(obj.BeamIn.Wavelength,1);
+			obj.System.simulate(ref_win);
 			for optn = 1:width(obj.System.PreCavityOptics)
-				obj.Pump = obj.transferBeam(obj.Source,obj.System.PreCavityOptics.(optn),obj.Pump);
-			end
-			for optn = 1:width(obj.System.Optics)
-				obj.Pump = obj.transferBeam(obj.Source,obj.System.Optics.(optn),obj.Pump);
+				obj.Pump = obj.transferBeam(obj.BeamIn,obj.System.PreCavityOptics.(optn),obj.Pump);
 			end
 		end
 
