@@ -8,6 +8,7 @@ classdef Cavity < handle
 		PreCavityOptics
 		Optics 
 		OCPosition
+		EigenBeam	GaussianBeam
 	end
 	properties (Transient)
 		SimWin SimWindow
@@ -24,6 +25,7 @@ classdef Cavity < handle
 		PreInterfaceZs
 		InterfaceZs
 		TransferMatrix
+		Stability
 		Xtal
 		CrystalPosition
 		CrystalZ
@@ -88,8 +90,6 @@ classdef Cavity < handle
 				obj.GDD = obj.GDD + opt.GDD;
 			end
 		end
-
-		
 
 		function minGDlam = get.MinGDWave(obj)
 			wavs = obj.SimWin.Lambdanm;
@@ -160,6 +160,30 @@ classdef Cavity < handle
 				opt = obj.Optics.(ii);
 				M = @(lam) pagemtimes(opt.TransferMatrix(lam),M(lam));
 			end
+		end
+
+		function stab = get.Stability(obj)
+			if ~isempty(obj.EigenBeam)
+				lam = obj.EigenBeam.Wavelength;
+			elseif ~isempty(obj.SimWin)
+				lam = obj.SimWin.ReferenceWave;
+			else
+				lam = 1.5e-6;
+			end
+			M = obj.TransferMatrix(lam);
+			Mx = M(1:2,1:2);
+			My = M(3:4,3:4);
+			stab = [trace(Mx)./2 , trace(My)./2];
+		end
+
+		function createBeam(obj,lam)
+			arguments
+				obj
+				lam = 1.5e-6;
+			end
+			obj.EigenBeam = GaussianBeam(lam);
+			obj.EigenBeam.Name = obj.Name + " Beam";
+			obj.EigenBeam.ComplexParameter = obj.eigencalc(lam);
 		end
 
 		function q = eigencalc(obj,lam)
